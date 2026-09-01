@@ -3,25 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Traffic Pipeline - 工业级爆款短视频创作工作台</title>
+    <title>Traffic Studio - 工业级短视频智能创作工作台</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #07090E;
-            --bg-secondary: #0D111A;
-            --card-bg: rgba(18, 24, 38, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --card-hover: rgba(28, 36, 56, 0.85);
+            --bg-base: #080B11;
+            --bg-surface-1: #0F1420;
+            --bg-surface-2: #161D2E;
+            --bg-surface-3: #1E283D;
+            --bg-glass: rgba(16, 23, 38, 0.72);
+            --bg-glass-hover: rgba(26, 36, 58, 0.85);
+
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --border-medium: rgba(255, 255, 255, 0.12);
+            --border-focus: #38BDF8;
+
+            --primary: #38BDF8;
+            --primary-gradient: linear-gradient(135deg, #00F2FE 0%, #4FACFE 50%, #7000FF 100%);
+            --primary-glow: rgba(56, 189, 248, 0.35);
+
             --accent-cyan: #00F2FE;
-            --accent-blue: #4FACFE;
-            --accent-purple: #9D4EDD;
-            --accent-gold: #FFD166;
-            --accent-green: #06D6A0;
-            --text-primary: #F8FAFC;
+            --accent-purple: #A855F7;
+            --accent-amber: #F59E0B;
+            --accent-emerald: #10B981;
+            --accent-rose: #F43F5E;
+
+            --text-main: #F8FAFC;
             --text-secondary: #94A3B8;
             --text-muted: #64748B;
+            --text-dim: #475569;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 22px;
+
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+            --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 24px var(--primary-glow);
         }
 
         * {
@@ -29,411 +51,931 @@
             margin: 0;
             padding: 0;
             font-family: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
+            overflow: hidden;
             background-image: 
-                radial-gradient(circle at 15% 15%, rgba(79, 172, 254, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(157, 78, 221, 0.12) 0%, transparent 45%);
+                radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
         }
 
-        /* Top Navbar */
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* ---------------- TOP NAVBAR ---------------- */
         header {
+            height: 62px;
+            min-height: 62px;
+            padding: 0 24px;
+            background: rgba(11, 15, 25, 0.88);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 32px;
-            background: rgba(13, 17, 26, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--card-border);
-            position: sticky;
-            top: 0;
             z-index: 100;
         }
 
-        .brand {
+        .brand-area {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .brand-logo {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
+            background: var(--primary-gradient);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 800;
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+            box-shadow: 0 4px 16px rgba(0, 242, 254, 0.35);
+            position: relative;
+            flex-shrink: 0;
         }
 
-        .brand-text h1 {
-            font-size: 18px;
+        .brand-logo svg {
+            width: 20px;
+            height: 20px;
+            fill: #0B0F19;
+        }
+
+        .brand-title-wrap {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-name {
+            font-size: 16px;
             font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(90deg, #FFFFFF, var(--accent-cyan));
+            letter-spacing: -0.3px;
+            background: linear-gradient(120deg, #FFFFFF 30%, #38BDF8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .brand-text p {
+        .version-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: #38BDF8;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            padding: 1px 6px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
             font-size: 11px;
             color: var(--text-muted);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .nav-center-stats {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            padding: 5px 14px;
+            border-radius: 30px;
+        }
+
+        .engine-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .engine-chip.ok {
+            color: #34D399;
+        }
+
+        .engine-chip.warn {
+            color: #FBBF24;
+        }
+
+        .chip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .chip-divider {
+            width: 1px;
+            height: 12px;
+            background: var(--border-subtle);
         }
 
         .nav-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }
 
         .badge-status {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
-            color: var(--accent-green);
-            background: rgba(6, 214, 160, 0.1);
+            font-size: 12px;
+            font-weight: 600;
+            color: #34D399;
+            background: rgba(16, 185, 129, 0.1);
             padding: 6px 14px;
             border-radius: 20px;
-            border: 1px solid rgba(6, 214, 160, 0.25);
+            border: 1px solid rgba(16, 185, 129, 0.25);
         }
 
         .dot-pulse {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-green);
+            width: 7px;
+            height: 7px;
+            background: #10B981;
             border-radius: 50%;
-            box-shadow: 0 0 8px var(--accent-green);
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px #10B981;
+            animation: pulse-ring 2s infinite ease-in-out;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 6px #10B981); }
+            100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        /* Main Studio Grid */
+        /* ---------------- 3-COLUMN WORKSPACE ---------------- */
         main {
             display: grid;
-            grid-template-columns: 320px 1fr 380px;
-            gap: 24px;
-            padding: 24px 32px;
+            grid-template-columns: 330px minmax(520px, 1fr) 370px;
+            gap: 16px;
+            padding: 16px 20px;
             flex: 1;
-            height: calc(100vh - 71px);
+            height: calc(100vh - 62px);
+            min-height: 0;
             overflow: hidden;
         }
 
-        /* Column Cards */
         .studio-col {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
             display: flex;
             flex-direction: column;
-            backdrop-filter: blur(24px);
+            backdrop-filter: blur(20px);
+            min-height: 0;
             overflow: hidden;
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-md);
+            transition: border-color 0.2s ease;
+        }
+
+        .studio-col:hover {
+            border-color: var(--border-medium);
         }
 
         .col-header {
-            padding: 18px 20px;
-            border-bottom: 1px solid var(--card-border);
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.02);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.02);
+            flex-shrink: 0;
         }
 
-        .col-title {
-            font-size: 15px;
-            font-weight: 700;
+        .col-title-group {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
+        .col-icon-box {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38BDF8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .col-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.2px;
+        }
+
+        .col-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        /* Pinned Subheader for Category Tabs - NEVER scrolls away */
+        .col-pinned-subnav {
+            padding: 12px 14px 8px 14px;
+            background: rgba(11, 16, 28, 0.95);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
         .col-body {
-            padding: 18px 20px;
+            padding: 14px 16px;
             overflow-y: auto;
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 14px;
+            min-height: 0;
         }
 
-        /* Category Pill Tabs */
+        /* ---------------- LEFT COLUMN: TREND RADAR ---------------- */
+        .category-tab-scroll {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+
         .cat-pill {
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 500;
+            padding: 5px 11px;
+            border-radius: 16px;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .cat-pill:hover {
-            background: rgba(255, 255, 255, 0.12);
-            color: #FFF;
-        }
-
-        .cat-pill.active {
-            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(157, 78, 221, 0.25));
-            border-color: var(--accent-cyan);
-            color: #FFF;
-            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-        }
-
-        .badge-resonance {
-            background: linear-gradient(135deg, rgba(255, 75, 43, 0.3), rgba(255, 65, 108, 0.3));
-            border: 1px solid rgba(255, 75, 43, 0.6);
-            color: #FF7043;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 6px;
+            white-space: nowrap;
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .cat-pill:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .cat-pill.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(168, 85, 247, 0.25));
+            border-color: #38BDF8;
+            color: #FFFFFF;
+            font-weight: 600;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .trend-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 0 2px;
+        }
+
+        .trend-meta-bar strong {
+            color: #38BDF8;
+            font-weight: 600;
+        }
+
+        .trends-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .trend-card {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 14px 12px 42px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .trend-card:hover {
-            background: var(--card-hover);
-            border-color: rgba(0, 242, 254, 0.4);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(56, 189, 248, 0.4);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
         }
 
-        .trend-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
+        .trend-card:active {
+            transform: translateY(0);
         }
 
-        .trend-platform {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 8px;
+        .trend-rank {
+            position: absolute;
+            left: 12px;
+            top: 13px;
+            width: 22px;
+            height: 22px;
             border-radius: 6px;
-            background: rgba(79, 172, 254, 0.15);
-            color: var(--accent-cyan);
-        }
-
-        .trend-score {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--accent-gold);
             display: flex;
             align-items: center;
-            gap: 4px;
-        }
-
-        .trend-title {
-            font-size: 13px;
-            font-weight: 600;
-            line-height: 1.4;
-            color: var(--text-primary);
-        }
-
-        /* Center: Storyboard Workspace */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 13px;
-            font-weight: 600;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.07);
             color: var(--text-secondary);
         }
 
-        input[type="text"], select, textarea {
-            width: 100%;
-            background: rgba(10, 14, 22, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 12px 14px;
+        .trend-rank.top-1 {
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            color: #1A0E00;
+            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.4);
+        }
+
+        .trend-rank.top-2 {
+            background: linear-gradient(135deg, #E2E8F0, #94A3B8);
+            color: #0F172A;
+        }
+
+        .trend-rank.top-3 {
+            background: linear-gradient(135deg, #F97316, #C2410C);
             color: #FFF;
-            font-size: 14px;
-            outline: none;
-            transition: border 0.2s ease;
         }
 
-        input[type="text"]:focus, select:focus, textarea:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+        .trend-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            gap: 8px;
         }
 
-        .topic-bar {
+        .trend-platform-tag {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: rgba(56, 189, 248, 0.12);
+            color: #38BDF8;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .trend-platform-tag.resonance {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(168, 85, 247, 0.2));
+            color: #FB7185;
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        .trend-score-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #FBBF24;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .trend-title-text {
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.45;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .trend-footer-action {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .trend-click-tip {
+            color: #38BDF8;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .trend-card:hover .trend-click-tip {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ---------------- CENTER COLUMN: STORYBOARD WORKSPACE ---------------- */
+        .prompt-engine-box {
+            background: linear-gradient(180deg, rgba(30, 41, 64, 0.5) 0%, rgba(18, 26, 43, 0.3) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .prompt-input-row {
             display: flex;
             gap: 10px;
         }
 
-        .btn-magic {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-            color: #000;
-            font-weight: 700;
+        .prompt-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .prompt-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #38BDF8;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .prompt-input-wrapper input {
+            width: 100%;
+            background: rgba(11, 15, 25, 0.7);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            padding: 12px 16px 12px 40px;
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .prompt-input-wrapper input:focus {
+            border-color: #38BDF8;
+            background: rgba(11, 15, 25, 0.95);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-magic-ai {
+            background: var(--primary-gradient);
+            color: #070B14;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             padding: 0 20px;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            box-shadow: 0 4px 18px rgba(0, 242, 254, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-magic-ai:hover {
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 6px 24px rgba(0, 242, 254, 0.5);
+            filter: brightness(1.08);
+        }
+
+        .btn-magic-ai:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        .btn-magic-ai:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            filter: grayscale(0.5);
+        }
+
+        .quick-tag-strip {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            white-space: nowrap;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: var(--text-muted);
         }
 
-        .btn-magic:hover {
-            opacity: 0.92;
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+        .quick-tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 3px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.18s ease;
         }
 
-        /* Scene Cards */
-        .scene-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 16px;
-            padding: 16px;
+        .quick-tag:hover {
+            background: rgba(56, 189, 248, 0.12);
+            color: #38BDF8;
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        /* Config Grid */
+        .config-grid-row {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            position: relative;
+            gap: 6px;
         }
 
-        .scene-header {
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.2px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .scene-tag {
-            font-size: 12px;
-            font-weight: 700;
-            background: rgba(157, 78, 221, 0.2);
-            color: #C77DFF;
-            padding: 4px 10px;
-            border-radius: 8px;
-        }
-
-        .btn-listen {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #FFF;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .input-control {
+            width: 100%;
+            background: rgba(15, 21, 35, 0.65);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
             transition: all 0.2s ease;
         }
 
-        .btn-listen:hover {
-            background: rgba(0, 242, 254, 0.2);
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
+        .input-control:focus {
+            border-color: #38BDF8;
+            background: rgba(15, 21, 35, 0.9);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
         }
 
-        /* Right: Preview & Render Studio */
-        .player-container {
-            width: 100%;
-            aspect-ratio: 9 / 16;
-            max-height: 380px;
-            background: #000;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+        select.input-control {
+            cursor: pointer;
+        }
+
+        /* Storyboard Scenes List */
+        .scenes-header-bar {
             display: flex;
             align-items: center;
-            justify-content: center;
-            position: relative;
+            justify-content: space-between;
+            padding-top: 4px;
         }
 
-        .player-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .scenes-count-pill {
+            font-size: 11px;
+            font-weight: 600;
+            color: #38BDF8;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
 
-        .empty-player {
+        .scenes-list {
             display: flex;
             flex-direction: column;
-            align-items: center;
             gap: 12px;
-            color: var(--text-muted);
-            font-size: 13px;
         }
 
-        .btn-render {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #00F2FE 0%, #4FACFE 50%, #9D4EDD 100%);
-            border: none;
-            border-radius: 14px;
-            color: #000;
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 24px rgba(79, 172, 254, 0.35);
+        .scene-card {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scene-card:hover {
+            border-color: var(--border-medium);
+            background: rgba(21, 30, 48, 0.7);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .scene-top-row {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             gap: 10px;
         }
 
-        .btn-render:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(0, 242, 254, 0.5);
-            filter: brightness(1.08);
+        .scene-index-badge {
+            font-size: 11px;
+            font-weight: 700;
+            color: #C084FC;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 3px 9px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .btn-render:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .scene-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Action Rows */
-        .btn-row {
+        .btn-tts-listen {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: #38BDF8;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-tts-listen:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: #38BDF8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+        }
+
+        .btn-tts-listen.playing {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10B981;
+            color: #34D399;
+        }
+
+        .scene-voiceover-area {
+            width: 100%;
+            background: rgba(10, 14, 24, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            color: #FFFFFF;
+            font-size: 13px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .scene-voiceover-area:focus {
+            border-color: #38BDF8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+        }
+
+        .scene-asset-bar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .scene-keywords-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            outline: none;
+        }
+
+        .scene-keywords-input:focus {
+            border-color: #38BDF8;
+            color: #FFF;
+        }
+
+        .scene-asset-tag {
+            font-size: 10px;
+            font-weight: 600;
+            color: #34D399;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 5px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* ---------------- RIGHT COLUMN: MONITOR & EXPORT ---------------- */
+        .player-monitor-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .phone-frame {
+            width: 190px;
+            aspect-ratio: 9 / 16;
+            background: #020408;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 6px;
+            width: 50px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            z-index: 10;
+        }
+
+        .phone-rec-dot {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #EF4444;
+            z-index: 10;
+        }
+
+        .phone-rec-dot::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #EF4444;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        .phone-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .player-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 16px;
+        }
+
+        .player-radar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px dashed rgba(56, 189, 248, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38BDF8;
+            font-size: 16px;
+        }
+
+        .player-spec-badge {
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Audio & Engine Settings Card */
+        .audio-config-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .audio-config-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
-        .btn-sub {
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 13px;
+        /* Action Buttons */
+        .btn-render-primary {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #060911;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-render-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(0, 242, 254, 0.55);
+            filter: brightness(1.08);
+        }
+
+        .btn-render-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-render-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .action-row-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-action-outline {
+            padding: 9px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.05);
-            color: #FFF;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -441,124 +983,268 @@
             transition: all 0.2s ease;
         }
 
-        .btn-sub:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.25);
+        .btn-action-outline:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #FFFFFF;
         }
 
-        /* Console Logs */
-        .log-box {
-            background: rgba(0, 0, 0, 0.5);
+        .btn-action-outline:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Terminal Console */
+        .terminal-box {
+            background: #060910;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 12px;
-            font-family: 'Consolas', monospace;
-            font-size: 11px;
-            color: #A0AEC0;
-            height: 120px;
-            overflow-y: auto;
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            height: 120px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            line-height: 1.5;
+            color: #94A3B8;
         }
 
-        .log-box p {
-            line-height: 1.4;
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-dim);
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 2px;
         }
-        /* 3.1 information architecture refresh */
-        body { background: #080b12; background-image: radial-gradient(circle at 8% 0%, rgba(55,120,255,.16), transparent 32%), radial-gradient(circle at 92% 8%, rgba(142,84,255,.12), transparent 30%); height:100vh; overflow:hidden; }
-        header { padding: 14px 28px; background: rgba(8,11,18,.9); }
-        main { grid-template-columns: minmax(300px, 360px) minmax(560px, 1fr) minmax(330px, 390px); gap: 18px; padding: 18px 24px 24px; min-height:0; height:auto; flex:1 1 0; }
-        .studio-col { border-radius: 16px; background: rgba(15,20,31,.9); box-shadow: 0 16px 48px rgba(0,0,0,.24); min-height:0; }
-        .col-body { min-height:0; }
-        .category-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .cat-pill { text-align: left; border-radius: 10px; padding: 10px 11px; font-size: 12px; line-height: 1.25; }
-        .cat-pill small { display:block; margin-top:4px; color:var(--text-muted); font-weight:500; font-size:10px; }
-        .cat-pill.active small { color:#bdefff; }
-        .trend-summary { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:10px; background:rgba(79,172,254,.08); color:var(--text-secondary); font-size:11px; }
-        .trend-card { position:relative; padding:14px 14px 14px 48px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.025); cursor:pointer; }
-        .trend-rank { position:absolute; left:14px; top:14px; width:24px; height:24px; display:grid; place-items:center; border-radius:8px; font-weight:800; background:rgba(255,255,255,.07); color:var(--text-secondary); }
-        .trend-rank.top { color:#111827; background:linear-gradient(135deg,#ffd166,#ff9f1c); }
-        .trend-meta { margin-top:8px; display:flex; gap:8px; color:var(--text-muted); font-size:10px; }
-        .section-kicker { color:var(--accent-cyan); font-size:10px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; }
-        .scene-tools { display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:9px; }
-        .scene-keywords { font-size:11px !important; padding:8px 10px !important; background:rgba(0,0,0,.2) !important; }
-        .asset-hint { display:flex; align-items:center; padding:0 9px; border-radius:8px; color:#85f5ce; background:rgba(6,214,160,.08); font-size:10px; white-space:nowrap; }
-        .engine-strip { display:flex; gap:8px; flex-wrap:wrap; }
-        .engine-chip { padding:7px 9px; border-radius:9px; background:rgba(255,255,255,.045); color:var(--text-secondary); font-size:10px; border:1px solid rgba(255,255,255,.07); }
-        .engine-chip.ok { color:#82f3cb; border-color:rgba(6,214,160,.25); }
-        @media (max-width: 1180px) { body{height:auto;overflow:auto;} main { grid-template-columns:320px 1fr; height:auto; overflow:visible; } .studio-col:last-child { grid-column:1/-1; } }
-        @media (max-width: 760px) { header {padding:12px 16px} main {display:flex; flex-direction:column; padding:12px;} .studio-col {min-height:520px;} .category-grid{grid-template-columns:1fr 1fr;} }
-</style>
+
+        .terminal-log-row {
+            display: flex;
+            gap: 6px;
+            word-break: break-all;
+        }
+
+        .terminal-time {
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+
+        .terminal-msg {
+            color: #CBD5E1;
+        }
+        .terminal-msg.info { color: #38BDF8; }
+        .terminal-msg.success { color: #34D399; }
+        .terminal-msg.warn { color: #FBBF24; }
+        .terminal-msg.error { color: #FB7185; }
+
+        /* Utility buttons */
+        .btn-icon-refresh {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon-refresh:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #FFF;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-icon-refresh.spinning svg {
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Soundwave equalizer indicator */
+        .equalizer-wave {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 10px;
+        }
+        .equalizer-bar {
+            width: 2px;
+            background: #34D399;
+            border-radius: 1px;
+            animation: eq-bounce 0.8s ease-in-out infinite alternate;
+        }
+        .equalizer-bar:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+        .equalizer-bar:nth-child(2) { height: 10px; animation-delay: 0.3s; }
+        .equalizer-bar:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+
+        @keyframes eq-bounce {
+            0% { height: 2px; }
+            100% { height: 10px; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 280px 1fr 320px;
+                gap: 12px;
+                padding: 12px 14px;
+            }
+        }
+
+        @media (max-width: 960px) {
+            body { height: auto; overflow: auto; }
+            main {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+            }
+            .studio-col {
+                min-height: 480px;
+            }
+        }
+    </style>
 </head>
 <body>
 
+<!-- Header -->
 <header>
-    <div class="brand">
-        <div class="brand-logo">⚡</div>
-        <div class="brand-text">
-            <h1>AI Traffic Pipeline Studio</h1>
-            <p>工业级全自动短视频创作中心</p>
+    <div class="brand-area">
+        <div class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+        </div>
+        <div class="brand-title-wrap">
+            <div class="brand-title-row">
+                <span class="brand-name">Traffic Studio</span>
+                <span class="version-badge">PRO v3.0</span>
+            </div>
+            <span class="brand-subtitle">AI 短视频爆款全自动创作工作台</span>
         </div>
     </div>
+
+    <!-- Center status bar -->
+    <div class="nav-center-stats">
+        <div class="engine-chip ok"><span class="chip-dot"></span><span>AI 剧本生成器</span></div>
+        <div class="chip-divider"></div>
+        <div class="engine-chip" id="mediaEngineChip"><span class="chip-dot"></span><span>Pexels 引擎检测中</span></div>
+        <div class="chip-divider"></div>
+        <div class="engine-chip ok"><span class="chip-dot"></span><span>EdgeTTS 自然语音</span></div>
+        <div class="chip-divider"></div>
+        <div class="engine-chip ok"><span class="chip-dot"></span><span>毫秒级剪映导出</span></div>
+    </div>
+
     <div class="nav-actions">
         <div class="badge-status">
             <span class="dot-pulse"></span>
-            <span>引擎就绪 (Ready)</span>
+            <span>服务运行正常</span>
         </div>
     </div>
 </header>
 
+<!-- Main Workspace -->
 <main>
-    <!-- Left Column: Hot Trends Radar -->
+    <!-- Left Column: Hot Topics Radar -->
     <section class="studio-col">
-        <div class="col-header" style="flex-direction: column; align-items: flex-start; gap: 12px;">
-            <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
-                <div><div class="section-kicker">Trend intelligence</div><div class="col-title">选题推荐</div></div>
-                <button class="btn-sub" onclick="loadTrends()" style="padding: 6px 10px; font-size: 11px;">↻ 刷新</button>
+        <div class="col-header">
+            <div class="col-title-group">
+                <div class="col-icon-box">🔥</div>
+                <div>
+                    <div class="col-title">爆款热点雷达</div>
+                    <div class="col-subtitle">全网实时爬虫与多平台共振</div>
+                </div>
             </div>
-            <!-- Category Tabs -->
-            <div class="category-grid" id="catTabBar">
-                <button class="cat-pill active" onclick="switchCat('resonance', this)">🔥 多平台共振<small>跨平台同时升温</small></button>
-                <button class="cat-pill" onclick="switchCat('all', this)">⚡ 综合热榜<small>全领域实时精选</small></button>
-                <button class="cat-pill" onclick="switchCat('tech', this)">💻 科技数码<small>AI · 硬件 · 汽车</small></button>
-                <button class="cat-pill" onclick="switchCat('finance', this)">📈 商业财经<small>市场 · 公司 · 消费</small></button>
-                <button class="cat-pill" onclick="switchCat('social', this)">🌐 社会民生<small>生活 · 教育 · 城市</small></button>
-                <button class="cat-pill" onclick="switchCat('entertainment', this)">🎭 文娱热点<small>影视 · 游戏 · 体育</small></button>
-                <button class="cat-pill" onclick="switchCat('growth', this)">🧠 认知职场<small>成长 · 心理 · 效率</small></button>
+            <button class="btn-icon-refresh" id="btnRefreshTrends" title="刷新热点" onclick="refreshTrendsWithAnim()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Pinned Category Subnav (Permanently Fixed at Top) -->
+        <div class="col-pinned-subnav">
+            <div class="category-tab-scroll" id="catTabBar">
+                <button class="cat-pill active" onclick="switchCat('resonance', this)">🔥 多平台共振</button>
+                <button class="cat-pill" onclick="switchCat('all', this)">⚡ 综合热榜</button>
+                <button class="cat-pill" onclick="switchCat('tech', this)">💻 科技数码</button>
+                <button class="cat-pill" onclick="switchCat('finance', this)">📈 商业财经</button>
+                <button class="cat-pill" onclick="switchCat('social', this)">🌐 社会民生</button>
+                <button class="cat-pill" onclick="switchCat('entertainment', this)">🎭 文娱热点</button>
+                <button class="cat-pill" onclick="switchCat('growth', this)">🧠 认知职场</button>
+            </div>
+            <div class="trend-meta-bar">
+                <span>当前：<strong id="trendCategoryLabel">多平台共振</strong></span>
+                <span id="trendResultCount">正在抓取...</span>
             </div>
         </div>
-        <div class="col-body">
-            <div class="trend-summary"><span id="trendCategoryLabel">多平台共振</span><strong id="trendResultCount">加载中</strong></div>
-            <div id="trendsContainer"><div class="empty-player">正在抓取全网高热话题...</div></div>
+
+        <!-- Scrollable Trends List -->
+        <div class="col-body" id="trendsScrollBody">
+            <div class="trends-list" id="trendsContainer">
+                <div class="player-empty-state">
+                    <div class="player-radar-icon">⏳</div>
+                    <span style="font-size: 12px;">正在连接多平台热榜引擎...</span>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Middle Column: Storyboard Editor -->
+    <!-- Center Column: Storyboard Editor -->
     <section class="studio-col">
         <div class="col-header">
-            <div class="col-title">✍️ 爆款分镜工作台</div>
-            <div style="font-size: 12px; color: var(--text-muted);" id="projectStatusText">准备就绪</div>
+            <div class="col-title-group">
+                <div class="col-icon-box">🎬</div>
+                <div>
+                    <div class="col-title">智能分镜编导台</div>
+                    <div class="col-subtitle" id="projectStatusText">支持自律科普、情绪共鸣、商业认知等多风格拆解</div>
+                </div>
+            </div>
+            <div class="scenes-count-pill" id="sceneCountText">4 分镜 / 预估 60 秒</div>
         </div>
+
         <div class="col-body">
-            <div class="engine-strip"><span class="engine-chip ok">✓ 分镜脚本</span><span class="engine-chip" id="mediaEngineChip">素材引擎检测中</span><span class="engine-chip ok">✓ 自然语音</span><span class="engine-chip ok">✓ 断点渲染</span></div>
-            <div class="topic-bar">
-                <input type="text" id="topicInput" placeholder="输入短视频主题，或从左侧直接点击爆款选题..." value="为什么真正自律的人从不靠意志力死撑？">
-                <button class="btn-magic" id="btnGenScript" onclick="generateScript()">
-                    <span>🪄</span>
-                    <span>AI 深度拆解分镜</span>
-                </button>
+            <!-- Topic Input AI Box -->
+            <div class="prompt-engine-box">
+                <div class="prompt-input-row">
+                    <div class="prompt-input-wrapper">
+                        <span class="prompt-icon">✨</span>
+                        <input type="text" id="topicInput" placeholder="输入短视频创作主题，或直接点击左侧爆款热点..." value="为什么真正自律的人从不靠意志力死撑？">
+                    </div>
+                    <button class="btn-magic-ai" id="btnGenScript" onclick="generateScript()">
+                        <span>🪄 AI 深度拆解分镜</span>
+                    </button>
+                </div>
+                <!-- Quick Topic Tags -->
+                <div class="quick-tag-strip">
+                    <span>灵感推荐:</span>
+                    <span class="quick-tag" onclick="setQuickTopic('为什么真正自律的人从不靠意志力死撑？')">自律认知</span>
+                    <span class="quick-tag" onclick="setQuickTopic('普通人如何利用AI工具实现信息差变现？')">AI变现</span>
+                    <span class="quick-tag" onclick="setQuickTopic('为什么你越来越不想社交了？心理学真相')">深度心理</span>
+                    <span class="quick-tag" onclick="setQuickTopic('月薪5000和50000的人，思维差异究竟在哪里？')">财富逻辑</span>
+                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-top: 4px;">
+            <!-- Meta Settings -->
+            <div class="config-grid-row">
                 <div class="input-group">
-                    <label>短视频爆款大标题</label>
-                    <input type="text" id="videoTitleInput" value="90%的人都误解了【自律】的底层逻辑">
+                    <label><span>短视频吸睛大标题</span><span style="font-size: 10px; color: var(--text-muted);" id="titleCharCount">0/60</span></label>
+                    <input type="text" class="input-control" id="videoTitleInput" value="90%的人都误解了【自律】的底层逻辑" oninput="updateStats()">
                 </div>
                 <div class="input-group">
                     <label>风格定位</label>
-                    <select id="videoStyleSelect">
-                        <option value="干货科普">干货科普 (认知觉醒)</option>
+                    <select class="input-control" id="videoStyleSelect">
+                        <option value="干货科普" selected>干货科普 (认知觉醒)</option>
                         <option value="幽默反转">幽默反转 (黄金留人)</option>
                         <option value="情感共鸣">情感共鸣 (治愈走心)</option>
                         <option value="商业认知">商业认知 (底层复利)</option>
@@ -566,48 +1252,88 @@
                 </div>
                 <div class="input-group">
                     <label>时长档位</label>
-                    <select id="durationSelect">
-                        <option value="deep_60s" selected>🎬 深度干货 (60~90s 推荐)</option>
-                        <option value="quick_30s">⚡ 极速爆款 (30~45s)</option>
-                        <option value="long_120s">📚 深度精解 (2~3分钟)</option>
+                    <select class="input-control" id="durationSelect">
+                        <option value="deep_60s" selected>深度干货 (60~90s 推荐)</option>
+                        <option value="quick_30s">快速短片 (30~45s)</option>
+                        <option value="long_120s">深度精解 (2~3分钟)</option>
                     </select>
                 </div>
             </div>
 
-            <div style="margin-top: 10px;">
-                <label style="margin-bottom: 8px; display: block;">分镜剧本列表 (<span id="sceneCountText">4</span> 分镜)</label>
-                <div id="scenesContainer" style="display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Scene Card 1 -->
+            <!-- Scene Cards Container -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="scenes-header-bar">
+                    <label style="font-size: 12px; font-weight: 700; color: var(--text-main);">分镜剧本详情</label>
+                    <button class="btn-tts-listen" onclick="addNewScene()" style="padding: 3px 8px; font-size: 11px;">+ 添加分镜</button>
+                </div>
+
+                <div class="scenes-list" id="scenesContainer">
+                    <!-- Scene 1 -->
                     <div class="scene-card">
-                        <div class="scene-header">
-                            <span class="scene-tag">分镜 1 · 黄金 3 秒 Hook</span>
-                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        <div class="scene-top-row">
+                            <span class="scene-index-badge">分镜 1 · 黄金 3 秒 Hook</span>
+                            <div class="scene-actions">
+                                <button class="btn-tts-listen" onclick="previewVoice(this)">
+                                    <span>🔊 试听配音</span>
+                                </button>
+                            </div>
                         </div>
-                        <textarea rows="2">很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！</textarea>
+                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！</textarea>
+                        <div class="scene-asset-bar">
+                            <input class="scene-keywords-input scene-keywords" value="disciplined person morning habit, brain thinking, focus" placeholder="实拍画面英文关键词 (Pexels检索)">
+                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                        </div>
                     </div>
-                    <!-- Scene Card 2 -->
+
+                    <!-- Scene 2 -->
                     <div class="scene-card">
-                        <div class="scene-header">
-                            <span class="scene-tag">分镜 2 · 认知颠覆</span>
-                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        <div class="scene-top-row">
+                            <span class="scene-index-badge">分镜 2 · 认知颠覆</span>
+                            <div class="scene-actions">
+                                <button class="btn-tts-listen" onclick="previewVoice(this)">
+                                    <span>🔊 试听配音</span>
+                                </button>
+                            </div>
                         </div>
-                        <textarea rows="2">大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。</textarea>
+                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。</textarea>
+                        <div class="scene-asset-bar">
+                            <input class="scene-keywords-input scene-keywords" value="brain psychology, exhausted person working, micro habits" placeholder="实拍画面英文关键词">
+                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                        </div>
                     </div>
-                    <!-- Scene Card 3 -->
+
+                    <!-- Scene 3 -->
                     <div class="scene-card">
-                        <div class="scene-header">
-                            <span class="scene-tag">分镜 3 · 破局法则</span>
-                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        <div class="scene-top-row">
+                            <span class="scene-index-badge">分镜 3 · 破局法则</span>
+                            <div class="scene-actions">
+                                <button class="btn-tts-listen" onclick="previewVoice(this)">
+                                    <span>🔊 试听配音</span>
+                                </button>
+                            </div>
                         </div>
-                        <textarea rows="2">每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！</textarea>
+                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！</textarea>
+                        <div class="scene-asset-bar">
+                            <input class="scene-keywords-input scene-keywords" value="stopwatch timer 2 minutes, easy start, smiling productive" placeholder="实拍画面英文关键词">
+                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                        </div>
                     </div>
-                    <!-- Scene Card 4 -->
+
+                    <!-- Scene 4 -->
                     <div class="scene-card">
-                        <div class="scene-header">
-                            <span class="scene-tag">分镜 4 · 升华金句 & CTA</span>
-                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        <div class="scene-top-row">
+                            <span class="scene-index-badge">分镜 4 · 升华金句 & CTA</span>
+                            <div class="scene-actions">
+                                <button class="btn-tts-listen" onclick="previewVoice(this)">
+                                    <span>🔊 试听配音</span>
+                                </button>
+                            </div>
                         </div>
-                        <textarea rows="2">记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！</textarea>
+                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！</textarea>
+                        <div class="scene-asset-bar">
+                            <input class="scene-keywords-input scene-keywords" value="sun rise motivation, successful lifestyle, like and subscribe" placeholder="实拍画面英文关键词">
+                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -617,62 +1343,88 @@
     <!-- Right Column: Studio Render & Preview -->
     <section class="studio-col">
         <div class="col-header">
-            <div class="col-title">🎬 视听监看与交付</div>
+            <div class="col-title-group">
+                <div class="col-icon-box">🎛️</div>
+                <div>
+                    <div class="col-title">监视器与合成导出</div>
+                    <div class="col-subtitle">9:16 高清画幅 · 剪映工程生成</div>
+                </div>
+            </div>
         </div>
+
         <div class="col-body">
-            <!-- 9:16 Responsive Player -->
-            <div class="player-container">
-                <video id="finalVideoPlayer" controls style="display: none;"></video>
-                <div class="empty-player" id="playerPlaceholder">
-                    <span style="font-size: 36px;">📱</span>
-                    <span>点击下方按钮一键渲染</span>
-                    <span style="font-size: 11px; color: var(--text-muted);">输出 1080x1920 高清 60fps 竖屏成品</span>
+            <!-- 9:16 Video Monitor Preview Frame -->
+            <div class="player-monitor-wrap">
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-rec-dot">PREVIEW</div>
+                    <video id="finalVideoPlayer" class="phone-video" controls style="display: none;"></video>
+                    <div class="player-empty-state" id="playerPlaceholder">
+                        <div class="player-radar-icon">📹</div>
+                        <span style="font-size: 11px; font-weight: 700; color: #CBD5E1;">9 : 16 PREVIEW</span>
+                        <span style="font-size: 11px; color: var(--text-muted);">合成后在此自动播放</span>
+                        <span class="player-spec-badge">1080×1920 · 60fps</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Controls -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="input-group">
-                    <label>解说音色</label>
-                    <select id="voiceSelect">
-                        <option value="zh-CN-XiaoxiaoNeural" selected>晓晓 · 自然知性（推荐）</option>
-                        <option value="zh-CN-YunxiNeural">云希 · 青年叙事</option>
-                        <option value="zh-CN-YunjianNeural">云健 (稳重大气)</option>
-                        <option value="zh-CN-YunyangNeural">云扬 (专业干货)</option>
-                    </select>
+            <!-- Voice & Audio Config -->
+            <div class="audio-config-card">
+                <div class="audio-config-grid">
+                    <div class="input-group">
+                        <label>🎙️ 解说音色</label>
+                        <select class="input-control" id="voiceSelect">
+                            <option value="zh-CN-XiaoxiaoNeural" selected>晓晓 · 自然知性 (推荐)</option>
+                            <option value="zh-CN-YunxiNeural">云希 · 青年叙事</option>
+                            <option value="zh-CN-YunjianNeural">云健 · 稳重大气</option>
+                            <option value="zh-CN-YunyangNeural">云扬 · 专业干货</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>🎵 背景音乐</label>
+                        <select class="input-control" id="bgmSelect">
+                            <option value="energetic" selected>轻快律动 (Lo-Fi)</option>
+                            <option value="suspense">悬疑反转 (深沉)</option>
+                            <option value="emotional">治愈温暖 (钢琴)</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div class="input-group">
-                    <label>背景音乐</label>
-                    <select id="bgmSelect">
-                        <option value="energetic">轻快律动 (Lo-Fi)</option>
-                        <option value="suspense">悬疑反转 (深沉)</option>
-                        <option value="emotional">治愈温暖 (钢琴)</option>
+                    <label>⚡ 语音语速节奏</label>
+                    <select class="input-control" id="voiceRateSelect">
+                        <option value="-5%">舒缓自然 (-5%)</option>
+                        <option value="+0%" selected>自然对话 · 推荐 (+0%)</option>
+                        <option value="+8%">轻快短视频 (+8%)</option>
                     </select>
                 </div>
             </div>
-            <div class="input-group"><label>语音节奏</label><select id="voiceRateSelect"><option value="-5%">舒缓自然</option><option value="+0%" selected>自然对话（推荐）</option><option value="+8%">轻快短视频</option></select></div>
 
-            <!-- Render Button -->
-            <button class="btn-render" id="btnRender" onclick="startRender()">
-                <span>🚀</span>
-                <span>一键合成 1080x1920 短视频</span>
+            <!-- Primary Action Button -->
+            <button class="btn-render-primary" id="btnRender" onclick="startRender()">
+                <span>🚀 开始全自动渲染合成</span>
             </button>
 
-            <!-- Quick Actions -->
-            <div class="btn-row">
-                <button class="btn-sub" id="btnOpenDraft" onclick="openJianYingDraft()" disabled>
-                    <span>📂</span>
-                    <span>打开剪映工程</span>
+            <!-- Secondary Actions -->
+            <div class="action-row-buttons">
+                <button class="btn-action-outline" id="btnOpenDraft" onclick="openJianYingDraft()" disabled>
+                    <span>🎬 打开剪映工程</span>
                 </button>
-                <button class="btn-sub" id="btnDownloadVideo" onclick="downloadVideo()" disabled>
-                    <span>⬇️</span>
-                    <span>下载 MP4 成品</span>
+                <button class="btn-action-outline" id="btnDownloadVideo" onclick="downloadVideo()" disabled>
+                    <span>💾 下载 MP4 成品</span>
                 </button>
             </div>
 
-            <!-- Terminal Logs -->
-            <div class="log-box" id="logBox">
-                <p style="color: var(--accent-cyan);">[SYSTEM] AI Traffic Pipeline Studio 已就绪...</p>
+            <!-- Real-time Terminal Log -->
+            <div class="terminal-box" id="logBox">
+                <div class="terminal-header">
+                    <span>PIPELINE LOGS</span>
+                    <span id="logStatusBadge">READY</span>
+                </div>
+                <div class="terminal-log-row">
+                    <span class="terminal-time">[SYSTEM]</span>
+                    <span class="terminal-msg info">Traffic Studio 工业级视频合成引擎已就绪</span>
+                </div>
             </div>
         </div>
     </section>
@@ -683,74 +1435,115 @@
     let currentVideoUrl = "";
     let currentProjectId = "";
     let currentJobId = "";
-
     let currentCategory = "resonance";
+    let currentAudio = null;
 
-    // 页面加载自动拉取热榜
+    const categoryLabels = {
+        resonance: '🔥 多平台共振',
+        all: '⚡ 综合热榜',
+        tech: '💻 科技数码',
+        finance: '📈 商业财经',
+        social: '🌐 社会民生',
+        entertainment: '🎭 文娱热点',
+        growth: '🧠 认知职场'
+    };
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
     window.addEventListener('DOMContentLoaded', () => {
         loadTrends();
         loadMediaStatus();
-        document.querySelectorAll('.scene-card').forEach((card, index) => enrichSceneCard(card, ['cinematic lifestyle', 'natural light', 'vertical video'][index % 3]));
+        updateStats();
     });
 
-    const categoryLabels = {resonance:'多平台共振', all:'综合热榜', tech:'科技数码', finance:'商业财经', social:'社会民生', entertainment:'文娱热点', growth:'认知职场'};
-    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-
-    function enrichSceneCard(card, keywords='cinematic lifestyle, natural light') {
-        if (card.querySelector('.scene-keywords')) return;
-        const tools = document.createElement('div');
-        tools.className = 'scene-tools';
-        tools.innerHTML = `<input class="scene-keywords" value="${escapeHtml(Array.isArray(keywords) ? keywords.join(', ') : keywords)}" placeholder="真实素材英文关键词，用逗号分隔"><span class="asset-hint">Pexels 实拍优先</span>`;
-        card.appendChild(tools);
+    function setQuickTopic(text) {
+        document.getElementById('topicInput').value = text;
+        generateScript();
     }
 
     async function loadMediaStatus() {
         const chip = document.getElementById('mediaEngineChip');
         try {
             const data = await (await fetch('/api/media/status')).json();
-            chip.textContent = data.pexels_configured ? '✓ Pexels 实拍已连接' : '⚠ Pexels 未配置 · 摄影图库兜底';
-            chip.classList.toggle('ok', data.pexels_configured);
-        } catch (_) { chip.textContent = '⚠ 素材引擎状态未知'; }
+            if (data.pexels_configured) {
+                chip.innerHTML = '<span class="chip-dot"></span><span>✓ Pexels 实拍已连接</span>';
+                chip.className = 'engine-chip ok';
+            } else {
+                chip.innerHTML = '<span class="chip-dot"></span><span>⚠ 图库引擎 (摄影兜底)</span>';
+                chip.className = 'engine-chip warn';
+            }
+        } catch (_) {
+            chip.innerHTML = '<span class="chip-dot"></span><span>素材引擎就绪</span>';
+        }
     }
 
     function switchCat(cat, btn) {
         currentCategory = cat;
         document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
+        if (btn) {
+            btn.classList.add('active');
+            btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+        }
         document.getElementById('trendCategoryLabel').textContent = categoryLabels[cat] || cat;
+        
+        // Always reset the scroll position of the trends list when switching categories
+        const scrollContainer = document.getElementById('trendsScrollBody');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+
         loadTrends();
+    }
+
+    async function refreshTrendsWithAnim() {
+        const btn = document.getElementById('btnRefreshTrends');
+        btn.classList.add('spinning');
+        await loadTrends();
+        setTimeout(() => btn.classList.remove('spinning'), 500);
     }
 
     async function loadTrends() {
         const container = document.getElementById('trendsContainer');
-        container.innerHTML = '<div class="empty-player">正在抓取细分领域热榜...</div>';
+        container.innerHTML = `
+            <div class="player-empty-state">
+                <div class="player-radar-icon" style="animation: spin 1s linear infinite;">🔄</div>
+                <span style="font-size: 11px;">正在爬取 ${categoryLabels[currentCategory] || '热点'}...</span>
+            </div>
+        `;
         try {
             const resp = await fetch(`/api/trends?category=${currentCategory}`);
             const data = await resp.json();
             if (data.success && data.trends) {
                 container.innerHTML = '';
-                document.getElementById('trendResultCount').textContent = `${data.trends.length} 条推荐`;
+                document.getElementById('trendResultCount').textContent = `共精选 ${data.trends.length} 条`;
                 if (data.trends.length === 0) {
-                    container.innerHTML = '<div class="empty-player">暂无该分类热点</div>';
+                    container.innerHTML = '<div class="player-empty-state"><span style="font-size: 11px;">暂无该分类热点</span></div>';
                     return;
                 }
+
                 data.trends.forEach((t, index) => {
                     const card = document.createElement('div');
                     card.className = 'trend-card';
                     
-                    let badgeHtml = `<span class="trend-platform">${escapeHtml(t.source_platform)}</span>`;
+                    let rankClass = '';
+                    if (index === 0) rankClass = 'top-1';
+                    else if (index === 1) rankClass = 'top-2';
+                    else if (index === 2) rankClass = 'top-3';
+
+                    let badgeHtml = `<span class="trend-platform-tag">${escapeHtml(t.source_platform || '全网')}</span>`;
                     if (t.is_resonance) {
-                        badgeHtml = `<span class="badge-resonance">🔥 共振 [${t.resonating_platforms.join('+')}]</span>`;
+                        badgeHtml = `<span class="trend-platform-tag resonance">🔥 共振 · ${(t.resonating_platforms || []).join(' / ')}</span>`;
                     }
                     
                     card.innerHTML = `
-                        <div class="trend-top">
+                        <span class="trend-rank ${rankClass}">#${index + 1}</span>
+                        <div class="trend-header-row">
                             ${badgeHtml}
-                            <span class="trend-score">热度 ${escapeHtml(t.hot_score)}</span>
+                            <span class="trend-score-badge">🔥 ${escapeHtml(t.hot_score)}</span>
                         </div>
-                        <span class="trend-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
-                        <div class="trend-title">${escapeHtml(t.title)}</div>
-                        <div class="trend-meta"><span>${escapeHtml(t.category_name)}</span><span>点击生成分镜 →</span></div>
+                        <div class="trend-title-text">${escapeHtml(t.title)}</div>
+                        <div class="trend-footer-action">
+                            <span>${escapeHtml(t.category_name || '')}</span>
+                            <span class="trend-click-tip">一键生成分镜 →</span>
+                        </div>
                     `;
                     card.onclick = () => {
                         document.getElementById('topicInput').value = t.title;
@@ -760,8 +1553,50 @@
                 });
             }
         } catch (e) {
-            container.innerHTML = '<div class="empty-player">热榜抓取失败，请检查网络</div>';
+            container.innerHTML = '<div class="player-empty-state"><span style="color:#FB7185; font-size:11px;">热点获取失败，请重试</span></div>';
         }
+    }
+
+    function updateStats() {
+        const title = document.getElementById('videoTitleInput').value || '';
+        document.getElementById('titleCharCount').textContent = `${title.length}/60`;
+
+        const cards = document.querySelectorAll('.scene-card');
+        let totalWords = 0;
+        cards.forEach(card => {
+            const ta = card.querySelector('textarea');
+            if (ta) totalWords += ta.value.trim().length;
+        });
+
+        const estSeconds = Math.max(10, Math.round(totalWords / 4.2));
+        document.getElementById('sceneCountText').textContent = `${cards.length} 分镜 / 共 ${totalWords} 字 / 预估 ${estSeconds} 秒`;
+    }
+
+    function addNewScene() {
+        const container = document.getElementById('scenesContainer');
+        const count = container.querySelectorAll('.scene-card').length + 1;
+        const card = document.createElement('div');
+        card.className = 'scene-card';
+        card.innerHTML = `
+            <div class="scene-top-row">
+                <span class="scene-index-badge">分镜 ${count} · 补充情节</span>
+                <div class="scene-actions">
+                    <button class="btn-tts-listen" onclick="previewVoice(this)">
+                        <span>🔊 试听配音</span>
+                    </button>
+                    <button class="btn-tts-listen" style="border-color: rgba(244,63,94,0.3); color:#FB7185;" onclick="this.closest('.scene-card').remove(); updateStats();">
+                        <span>🗑</span>
+                    </button>
+                </div>
+            </div>
+            <textarea class="scene-voiceover-area" rows="2" placeholder="输入本分镜旁白解说文案..." oninput="updateStats()"></textarea>
+            <div class="scene-asset-bar">
+                <input class="scene-keywords-input scene-keywords" placeholder="实拍画面英文关键词 (例如: cinematic urban office)">
+                <span class="scene-asset-tag">Pexels 实拍优先</span>
+            </div>
+        `;
+        container.appendChild(card);
+        updateStats();
     }
 
     async function generateScript() {
@@ -770,10 +1605,10 @@
         const duration_tier = document.getElementById('durationSelect').value;
         if (!topic) return;
 
-        addLog(`🪄 正在调用大模型深度拆解分镜: 《${topic}》 (${style} / ${duration_tier})...`);
+        addLog(`🪄 正在调用大模型深度拆解分镜: 《${topic}》 (${style} / ${duration_tier})...`, 'info');
         const btn = document.getElementById('btnGenScript');
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳</span><span>DeepSeek 深度创作中...</span>';
+        btn.innerHTML = '<span>⏳ 创作中...</span>';
 
         try {
             const resp = await fetch('/api/generate_script', {
@@ -787,40 +1622,53 @@
                 document.getElementById('videoTitleInput').value = s.title;
                 const container = document.getElementById('scenesContainer');
                 container.innerHTML = '';
-                let totalWords = 0;
+                
                 s.scenes.forEach(sc => {
-                    totalWords += (sc.voiceover_text || "").length;
                     const scCard = document.createElement('div');
                     scCard.className = 'scene-card';
                     scCard.innerHTML = `
-                        <div class="scene-header">
-                            <span class="scene-tag">分镜 ${sc.scene_index} · ${sc.transition} (${sc.voiceover_text.length}字)</span>
-                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        <div class="scene-top-row">
+                            <span class="scene-index-badge">分镜 ${sc.scene_index} · ${sc.transition} (${sc.voiceover_text.length}字)</span>
+                            <div class="scene-actions">
+                                <button class="btn-tts-listen" onclick="previewVoice(this)">
+                                    <span>🔊 试听配音</span>
+                                </button>
+                            </div>
                         </div>
-                        <textarea rows="3">${escapeHtml(sc.voiceover_text)}</textarea>
-                        <div class="scene-tools"><input class="scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="真实素材英文关键词，用逗号分隔"><span class="asset-hint">Pexels 实拍优先</span></div>
+                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">${escapeHtml(sc.voiceover_text)}</textarea>
+                        <div class="scene-asset-bar">
+                            <input class="scene-keywords-input scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="实拍画面英文关键词">
+                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                        </div>
                     `;
                     container.appendChild(scCard);
                 });
-                document.getElementById('sceneCountText').innerText = `${s.scenes.length} 分镜 / 共 ${totalWords} 字 / 预估 ${Math.round(totalWords / 4.2)} 秒`;
-                addLog(`✅ 深度分镜创作完成！包含 ${s.scenes.length} 个分镜，总计 ${totalWords} 字 (预估 ${Math.round(totalWords / 4.2)} 秒)。`);
+                updateStats();
+                addLog(`✅ 分镜创作完成！包含 ${s.scenes.length} 个镜头剧本已装载。`, 'success');
             }
         } catch (e) {
-            addLog(`❌ 分镜生成异常: ${e.message}`);
+            addLog(`❌ 分镜生成异常: ${e.message}`, 'error');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span>🪄</span><span>AI 深度拆解分镜</span>';
+            btn.innerHTML = '<span>🪄 AI 深度拆解分镜</span>';
         }
     }
 
     async function previewVoice(btn) {
-        const textarea = btn.closest('.scene-card').querySelector('textarea');
+        const card = btn.closest('.scene-card');
+        const textarea = card.querySelector('textarea');
         const text = textarea.value.trim();
         const voice = document.getElementById('voiceSelect').value;
         const rate = document.getElementById('voiceRateSelect').value;
         if (!text) return;
 
-        btn.innerText = '⏳ 合成中...';
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span>⏳ 合成中</span>';
         try {
             const resp = await fetch('/api/preview_tts', {
                 method: 'POST',
@@ -829,14 +1677,25 @@
             });
             const data = await resp.json();
             if (data.success && data.audio_url) {
-                const audio = new Audio(data.audio_url);
-                audio.play();
-                btn.innerText = '▶️ 播放中';
-                audio.onended = () => { btn.innerText = '🔊 试听'; };
+                currentAudio = new Audio(data.audio_url);
+                btn.classList.add('playing');
+                btn.innerHTML = `
+                    <div class="equalizer-wave">
+                        <span class="equalizer-bar"></span>
+                        <span class="equalizer-bar"></span>
+                        <span class="equalizer-bar"></span>
+                    </div>
+                    <span>播放中</span>
+                `;
+                currentAudio.play();
+                currentAudio.onended = () => {
+                    btn.classList.remove('playing');
+                    btn.innerHTML = originalHtml;
+                };
             }
         } catch (e) {
-            btn.innerText = '❌ 失败';
-            setTimeout(() => { btn.innerText = '🔊 试听'; }, 2000);
+            btn.innerHTML = '<span>❌ 失败</span>';
+            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
         }
     }
 
@@ -850,18 +1709,25 @@
         document.querySelectorAll('.scene-card').forEach((card, idx) => {
             const ta = card.querySelector('textarea');
             const keywordInput = card.querySelector('.scene-keywords');
-            scenes.push({
-                scene_index: idx + 1,
-                voiceover_text: ta.value.trim(),
-                visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8)
-            });
+            if (ta && ta.value.trim()) {
+                scenes.push({
+                    scene_index: idx + 1,
+                    voiceover_text: ta.value.trim(),
+                    visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8)
+                });
+            }
         });
+
+        if (scenes.length === 0) {
+            addLog('⚠️ 渲染失败：分镜剧本不能为空', 'warn');
+            return;
+        }
 
         const btn = document.getElementById('btnRender');
         btn.disabled = true;
-        btn.innerHTML = '<span>⚙️</span><span>正在极速渲染 1080x1920 视频...</span>';
+        btn.innerHTML = '<span>⚙️ 全自动流水线极速渲染中...</span>';
 
-        addLog('🚀 启动全自动流水线：TTS 合成 -> 毫秒字幕 -> 动态素材 -> 音效混音 -> 视频导出...');
+        addLog('🚀 启动全自动流水线：TTS合成 -> 毫秒字幕 -> 动态素材 -> 音效混音 -> 视频导出...', 'info');
 
         try {
             const resp = await fetch('/api/jobs', {
@@ -873,15 +1739,17 @@
             if (data.success && data.job) {
                 currentJobId = data.job.job_id;
                 currentProjectId = data.job.project_id;
-                addLog(`📥 任务已进入队列: ${currentJobId}`);
+                addLog(`📥 任务已进入队列 [${currentJobId}]`, 'info');
                 await pollRenderJob(currentJobId);
             } else {
-                addLog(`❌ 创建任务失败: ${data.detail || '未知错误'}`);
+                addLog(`❌ 创建任务失败: ${data.detail || '未知错误'}`, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span>🚀 开始全自动渲染合成</span>';
             }
         } catch (e) {
-            addLog(`❌ 渲染异常: ${e.message}`);
+            addLog(`❌ 渲染异常: ${e.message}`, 'error');
             btn.disabled = false;
-            btn.innerHTML = '<span>🚀</span><span>一键合成 1080x1920 短视频</span>';
+            btn.innerHTML = '<span>🚀 开始全自动渲染合成</span>';
         }
     }
 
@@ -895,13 +1763,13 @@
             const job = data.job;
             if (job.stage !== previousStage) {
                 previousStage = job.stage;
-                addLog(`⚙️ 当前阶段: ${job.stage}`);
+                addLog(`⚙️ 当前阶段: ${job.stage}`, 'info');
             }
             if (job.status === 'succeeded') {
                 currentVideoUrl = job.video_url;
-                currentDraftPath = job.result.jianying_draft_path;
+                currentDraftPath = job.result ? job.result.jianying_draft_path : '';
 
-                // 显示播放器
+                // Display video in player frame
                 const videoPlayer = document.getElementById('finalVideoPlayer');
                 const placeholder = document.getElementById('playerPlaceholder');
                 videoPlayer.src = job.video_url;
@@ -909,25 +1777,25 @@
                 placeholder.style.display = 'none';
                 videoPlayer.play();
 
-                // 激活按钮
+                // Enable action buttons
                 document.getElementById('btnOpenDraft').disabled = false;
                 document.getElementById('btnDownloadVideo').disabled = false;
 
                 if (job.logs) {
-                    job.logs.forEach(l => addLog(l));
+                    job.logs.forEach(l => addLog(l, 'info'));
                 }
-                addLog('🎉 视频渲染完成！可以直接在上方预览播放，或一键导入剪映。');
+                addLog('🎉 1080x1920 视频渲染完成！可在监视器中预览或打开剪映。', 'success');
                 break;
             }
             if (['failed', 'cancelled', 'interrupted'].includes(job.status)) {
-                addLog(`❌ 任务${job.status}: ${job.error || ''}`);
+                addLog(`❌ 任务${job.status}: ${job.error || ''}`, 'error');
                 break;
             }
             await new Promise(resolve => setTimeout(resolve, 1500));
         }
         if (currentJobId === jobId) {
             btn.disabled = false;
-            btn.innerHTML = '<span>🚀</span><span>一键合成 1080x1920 短视频</span>';
+            btn.innerHTML = '<span>🚀 开始全自动渲染合成</span>';
         }
     }
 
@@ -939,9 +1807,9 @@
                 headers: { 'Content-Type': 'application/json' }
             });
             const data = await resp.json();
-            addLog(data.message);
+            addLog(data.message, 'success');
         } catch (e) {
-            addLog(`❌ 打开失败: ${e.message}`);
+            addLog(`❌ 打开失败: ${e.message}`, 'error');
         }
     }
 
@@ -949,16 +1817,20 @@
         if (currentVideoUrl) {
             const a = document.createElement('a');
             a.href = currentVideoUrl;
-            a.download = 'viral_video.mp4';
+            a.download = 'traffic_studio_export.mp4';
             a.click();
         }
     }
 
-    function addLog(msg) {
+    function addLog(msg, type = 'info') {
         const box = document.getElementById('logBox');
-        const p = document.createElement('p');
-        p.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        box.appendChild(p);
+        const row = document.createElement('div');
+        row.className = 'terminal-log-row';
+        row.innerHTML = `
+            <span class="terminal-time">[${new Date().toLocaleTimeString()}]</span>
+            <span class="terminal-msg ${type}">${escapeHtml(msg)}</span>
+        `;
+        box.appendChild(row);
         box.scrollTop = box.scrollHeight;
     }
 </script>
