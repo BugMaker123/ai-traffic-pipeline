@@ -1,0 +1,120 @@
+# ==========================================
+# Python & Bytecode
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==========================================
+# Virtual Environments
+# ==========================================
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ==========================================
+# IDE & Editors
+# ==========================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Environment & Secrets (严禁提交敏感 Key)
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ==========================================
+# AI Pipeline Outputs (音视频、草稿、中间生成物)
+# ==========================================
+output/
+output/*
+/output/audio/
+/output/video_assets/
+/output/final/
+/output/drafts/
+
+# 根目录临时音视频与生图测试文件
+*.mp4
+*.mp3
+*.wav
+*.srt
+*.jpg
+*.jpeg
+*.png
+*TEMP_MPY*
+test_scene_*.jpg
+test_*.mp4
+
+# ==========================================
+# Testing & Coverage
+# ==========================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking, linting, and tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.pyre/
+.pyright/
+.cache/
+
+# Logs, local databases, and runtime state
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.pid
+*.seed
+
+# Local temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Front-end dependencies and build caches
+node_modules/
+.npm/
+.yarn/
+.pnpm-store/
+.next/
+.nuxt/
+.parcel-cache/
+
+# Local OS metadata
+Desktop.ini

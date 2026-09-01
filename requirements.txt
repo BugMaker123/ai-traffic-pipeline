@@ -1,0 +1,22 @@
+# 核心编排与大模型
+langgraph==0.2.76
+langchain-core==0.3.40
+langchain-openai==0.3.7
+pydantic==2.10.6
+
+# 语音合成与多媒体
+edge-tts==7.2.8
+moviepy==2.1.2
+imageio-ffmpeg==0.6.0
+pillow==10.4.0
+numpy==1.26.4
+pydub==0.25.1
+
+# 网络请求与工具
+requests==2.32.3
+beautifulsoup4==4.12.3
+python-dotenv==1.0.1
+rich==13.9.4
+typing-extensions==4.12.2
+fastapi==0.115.8
+uvicorn==0.34.0

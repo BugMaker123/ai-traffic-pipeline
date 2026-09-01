@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Traffic Pipeline - 工业级爆款短视频创作工作台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #07090E;
+            --bg-secondary: #0D111A;
+            --card-bg: rgba(18, 24, 38, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover: rgba(28, 36, 56, 0.85);
+            --accent-cyan: #00F2FE;
+            --accent-blue: #4FACFE;
+            --accent-purple: #9D4EDD;
+            --accent-gold: #FFD166;
+            --accent-green: #06D6A0;
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(79, 172, 254, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(157, 78, 221, 0.12) 0%, transparent 45%);
+        }
+
+        /* Top Navbar */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            background: rgba(13, 17, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+        }
+
+        .brand-text h1 {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #FFFFFF, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .badge-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--accent-green);
+            background: rgba(6, 214, 160, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(6, 214, 160, 0.25);
+        }
+
+        .dot-pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Main Studio Grid */
+        main {
+            display: grid;
+            grid-template-columns: 320px 1fr 380px;
+            gap: 24px;
+            padding: 24px 32px;
+            flex: 1;
+            height: calc(100vh - 71px);
+            overflow: hidden;
+        }
+
+        /* Column Cards */
+        .studio-col {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(24px);
+            overflow: hidden;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+        }
+
+        .col-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .col-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .col-body {
+            padding: 18px 20px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Category Pill Tabs */
+        .cat-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cat-pill:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #FFF;
+        }
+
+        .cat-pill.active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(157, 78, 221, 0.25));
+            border-color: var(--accent-cyan);
+            color: #FFF;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        .badge-resonance {
+            background: linear-gradient(135deg, rgba(255, 75, 43, 0.3), rgba(255, 65, 108, 0.3));
+            border: 1px solid rgba(255, 75, 43, 0.6);
+            color: #FF7043;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-card:hover {
+            background: var(--card-hover);
+            border-color: rgba(0, 242, 254, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .trend-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .trend-platform {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(79, 172, 254, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        .trend-score {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-title {
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        /* Center: Storyboard Workspace */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            background: rgba(10, 14, 22, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #FFF;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s ease;
+        }
+
+        input[type="text"]:focus, select:focus, textarea:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+        }
+
+        .topic-bar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-magic {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #000;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            padding: 0 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-magic:hover {
+            opacity: 0.92;
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+        }
+
+        /* Scene Cards */
+        .scene-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        .scene-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .scene-tag {
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(157, 78, 221, 0.2);
+            color: #C77DFF;
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+
+        .btn-listen {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #FFF;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-listen:hover {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Right: Preview & Render Studio */
+        .player-container {
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            max-height: 380px;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .player-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .empty-player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .btn-render {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #00F2FE 0%, #4FACFE 50%, #9D4EDD 100%);
+            border: none;
+            border-radius: 14px;
+            color: #000;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 24px rgba(79, 172, 254, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-render:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 242, 254, 0.5);
+            filter: brightness(1.08);
+        }
+
+        .btn-render:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Action Rows */
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-sub {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sub:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Console Logs */
+        .log-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            color: #A0AEC0;
+            height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-box p {
+            line-height: 1.4;
+        }
+        /* 3.1 information architecture refresh */
+        body { background: #080b12; background-image: radial-gradient(circle at 8% 0%, rgba(55,120,255,.16), transparent 32%), radial-gradient(circle at 92% 8%, rgba(142,84,255,.12), transparent 30%); height:100vh; overflow:hidden; }
+        header { padding: 14px 28px; background: rgba(8,11,18,.9); }
+        main { grid-template-columns: minmax(300px, 360px) minmax(560px, 1fr) minmax(330px, 390px); gap: 18px; padding: 18px 24px 24px; min-height:0; height:auto; flex:1 1 0; }
+        .studio-col { border-radius: 16px; background: rgba(15,20,31,.9); box-shadow: 0 16px 48px rgba(0,0,0,.24); min-height:0; }
+        .col-body { min-height:0; }
+        .category-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .cat-pill { text-align: left; border-radius: 10px; padding: 10px 11px; font-size: 12px; line-height: 1.25; }
+        .cat-pill small { display:block; margin-top:4px; color:var(--text-muted); font-weight:500; font-size:10px; }
+        .cat-pill.active small { color:#bdefff; }
+        .trend-summary { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:10px; background:rgba(79,172,254,.08); color:var(--text-secondary); font-size:11px; }
+        .trend-card { position:relative; padding:14px 14px 14px 48px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.025); cursor:pointer; }
+        .trend-rank { position:absolute; left:14px; top:14px; width:24px; height:24px; display:grid; place-items:center; border-radius:8px; font-weight:800; background:rgba(255,255,255,.07); color:var(--text-secondary); }
+        .trend-rank.top { color:#111827; background:linear-gradient(135deg,#ffd166,#ff9f1c); }
+        .trend-meta { margin-top:8px; display:flex; gap:8px; color:var(--text-muted); font-size:10px; }
+        .section-kicker { color:var(--accent-cyan); font-size:10px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; }
+        .scene-tools { display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:9px; }
+        .scene-keywords { font-size:11px !important; padding:8px 10px !important; background:rgba(0,0,0,.2) !important; }
+        .asset-hint { display:flex; align-items:center; padding:0 9px; border-radius:8px; color:#85f5ce; background:rgba(6,214,160,.08); font-size:10px; white-space:nowrap; }
+        .engine-strip { display:flex; gap:8px; flex-wrap:wrap; }
+        .engine-chip { padding:7px 9px; border-radius:9px; background:rgba(255,255,255,.045); color:var(--text-secondary); font-size:10px; border:1px solid rgba(255,255,255,.07); }
+        .engine-chip.ok { color:#82f3cb; border-color:rgba(6,214,160,.25); }
+        @media (max-width: 1180px) { body{height:auto;overflow:auto;} main { grid-template-columns:320px 1fr; height:auto; overflow:visible; } .studio-col:last-child { grid-column:1/-1; } }
+        @media (max-width: 760px) { header {padding:12px 16px} main {display:flex; flex-direction:column; padding:12px;} .studio-col {min-height:520px;} .category-grid{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-text">
+            <h1>AI Traffic Pipeline Studio</h1>
+            <p>工业级全自动短视频创作中心</p>
+        </div>
+    </div>
+    <div class="nav-actions">
+        <div class="badge-status">
+            <span class="dot-pulse"></span>
+            <span>引擎就绪 (Ready)</span>
+        </div>
+    </div>
+</header>
+
+<main>
+    <!-- Left Column: Hot Trends Radar -->
+    <section class="studio-col">
+        <div class="col-header" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+            <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+                <div><div class="section-kicker">Trend intelligence</div><div class="col-title">选题推荐</div></div>
+                <button class="btn-sub" onclick="loadTrends()" style="padding: 6px 10px; font-size: 11px;">↻ 刷新</button>
+            </div>
+            <!-- Category Tabs -->
+            <div class="category-grid" id="catTabBar">
+                <button class="cat-pill active" onclick="switchCat('resonance', this)">🔥 多平台共振<small>跨平台同时升温</small></button>
+                <button class="cat-pill" onclick="switchCat('all', this)">⚡ 综合热榜<small>全领域实时精选</small></button>
+                <button class="cat-pill" onclick="switchCat('tech', this)">💻 科技数码<small>AI · 硬件 · 汽车</small></button>
+                <button class="cat-pill" onclick="switchCat('finance', this)">📈 商业财经<small>市场 · 公司 · 消费</small></button>
+                <button class="cat-pill" onclick="switchCat('social', this)">🌐 社会民生<small>生活 · 教育 · 城市</small></button>
+                <button class="cat-pill" onclick="switchCat('entertainment', this)">🎭 文娱热点<small>影视 · 游戏 · 体育</small></button>
+                <button class="cat-pill" onclick="switchCat('growth', this)">🧠 认知职场<small>成长 · 心理 · 效率</small></button>
+            </div>
+        </div>
+        <div class="col-body">
+            <div class="trend-summary"><span id="trendCategoryLabel">多平台共振</span><strong id="trendResultCount">加载中</strong></div>
+            <div id="trendsContainer"><div class="empty-player">正在抓取全网高热话题...</div></div>
+        </div>
+    </section>
+
+    <!-- Middle Column: Storyboard Editor -->
+    <section class="studio-col">
+        <div class="col-header">
+            <div class="col-title">✍️ 爆款分镜工作台</div>
+            <div style="font-size: 12px; color: var(--text-muted);" id="projectStatusText">准备就绪</div>
+        </div>
+        <div class="col-body">
+            <div class="engine-strip"><span class="engine-chip ok">✓ 分镜脚本</span><span class="engine-chip" id="mediaEngineChip">素材引擎检测中</span><span class="engine-chip ok">✓ 自然语音</span><span class="engine-chip ok">✓ 断点渲染</span></div>
+            <div class="topic-bar">
+                <input type="text" id="topicInput" placeholder="输入短视频主题，或从左侧直接点击爆款选题..." value="为什么真正自律的人从不靠意志力死撑？">
+                <button class="btn-magic" id="btnGenScript" onclick="generateScript()">
+                    <span>🪄</span>
+                    <span>AI 深度拆解分镜</span>
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-top: 4px;">
+                <div class="input-group">
+                    <label>短视频爆款大标题</label>
+                    <input type="text" id="videoTitleInput" value="90%的人都误解了【自律】的底层逻辑">
+                </div>
+                <div class="input-group">
+                    <label>风格定位</label>
+                    <select id="videoStyleSelect">
+                        <option value="干货科普">干货科普 (认知觉醒)</option>
+                        <option value="幽默反转">幽默反转 (黄金留人)</option>
+                        <option value="情感共鸣">情感共鸣 (治愈走心)</option>
+                        <option value="商业认知">商业认知 (底层复利)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>时长档位</label>
+                    <select id="durationSelect">
+                        <option value="deep_60s" selected>🎬 深度干货 (60~90s 推荐)</option>
+                        <option value="quick_30s">⚡ 极速爆款 (30~45s)</option>
+                        <option value="long_120s">📚 深度精解 (2~3分钟)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <label style="margin-bottom: 8px; display: block;">分镜剧本列表 (<span id="sceneCountText">4</span> 分镜)</label>
+                <div id="scenesContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Scene Card 1 -->
+                    <div class="scene-card">
+                        <div class="scene-header">
+                            <span class="scene-tag">分镜 1 · 黄金 3 秒 Hook</span>
+                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        </div>
+                        <textarea rows="2">很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！</textarea>
+                    </div>
+                    <!-- Scene Card 2 -->
+                    <div class="scene-card">
+                        <div class="scene-header">
+                            <span class="scene-tag">分镜 2 · 认知颠覆</span>
+                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        </div>
+                        <textarea rows="2">大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。</textarea>
+                    </div>
+                    <!-- Scene Card 3 -->
+                    <div class="scene-card">
+                        <div class="scene-header">
+                            <span class="scene-tag">分镜 3 · 破局法则</span>
+                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        </div>
+                        <textarea rows="2">每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！</textarea>
+                    </div>
+                    <!-- Scene Card 4 -->
+                    <div class="scene-card">
+                        <div class="scene-header">
+                            <span class="scene-tag">分镜 4 · 升华金句 & CTA</span>
+                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        </div>
+                        <textarea rows="2">记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Right Column: Studio Render & Preview -->
+    <section class="studio-col">
+        <div class="col-header">
+            <div class="col-title">🎬 视听监看与交付</div>
+        </div>
+        <div class="col-body">
+            <!-- 9:16 Responsive Player -->
+            <div class="player-container">
+                <video id="finalVideoPlayer" controls style="display: none;"></video>
+                <div class="empty-player" id="playerPlaceholder">
+                    <span style="font-size: 36px;">📱</span>
+                    <span>点击下方按钮一键渲染</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">输出 1080x1920 高清 60fps 竖屏成品</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="input-group">
+                    <label>解说音色</label>
+                    <select id="voiceSelect">
+                        <option value="zh-CN-XiaoxiaoNeural" selected>晓晓 · 自然知性（推荐）</option>
+                        <option value="zh-CN-YunxiNeural">云希 · 青年叙事</option>
+                        <option value="zh-CN-YunjianNeural">云健 (稳重大气)</option>
+                        <option value="zh-CN-YunyangNeural">云扬 (专业干货)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>背景音乐</label>
+                    <select id="bgmSelect">
+                        <option value="energetic">轻快律动 (Lo-Fi)</option>
+                        <option value="suspense">悬疑反转 (深沉)</option>
+                        <option value="emotional">治愈温暖 (钢琴)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group"><label>语音节奏</label><select id="voiceRateSelect"><option value="-5%">舒缓自然</option><option value="+0%" selected>自然对话（推荐）</option><option value="+8%">轻快短视频</option></select></div>
+
+            <!-- Render Button -->
+            <button class="btn-render" id="btnRender" onclick="startRender()">
+                <span>🚀</span>
+                <span>一键合成 1080x1920 短视频</span>
+            </button>
+
+            <!-- Quick Actions -->
+            <div class="btn-row">
+                <button class="btn-sub" id="btnOpenDraft" onclick="openJianYingDraft()" disabled>
+                    <span>📂</span>
+                    <span>打开剪映工程</span>
+                </button>
+                <button class="btn-sub" id="btnDownloadVideo" onclick="downloadVideo()" disabled>
+                    <span>⬇️</span>
+                    <span>下载 MP4 成品</span>
+                </button>
+            </div>
+
+            <!-- Terminal Logs -->
+            <div class="log-box" id="logBox">
+                <p style="color: var(--accent-cyan);">[SYSTEM] AI Traffic Pipeline Studio 已就绪...</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    let currentDraftPath = "";
+    let currentVideoUrl = "";
+    let currentProjectId = "";
+    let currentJobId = "";
+
+    let currentCategory = "resonance";
+
+    // 页面加载自动拉取热榜
+    window.addEventListener('DOMContentLoaded', () => {
+        loadTrends();
+        loadMediaStatus();
+        document.querySelectorAll('.scene-card').forEach((card, index) => enrichSceneCard(card, ['cinematic lifestyle', 'natural light', 'vertical video'][index % 3]));
+    });
+
+    const categoryLabels = {resonance:'多平台共振', all:'综合热榜', tech:'科技数码', finance:'商业财经', social:'社会民生', entertainment:'文娱热点', growth:'认知职场'};
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+    function enrichSceneCard(card, keywords='cinematic lifestyle, natural light') {
+        if (card.querySelector('.scene-keywords')) return;
+        const tools = document.createElement('div');
+        tools.className = 'scene-tools';
+        tools.innerHTML = `<input class="scene-keywords" value="${escapeHtml(Array.isArray(keywords) ? keywords.join(', ') : keywords)}" placeholder="真实素材英文关键词，用逗号分隔"><span class="asset-hint">Pexels 实拍优先</span>`;
+        card.appendChild(tools);
+    }
+
+    async function loadMediaStatus() {
+        const chip = document.getElementById('mediaEngineChip');
+        try {
+            const data = await (await fetch('/api/media/status')).json();
+            chip.textContent = data.pexels_configured ? '✓ Pexels 实拍已连接' : '⚠ Pexels 未配置 · 摄影图库兜底';
+            chip.classList.toggle('ok', data.pexels_configured);
+        } catch (_) { chip.textContent = '⚠ 素材引擎状态未知'; }
+    }
+
+    function switchCat(cat, btn) {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        document.getElementById('trendCategoryLabel').textContent = categoryLabels[cat] || cat;
+        loadTrends();
+    }
+
+    async function loadTrends() {
+        const container = document.getElementById('trendsContainer');
+        container.innerHTML = '<div class="empty-player">正在抓取细分领域热榜...</div>';
+        try {
+            const resp = await fetch(`/api/trends?category=${currentCategory}`);
+            const data = await resp.json();
+            if (data.success && data.trends) {
+                container.innerHTML = '';
+                document.getElementById('trendResultCount').textContent = `${data.trends.length} 条推荐`;
+                if (data.trends.length === 0) {
+                    container.innerHTML = '<div class="empty-player">暂无该分类热点</div>';
+                    return;
+                }
+                data.trends.forEach((t, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'trend-card';
+                    
+                    let badgeHtml = `<span class="trend-platform">${escapeHtml(t.source_platform)}</span>`;
+                    if (t.is_resonance) {
+                        badgeHtml = `<span class="badge-resonance">🔥 共振 [${t.resonating_platforms.join('+')}]</span>`;
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="trend-top">
+                            ${badgeHtml}
+                            <span class="trend-score">热度 ${escapeHtml(t.hot_score)}</span>
+                        </div>
+                        <span class="trend-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
+                        <div class="trend-title">${escapeHtml(t.title)}</div>
+                        <div class="trend-meta"><span>${escapeHtml(t.category_name)}</span><span>点击生成分镜 →</span></div>
+                    `;
+                    card.onclick = () => {
+                        document.getElementById('topicInput').value = t.title;
+                        generateScript();
+                    };
+                    container.appendChild(card);
+                });
+            }
+        } catch (e) {
+            container.innerHTML = '<div class="empty-player">热榜抓取失败，请检查网络</div>';
+        }
+    }
+
+    async function generateScript() {
+        const topic = document.getElementById('topicInput').value.trim();
+        const style = document.getElementById('videoStyleSelect').value;
+        const duration_tier = document.getElementById('durationSelect').value;
+        if (!topic) return;
+
+        addLog(`🪄 正在调用大模型深度拆解分镜: 《${topic}》 (${style} / ${duration_tier})...`);
+        const btn = document.getElementById('btnGenScript');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span><span>DeepSeek 深度创作中...</span>';
+
+        try {
+            const resp = await fetch('/api/generate_script', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, style, duration_tier })
+            });
+            const data = await resp.json();
+            if (data.success && data.script) {
+                const s = data.script;
+                document.getElementById('videoTitleInput').value = s.title;
+                const container = document.getElementById('scenesContainer');
+                container.innerHTML = '';
+                let totalWords = 0;
+                s.scenes.forEach(sc => {
+                    totalWords += (sc.voiceover_text || "").length;
+                    const scCard = document.createElement('div');
+                    scCard.className = 'scene-card';
+                    scCard.innerHTML = `
+                        <div class="scene-header">
+                            <span class="scene-tag">分镜 ${sc.scene_index} · ${sc.transition} (${sc.voiceover_text.length}字)</span>
+                            <button class="btn-listen" onclick="previewVoice(this)">🔊 试听</button>
+                        </div>
+                        <textarea rows="3">${escapeHtml(sc.voiceover_text)}</textarea>
+                        <div class="scene-tools"><input class="scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="真实素材英文关键词，用逗号分隔"><span class="asset-hint">Pexels 实拍优先</span></div>
+                    `;
+                    container.appendChild(scCard);
+                });
+                document.getElementById('sceneCountText').innerText = `${s.scenes.length} 分镜 / 共 ${totalWords} 字 / 预估 ${Math.round(totalWords / 4.2)} 秒`;
+                addLog(`✅ 深度分镜创作完成！包含 ${s.scenes.length} 个分镜，总计 ${totalWords} 字 (预估 ${Math.round(totalWords / 4.2)} 秒)。`);
+            }
+        } catch (e) {
+            addLog(`❌ 分镜生成异常: ${e.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🪄</span><span>AI 深度拆解分镜</span>';
+        }
+    }
+
+    async function previewVoice(btn) {
+        const textarea = btn.closest('.scene-card').querySelector('textarea');
+        const text = textarea.value.trim();
+        const voice = document.getElementById('voiceSelect').value;
+        const rate = document.getElementById('voiceRateSelect').value;
+        if (!text) return;
+
+        btn.innerText = '⏳ 合成中...';
+        try {
+            const resp = await fetch('/api/preview_tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, voice, rate, pitch: '-2Hz' })
+            });
+            const data = await resp.json();
+            if (data.success && data.audio_url) {
+                const audio = new Audio(data.audio_url);
+                audio.play();
+                btn.innerText = '▶️ 播放中';
+                audio.onended = () => { btn.innerText = '🔊 试听'; };
+            }
+        } catch (e) {
+            btn.innerText = '❌ 失败';
+            setTimeout(() => { btn.innerText = '🔊 试听'; }, 2000);
+        }
+    }
+
+    async function startRender() {
+        const title = document.getElementById('videoTitleInput').value.trim();
+        const voice = document.getElementById('voiceSelect').value;
+        const bgm = document.getElementById('bgmSelect').value;
+        const ttsRate = document.getElementById('voiceRateSelect').value;
+
+        const scenes = [];
+        document.querySelectorAll('.scene-card').forEach((card, idx) => {
+            const ta = card.querySelector('textarea');
+            const keywordInput = card.querySelector('.scene-keywords');
+            scenes.push({
+                scene_index: idx + 1,
+                voiceover_text: ta.value.trim(),
+                visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8)
+            });
+        });
+
+        const btn = document.getElementById('btnRender');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⚙️</span><span>正在极速渲染 1080x1920 视频...</span>';
+
+        addLog('🚀 启动全自动流水线：TTS 合成 -> 毫秒字幕 -> 动态素材 -> 音效混音 -> 视频导出...');
+
+        try {
+            const resp = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, scenes, voice, bgm_type: bgm, tts_rate: ttsRate, tts_pitch: '-2Hz' })
+            });
+            const data = await resp.json();
+            if (data.success && data.job) {
+                currentJobId = data.job.job_id;
+                currentProjectId = data.job.project_id;
+                addLog(`📥 任务已进入队列: ${currentJobId}`);
+                await pollRenderJob(currentJobId);
+            } else {
+                addLog(`❌ 创建任务失败: ${data.detail || '未知错误'}`);
+            }
+        } catch (e) {
+            addLog(`❌ 渲染异常: ${e.message}`);
+            btn.disabled = false;
+            btn.innerHTML = '<span>🚀</span><span>一键合成 1080x1920 短视频</span>';
+        }
+    }
+
+    async function pollRenderJob(jobId) {
+        const btn = document.getElementById('btnRender');
+        let previousStage = '';
+        while (currentJobId === jobId) {
+            const resp = await fetch(`/api/jobs/${jobId}`);
+            const data = await resp.json();
+            if (!resp.ok || !data.job) throw new Error(data.detail || '任务查询失败');
+            const job = data.job;
+            if (job.stage !== previousStage) {
+                previousStage = job.stage;
+                addLog(`⚙️ 当前阶段: ${job.stage}`);
+            }
+            if (job.status === 'succeeded') {
+                currentVideoUrl = job.video_url;
+                currentDraftPath = job.result.jianying_draft_path;
+
+                // 显示播放器
+                const videoPlayer = document.getElementById('finalVideoPlayer');
+                const placeholder = document.getElementById('playerPlaceholder');
+                videoPlayer.src = job.video_url;
+                videoPlayer.style.display = 'block';
+                placeholder.style.display = 'none';
+                videoPlayer.play();
+
+                // 激活按钮
+                document.getElementById('btnOpenDraft').disabled = false;
+                document.getElementById('btnDownloadVideo').disabled = false;
+
+                if (job.logs) {
+                    job.logs.forEach(l => addLog(l));
+                }
+                addLog('🎉 视频渲染完成！可以直接在上方预览播放，或一键导入剪映。');
+                break;
+            }
+            if (['failed', 'cancelled', 'interrupted'].includes(job.status)) {
+                addLog(`❌ 任务${job.status}: ${job.error || ''}`);
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+        if (currentJobId === jobId) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🚀</span><span>一键合成 1080x1920 短视频</span>';
+        }
+    }
+
+    async function openJianYingDraft() {
+        if (!currentProjectId) return;
+        try {
+            const resp = await fetch(`/api/projects/${currentProjectId}/open-draft`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await resp.json();
+            addLog(data.message);
+        } catch (e) {
+            addLog(`❌ 打开失败: ${e.message}`);
+        }
+    }
+
+    function downloadVideo() {
+        if (currentVideoUrl) {
+            const a = document.createElement('a');
+            a.href = currentVideoUrl;
+            a.download = 'viral_video.mp4';
+            a.click();
+        }
+    }
+
+    function addLog(msg) {
+        const box = document.getElementById('logBox');
+        const p = document.createElement('p');
+        p.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        box.appendChild(p);
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+</body>
+</html>
