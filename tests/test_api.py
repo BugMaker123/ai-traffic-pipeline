@@ -50,3 +50,11 @@ def test_media_status_is_explicit():
     response = client.get("/api/media/status")
     assert response.status_code == 200
     assert isinstance(response.json()["pexels_configured"], bool)
+
+
+def test_tasks_page_and_global_job_list(monkeypatch):
+    monkeypatch.setattr(server.job_manager, "list", lambda **kwargs: [])
+    assert client.get("/tasks").status_code == 200
+    response = client.get("/api/jobs")
+    assert response.status_code == 200
+    assert response.json()["jobs"] == []

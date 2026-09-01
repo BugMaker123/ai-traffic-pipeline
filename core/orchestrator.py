@@ -116,6 +116,10 @@ def node_audio_and_subtitles(state: PipelineState) -> Dict[str, Any]:
             
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         enriched_scenes = pool.submit(_run_tts_sync).result()
+
+    fallback_count = sum(1 for scene in enriched_scenes if scene.get("tts_fallback"))
+    if fallback_count:
+        logs.append(f"⚠️ Edge-TTS 暂时不可达，已为 {fallback_count} 个分镜生成静音占位音轨并使用估算字幕时间轴继续渲染。")
     
     global_subtitles = []
     current_time_offset = 0.0

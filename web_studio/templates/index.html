@@ -1146,6 +1146,7 @@
     </div>
 
     <div class="nav-actions">
+        <a href="/tasks" style="color:#38BDF8;text-decoration:none;font-size:12px;font-weight:700;padding:7px 12px;border:1px solid rgba(56,189,248,.3);border-radius:20px;">任务中心 · 全局日志</a>
         <div class="badge-status">
             <span class="dot-pulse"></span>
             <span>服务运行正常</span>
@@ -1415,16 +1416,17 @@
                 </button>
             </div>
 
-            <!-- Real-time Terminal Log -->
+            <!-- Current job summary; full logs live in the task center. -->
             <div class="terminal-box" id="logBox">
                 <div class="terminal-header">
-                    <span>PIPELINE LOGS</span>
+                    <span>CURRENT JOB</span>
                     <span id="logStatusBadge">READY</span>
                 </div>
                 <div class="terminal-log-row">
                     <span class="terminal-time">[SYSTEM]</span>
-                    <span class="terminal-msg info">Traffic Studio 工业级视频合成引擎已就绪</span>
+                    <span class="terminal-msg info">完整阶段日志已迁移至「任务中心」统一追踪</span>
                 </div>
+                <a href="/tasks" style="display:block;margin:10px 12px;color:#38BDF8;font-size:12px;text-decoration:none;">打开全局任务中心 →</a>
             </div>
         </div>
     </section>
@@ -1437,6 +1439,7 @@
     let currentJobId = "";
     let currentCategory = "resonance";
     let currentAudio = null;
+    let selectedTrendContext = null;
 
     const categoryLabels = {
         resonance: '🔥 多平台共振',
@@ -1457,6 +1460,7 @@
     });
 
     function setQuickTopic(text) {
+        selectedTrendContext = null;
         document.getElementById('topicInput').value = text;
         generateScript();
     }
@@ -1537,16 +1541,17 @@
                         <span class="trend-rank ${rankClass}">#${index + 1}</span>
                         <div class="trend-header-row">
                             ${badgeHtml}
-                            <span class="trend-score-badge">🔥 ${escapeHtml(t.hot_score)}</span>
+                            <span class="trend-score-badge">选题值 ${escapeHtml(t.editorial_score || t.hot_score)}</span>
                         </div>
                         <div class="trend-title-text">${escapeHtml(t.title)}</div>
                         <div class="trend-footer-action">
-                            <span>${escapeHtml(t.category_name || '')}</span>
+                            <span title="原始热度 ${escapeHtml(t.hot_score)}">${escapeHtml(t.trend_reason || t.category_name || '')}</span>
                             <span class="trend-click-tip">一键生成分镜 →</span>
                         </div>
                     `;
                     card.onclick = () => {
                         document.getElementById('topicInput').value = t.title;
+                        selectedTrendContext = t;
                         generateScript();
                     };
                     container.appendChild(card);
@@ -1601,6 +1606,7 @@
 
     async function generateScript() {
         const topic = document.getElementById('topicInput').value.trim();
+        const source = selectedTrendContext?.title === topic ? selectedTrendContext : null;
         const style = document.getElementById('videoStyleSelect').value;
         const duration_tier = document.getElementById('durationSelect').value;
         if (!topic) return;
@@ -1614,11 +1620,17 @@
             const resp = await fetch('/api/generate_script', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic, style, duration_tier })
+                body: JSON.stringify({
+                    topic, style, duration_tier,
+                    source_content: source?.raw_content || '',
+                    source_platform: source?.source_platform || '',
+                    captured_at: source?.captured_at || ''
+                })
             });
             const data = await resp.json();
             if (data.success && data.script) {
                 const s = data.script;
+                addLog(`🛡️ ${s.freshness_note || '已应用时效约束'}`, s.grounding_status === 'source_grounded' ? 'success' : 'info');
                 document.getElementById('videoTitleInput').value = s.title;
                 const container = document.getElementById('scenesContainer');
                 container.innerHTML = '';
@@ -1824,6 +1836,7 @@
 
     function addLog(msg, type = 'info') {
         const box = document.getElementById('logBox');
+        box.querySelectorAll('.terminal-log-row').forEach(row => row.remove());
         const row = document.createElement('div');
         row.className = 'terminal-log-row';
         row.innerHTML = `
@@ -1831,7 +1844,7 @@
             <span class="terminal-msg ${type}">${escapeHtml(msg)}</span>
         `;
         box.appendChild(row);
-        box.scrollTop = box.scrollHeight;
+        box.scrollTop = 0;
     }
 </script>
 </body>

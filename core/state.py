@@ -29,6 +29,8 @@ class VideoProjectScript(BaseModel):
     bgm_type: str = Field(default="energetic", description="推荐 BGM 情绪类型: energetic, suspense, emotional, chill")
     scenes: List[SceneItem] = Field(description="分镜列表")
     tags: List[str] = Field(default_factory=list, description="短视频标签 Tag")
+    grounding_status: str = Field(default="topic_only", description="事实时效状态")
+    freshness_note: str = Field(default="", description="时效与事实边界说明")
 
 class RawTopicItem(BaseModel):
     """原始采集的热点/爆款数据 (支持垂直分类与多平台共振登顶)"""
@@ -45,6 +47,8 @@ class RawTopicItem(BaseModel):
     comment_count: int = 0
     share_count: int = 0
     hot_score: float = 0.0
+    editorial_score: float = 0.0
+    trend_reason: str = ""
     captured_at: Optional[str] = None
 
 class PipelineState(TypedDict, total=False):

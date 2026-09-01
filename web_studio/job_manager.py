@@ -15,6 +15,18 @@ from core.orchestrator import PipelineCancelled, VideoPipelineRunner
 
 logger = logging.getLogger(__name__)
 TERMINAL_STATES = {"succeeded", "failed", "cancelled"}
+STAGE_PROGRESS = {
+    "queued": 0,
+    "starting": 3,
+    "topic_mining": 8,
+    "script_writing": 18,
+    "audio_and_subtitles": 38,
+    "media_sourcing": 62,
+    "video_compositing": 82,
+    "completed": 100,
+    "failed": 100,
+    "cancelled": 100,
+}
 
 
 class JobManager:
@@ -67,6 +79,8 @@ class JobManager:
             "result": None,
             "error": None,
             "logs": [],
+            "stage_started_at": now,
+            "stage_durations": {},
             "checkpoint": checkpoint,
         }
         with self._lock:
@@ -79,6 +93,16 @@ class JobManager:
     def _update(self, job_id: str, **changes: Any) -> None:
         with self._lock:
             job = self._jobs[job_id]
+            if "stage" in changes and changes["stage"] != job.get("stage"):
+                now_dt = datetime.now(timezone.utc)
+                started = job.get("stage_started_at")
+                if started:
+                    try:
+                        elapsed = max(0.0, (now_dt - datetime.fromisoformat(started)).total_seconds())
+                        job.setdefault("stage_durations", {})[job.get("stage", "unknown")] = round(elapsed, 2)
+                    except ValueError:
+                        pass
+                job["stage_started_at"] = now_dt.isoformat()
             job.update(changes)
             job["updated_at"] = self._now()
             self._persist(job)
@@ -130,6 +154,14 @@ class JobManager:
             job = self._jobs.get(job_id)
             return self.public(job) if job else None
 
+    def list(self, *, status: str | None = None, limit: int = 50) -> list[Dict[str, Any]]:
+        with self._lock:
+            jobs = list(self._jobs.values())
+            if status:
+                jobs = [job for job in jobs if job.get("status") == status]
+            jobs.sort(key=lambda job: job.get("created_at", ""), reverse=True)
+            return [self.public(job) for job in jobs[: max(1, min(limit, 200))]]
+
     def cancel(self, job_id: str) -> Optional[Dict[str, Any]]:
         with self._lock:
             job = self._jobs.get(job_id)
@@ -153,7 +185,9 @@ class JobManager:
 
     @staticmethod
     def public(job: Dict[str, Any]) -> Dict[str, Any]:
-        return {key: value for key, value in job.items() if key not in {"payload", "checkpoint"}}
+        result = {key: value for key, value in job.items() if key not in {"payload", "checkpoint"}}
+        result["progress"] = STAGE_PROGRESS.get(str(job.get("stage")), 0)
+        return result
 
 
 job_manager = JobManager()

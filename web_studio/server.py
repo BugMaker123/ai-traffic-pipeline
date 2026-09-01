@@ -54,6 +54,9 @@ class ScriptRequest(StrictModel):
     topic: str = Field(min_length=1, max_length=500)
     style: Literal["干货科普", "幽默反转", "情感共鸣", "商业认知"] = "干货科普"
     duration_tier: Literal[tuple(DURATION_PRESETS.keys())] = "deep_60s"
+    source_content: str = Field(default="", max_length=4000)
+    source_platform: str = Field(default="", max_length=80)
+    captured_at: str = Field(default="", max_length=40)
 
 
 class TTSPreviewRequest(StrictModel):
@@ -96,6 +99,14 @@ async def serve_index() -> str:
     return path.read_text(encoding="utf-8")
 
 
+@app.get("/tasks", response_class=HTMLResponse)
+async def serve_tasks() -> str:
+    path = TEMPLATES_DIR / "tasks.html"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="tasks.html not found")
+    return path.read_text(encoding="utf-8")
+
+
 @app.get("/api/trends")
 async def get_trends(category: str = Query(default="all")):
     if category not in CATEGORY_NAMES:
@@ -112,7 +123,10 @@ async def get_voices():
 @app.post("/api/generate_script")
 async def generate_script(req: ScriptRequest):
     generator = ScriptGenerator()
-    script = await asyncio.to_thread(generator.generate_script, req.topic, req.style, req.duration_tier)
+    script = await asyncio.to_thread(
+        generator.generate_script, req.topic, req.style, req.duration_tier, None,
+        req.source_content, req.source_platform, req.captured_at,
+    )
     return {"success": True, "script": script.model_dump()}
 
 
@@ -153,6 +167,18 @@ async def get_render_job(job_id: str):
     if job.get("result") and job["result"].get("final_video_path"):
         job["video_url"] = f"/output/final/{Path(job['result']['final_video_path']).name}"
     return {"success": True, "job": job}
+
+
+@app.get("/api/jobs")
+async def list_render_jobs(status_filter: str | None = Query(default=None, alias="status"), limit: int = Query(default=50, ge=1, le=200)):
+    allowed = {"queued", "running", "cancelling", "succeeded", "failed", "cancelled", "interrupted"}
+    if status_filter and status_filter not in allowed:
+        raise HTTPException(status_code=422, detail="未知任务状态")
+    jobs = job_manager.list(status=status_filter, limit=limit)
+    summary = {key: 0 for key in allowed}
+    for job in job_manager.list(limit=200):
+        summary[job.get("status", "failed")] = summary.get(job.get("status", "failed"), 0) + 1
+    return {"success": True, "jobs": jobs, "summary": summary}
 
 
 @app.post("/api/jobs/{job_id}/cancel", status_code=status.HTTP_202_ACCEPTED)

@@ -12,6 +12,7 @@ import sys
 import time
 import re
 import logging
+import math
 import requests
 from typing import List, Dict, Any, Optional, Set
 from core.state import RawTopicItem
@@ -113,6 +114,23 @@ class HotTopicCrawler:
                     if sub not in stopwords:
                         tokens.add(sub)
         return tokens
+
+    @staticmethod
+    def _score_editorial_value(item: RawTopicItem) -> tuple[float, str]:
+        """Separate raw popularity from usefulness as a video topic."""
+        title = item.title.strip()
+        specificity = min(18.0, len(set(title)) * 0.9)
+        engagement = min(12.0, math.log10(max(1, item.like_count + item.comment_count * 3 + item.share_count * 5)) * 3)
+        resonance = 14.0 if item.is_resonance else 0.0
+        question_value = 6.0 if any(mark in title for mark in ("为什么", "如何", "？", "?")) else 2.0
+        score = min(100.0, item.hot_score * 0.5 + specificity + engagement + resonance + question_value)
+        reasons = []
+        if item.is_resonance:
+            reasons.append(f"{len(item.resonating_platforms)} 平台共振")
+        if engagement >= 8:
+            reasons.append("互动强")
+        reasons.append("信息具体" if specificity >= 12 else "需补充切口")
+        return round(score, 1), " · ".join(reasons)
 
     @classmethod
     def fetch_douyin_hot(cls) -> List[RawTopicItem]:
@@ -277,6 +295,9 @@ class HotTopicCrawler:
                 item1.resonating_platforms = sorted(list(matched_platforms))
                 item1.hot_score = round(min(100.0, 98.0 + len(matched_platforms) * 0.8), 1)
 
+        for item in all_raw_pool:
+            item.editorial_score, item.trend_reason = cls._score_editorial_value(item)
+
         # 2. 领域过滤
         if category == "resonance":
             filtered = [item for item in all_raw_pool if item.is_resonance]
@@ -287,7 +308,7 @@ class HotTopicCrawler:
             filtered = all_raw_pool
 
         # 3. 排序策略：同分类内共振爆款优先置顶，其次按热度排序
-        filtered.sort(key=lambda x: (x.is_resonance, x.hot_score), reverse=True)
+        filtered.sort(key=lambda x: (x.is_resonance, x.editorial_score, x.hot_score), reverse=True)
 
         # 4. 去重
         seen_titles = set()

@@ -6,6 +6,21 @@ from writers import script_generator
 from media.pexels_client import PexelsMediaClient
 
 
+def test_temporal_claim_guard_rejects_unsupported_product_facts():
+    script = {
+        "title": "苹果涨价",
+        "scenes": [{"voiceover_text": "2023年苹果砍掉iPhone 14 Plus和Apple Watch Series 3。"}],
+    }
+    claims = script_generator.ScriptGenerator._unsupported_temporal_claims(script, "苹果涨价")
+    assert "2023年" in claims
+    assert any("iPhone" in claim for claim in claims)
+
+
+def test_temporal_claim_guard_accepts_claim_present_in_source():
+    script = {"scenes": [{"voiceover_text": "消息提到iPhone 17。"}]}
+    assert script_generator.ScriptGenerator._unsupported_temporal_claims(script, "来源：iPhone 17") == []
+
+
 class FakeResponse:
     status_code = 200
     text = ""
@@ -52,6 +67,28 @@ def test_tts_stream_contract_is_parsed(monkeypatch, tmp_path):
     assert (tmp_path / "mock.mp3").read_bytes() == b"mock-audio"
     assert result["duration"] == 1.0
     assert result["word_timestamps"][0]["text"] == "测试"
+
+
+def test_tts_network_failure_falls_back_to_silent_audio(monkeypatch, tmp_path):
+    class FailingCommunicate:
+        def __init__(self, **kwargs):
+            pass
+
+        async def stream(self):
+            raise OSError("Cannot connect to host speech.platform.bing.com")
+            yield
+
+    monkeypatch.setattr(tts_engine.edge_tts, "Communicate", FailingCommunicate)
+    monkeypatch.setattr(tts_engine, "AUDIO_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(tts_engine, "TTS_RETRY_ATTEMPTS", 1)
+    monkeypatch.setattr(tts_engine, "TTS_FALLBACK_SILENCE", True)
+
+    result = asyncio.run(tts_engine.TTSEngine().generate_speech_with_timestamps("测试失败兜底", "fallback.mp3"))
+
+    assert (tmp_path / "fallback.mp3").exists()
+    assert result["tts_fallback"] == "silent"
+    assert result["duration"] > 0
+    assert result["word_timestamps"][0]["text"] == "测"
 
 
 def test_pexels_photo_fallback_contract(monkeypatch, tmp_path):

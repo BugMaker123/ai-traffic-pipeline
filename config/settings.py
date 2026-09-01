@@ -38,6 +38,8 @@ VIDEO_WIDTH = int(os.getenv("VIDEO_WIDTH", "1080"))
 VIDEO_HEIGHT = int(os.getenv("VIDEO_HEIGHT", "1920"))
 VIDEO_FPS = int(os.getenv("VIDEO_FPS", "30"))
 MAX_RENDER_JOBS = max(1, int(os.getenv("MAX_RENDER_JOBS", "1")))
+TTS_CONCURRENCY = max(1, min(6, int(os.getenv("TTS_CONCURRENCY", "3"))))
+MEDIA_FETCH_CONCURRENCY = max(1, min(6, int(os.getenv("MEDIA_FETCH_CONCURRENCY", "3"))))
 MAX_SCENES = max(1, int(os.getenv("MAX_SCENES", "12")))
 OUTPUT_RETENTION_HOURS = max(1, int(os.getenv("OUTPUT_RETENTION_HOURS", "72")))
 

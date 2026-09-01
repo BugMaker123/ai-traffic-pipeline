@@ -11,10 +11,11 @@ import random
 import logging
 import requests
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from PIL import Image, ImageDraw, ImageFilter
-from config.settings import ASSETS_OUTPUT_DIR, PEXELS_API_KEY, VIDEO_WIDTH, VIDEO_HEIGHT
+from config.settings import ASSETS_OUTPUT_DIR, MEDIA_FETCH_CONCURRENCY, PEXELS_API_KEY, VIDEO_WIDTH, VIDEO_HEIGHT
 
 logger = logging.getLogger(__name__)
 
@@ -251,9 +252,8 @@ class PexelsMediaClient:
 
     def fetch_scene_assets(self, scenes: List[Dict[str, Any]], project_id: str) -> List[Dict[str, Any]]:
         """批量获取/生成所有分镜真实素材"""
-        updated = []
-        for s in scenes:
-            s_idx = s.get("scene_index", len(updated) + 1)
+        def fetch(s: Dict[str, Any]) -> Dict[str, Any]:
+            s_idx = s.get("scene_index", 1)
             kws = s.get("visual_keywords", ["cinematic", "focus"])
             dur = float(s.get("duration", 4.0))
             res = self.fetch_scene_asset(kws, s_idx, project_id, duration=dur)
@@ -262,5 +262,7 @@ class PexelsMediaClient:
             s_copy["asset_type"] = res.get("asset_type")
             s_copy["asset_source"] = res.get("source", "unknown")
             s_copy["asset_keyword"] = res.get("keyword", "")
-            updated.append(s_copy)
-        return updated
+            return s_copy
+
+        with ThreadPoolExecutor(max_workers=MEDIA_FETCH_CONCURRENCY, thread_name_prefix="media-fetch") as pool:
+            return list(pool.map(fetch, scenes))

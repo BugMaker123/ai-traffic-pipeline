@@ -6,6 +6,8 @@ import json
 import logging
 import re
 import uuid
+import hashlib
+from datetime import date
 from typing import Dict, Any, Optional
 import requests
 from config.settings import OPENAI_API_KEY, OPENAI_BASE_URL, LLM_MODEL
@@ -38,7 +40,10 @@ class ScriptGenerator:
         topic_or_content: str,
         style: str = "干货科普",
         duration_tier: str = "deep_60s",
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
+        source_content: str = "",
+        source_platform: str = "",
+        captured_at: str = "",
     ) -> VideoProjectScript:
         """
         根据输入主题与时长档位，生成深度饱满的结构化分镜剧本
@@ -49,8 +54,31 @@ class ScriptGenerator:
         # 1. 尝试调用大模型 API
         if self.api_key:
             try:
-                script_dict = self._call_llm(topic_or_content, style, duration_desc, proj_id)
+                script_dict = self._call_llm(
+                    topic_or_content, style, duration_desc, proj_id,
+                    source_content, source_platform, captured_at,
+                )
                 if script_dict and "scenes" in script_dict and len(script_dict["scenes"]) > 0:
+                    unsupported = self._unsupported_temporal_claims(script_dict, f"{topic_or_content} {source_content}")
+                    if unsupported:
+                        logger.warning("检测到无来源时效断言，要求重写: %s", ", ".join(unsupported))
+                        correction = (
+                            f"{source_content}\n\n[强制纠错] 上一稿出现材料不支持的内容：{', '.join(unsupported)}。"
+                            "重写时全部删除，不得替换成其他具体型号、年份或价格。"
+                        )
+                        script_dict = self._call_llm(
+                            topic_or_content, style, duration_desc, proj_id,
+                            correction, source_platform, captured_at,
+                        )
+                        if not script_dict or self._unsupported_temporal_claims(
+                            script_dict, f"{topic_or_content} {source_content}"
+                        ):
+                            raise ValueError("生成稿包含来源未支持的时效性事实")
+                    script_dict["grounding_status"] = "source_grounded" if source_content else "topic_only"
+                    script_dict["freshness_note"] = (
+                        f"依据 {source_platform or '热点来源'} 于 {captured_at or '当前'} 提供的材料生成"
+                        if source_content else "未提供事实来源，已限制具体时效性断言"
+                    )
                     return VideoProjectScript(**script_dict)
             except Exception as e:
                 logger.warning("LLM API 调用失败，切换至模板引擎: %s", e)
@@ -58,7 +86,31 @@ class ScriptGenerator:
         # 2. 深度多幕剧本兜底生成
         return self._generate_deep_fallback_script(topic_or_content, style, proj_id)
 
-    def _call_llm(self, topic: str, style: str, duration_desc: str, proj_id: str) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def _unsupported_temporal_claims(script: Dict[str, Any], allowed_text: str) -> list[str]:
+        """拦截来源材料中不存在的高时效年份、型号与价格断言。"""
+        text = " ".join(
+            [str(script.get("title", "")), str(script.get("topic_summary", ""))]
+            + [str(scene.get("voiceover_text", "")) for scene in script.get("scenes", [])]
+        )
+        patterns = (
+            r"20\d{2}年?",
+            r"iPhone\s*\d+(?:\s*(?:Pro|Plus|mini|Max))*",
+            r"Apple\s*Watch\s*Series\s*\d+",
+            r"(?:售价|价格|降价|补贴)[^，。；]{0,12}\d+(?:\.\d+)?(?:元|美元|万元)",
+        )
+        normalized_allowed = allowed_text.lower().replace(" ", "")
+        claims: list[str] = []
+        for pattern in patterns:
+            for claim in re.findall(pattern, text, flags=re.IGNORECASE):
+                if claim.lower().replace(" ", "") not in normalized_allowed:
+                    claims.append(claim)
+        return list(dict.fromkeys(claims))
+
+    def _call_llm(
+        self, topic: str, style: str, duration_desc: str, proj_id: str,
+        source_content: str = "", source_platform: str = "", captured_at: str = "",
+    ) -> Optional[Dict[str, Any]]:
         """调用 DeepSeek / OpenAI 接口生成高信息量剧本"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -68,7 +120,11 @@ class ScriptGenerator:
         user_prompt = SCRIPT_USER_TEMPLATE.format(
             topic_or_content=topic,
             style=style,
-            duration_spec=duration_desc
+            duration_spec=duration_desc,
+            current_date=date.today().isoformat(),
+            source_platform=source_platform or "未提供",
+            captured_at=captured_at or "未提供",
+            source_content=source_content or "（无事实材料）",
         )
         
         payload = {
@@ -77,7 +133,7 @@ class ScriptGenerator:
                 {"role": "system", "content": SCRIPT_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt}
             ],
-            "temperature": 0.75,
+            "temperature": 0.92,
             "response_format": {"type": "json_object"} if "deepseek" in self.model.lower() or "gpt" in self.model.lower() else None
         }
         
@@ -101,52 +157,58 @@ class ScriptGenerator:
     def _generate_deep_fallback_script(self, topic: str, style: str, proj_id: str) -> VideoProjectScript:
         """生成 6 幕高信息密度、逻辑严密的完整爆款剧本（保底生成）"""
         clean_topic = topic.strip()
+        variant = int(hashlib.sha256(f"{clean_topic}:{style}".encode("utf-8")).hexdigest()[:8], 16) % 3
+        openings = [
+            f"先别急着给【{clean_topic}】下结论。把镜头拉近，真正影响结果的，往往是被讨论声量盖住的那个细节。",
+            f"如果把【{clean_topic}】当成一笔账来算，最贵的通常不在明面上，而在被忽略的时间、选择和机会成本里。",
+            f"关于【{clean_topic}】，有两种说法听起来都对，却会把人带向相反的行动。分歧究竟藏在哪里？",
+        ]
         
         scenes_data = [
             {
                 "scene_index": 1,
-                "voiceover_text": f"为什么关于【{clean_topic}】，90% 的普通人每天都在做无效努力，而极少数真正的高手却能轻松破局？真相可能会彻底颠覆你的认知！",
-                "visual_keywords": ["shocked person", "thinking deeply", "dark neon light"],
+                "voiceover_text": openings[variant],
+                "visual_keywords": ["documentary close up", "street observation", "notebook detail"],
                 "image_prompt": "cinematic dark portrait of a focused person with intense eye contact and neon edge light",
-                "caption_highlight": ["90%普通人", "无效努力", "轻松破局"],
+                "caption_highlight": [clean_topic[:12], "被忽略的细节"],
                 "transition": "zoom_in"
             },
             {
                 "scene_index": 2,
-                "voiceover_text": "很多人最大的误区，就是把表象当本质，以为只要咬牙硬撑就能拿到结果。但心理学与行为科学研究证实：对抗本能的努力，只会带来报复性的摆烂与内耗。",
-                "visual_keywords": ["human brain glowing", "clock mechanism", "chess game strategy"],
+                "voiceover_text": f"先拆掉一个常见混淆：讨论【{clean_topic}】时，人们经常把现象、原因和结果揉成一句话。信息越热闹，因果关系反而越容易被省略。",
+                "visual_keywords": ["news wall investigation", "cause effect diagram", "crowded discussion"],
                 "image_prompt": "abstract futuristic neural network with glowing synapses and gears",
                 "caption_highlight": ["表象当本质", "对抗本能", "报复性摆烂"],
                 "transition": "fade"
             },
             {
                 "scene_index": 3,
-                "voiceover_text": "顶尖高手的核心秘诀，从来不是意志力有多强，而是懂得设计‘正向反馈闭环’，让系统和环境推着自己往前走，从而用极低的阻力骗过大脑。",
-                "visual_keywords": ["growth chart upward", "domino effect", "sunrise landscape"],
+                "voiceover_text": "判断它，不妨连续问三次：谁在做选择，谁承担代价，谁从这个叙事中获益。三个答案如果不是同一群人，关键通常就在这里。",
+                "visual_keywords": ["three people negotiation", "receipt cost closeup", "decision making office"],
                 "image_prompt": "glowing golden geometric loops and upward momentum in modern studio",
                 "caption_highlight": ["正向反馈闭环", "环境推着往前走", "骗过大脑"],
                 "transition": "slide_left"
             },
             {
                 "scene_index": 4,
-                "voiceover_text": "想要彻底破局，第一步就是戒掉‘完美主义’。把宏大的目标切碎成两分钟内就能完成的微小动作，先启动，让惯性接管你的执行力。",
-                "visual_keywords": ["runner starting line", "focus concentration", "morning sun"],
+                "voiceover_text": f"把方法落到【{clean_topic}】：先记录一个可观察事实，再找一个反例，最后写下结论成立的边界。少一个步骤，都可能只是立场，不是判断。",
+                "visual_keywords": ["field notes writing", "fact checking documents", "counterexample cards"],
                 "image_prompt": "determined athlete at starting line bathed in golden morning sun",
                 "caption_highlight": ["戒掉完美主义", "微小动作", "惯性接管执行力"],
                 "transition": "fade"
             },
             {
                 "scene_index": 5,
-                "voiceover_text": "记住：人与人之间最大的差距，不在于起跑线，而在于是否具备对事物本质规律的底层认知。思维一变，你的整个世界都会跟着改变。",
-                "visual_keywords": ["golden horizon light", "achievement success", "mountain peak"],
+                "voiceover_text": "更稳妥的答案往往没那么痛快：它允许例外，也承认信息不足。但正是这些边界，让观点能经得住下一条新闻和下一次现实检验。",
+                "visual_keywords": ["quiet newsroom desk", "boundary line map", "editor reviewing notes"],
                 "image_prompt": "inspirational panoramic mountain peak view with cinematic soft rays",
                 "caption_highlight": ["最大差距", "底层认知", "思维一变"],
                 "transition": "zoom_in"
             },
             {
                 "scene_index": 6,
-                "voiceover_text": "双击点赞收藏这条视频，提醒自己在迷茫时随时重温。在评论区写下你今天的第一步微行动，我们一起见证蜕变！",
-                "visual_keywords": ["thumbs up motivation", "community connection", "focus"],
+                "voiceover_text": f"所以把问题留给你：在【{clean_topic}】里，你亲眼见过的事实，和最流行的说法一致吗？说一个具体经历，比站队更有价值。",
+                "visual_keywords": ["street interview microphone", "real people conversation", "community testimony"],
                 "image_prompt": "confident person smiling in golden hour with warm welcoming lighting",
                 "caption_highlight": ["双击收藏", "第一步微行动", "见证蜕变"],
                 "transition": "fade"
@@ -155,10 +217,12 @@ class ScriptGenerator:
         
         return VideoProjectScript(
             project_id=proj_id,
-            title=f"90%的人都不知道的【{clean_topic}】破局真相",
-            topic_summary=f"深度拆解{clean_topic}的底层机制与步骤化落地破局方案",
+            title=f"把【{clean_topic}】放回真实现场",
+            topic_summary=f"从可观察事实、因果关系与适用边界三个层次重新审视{clean_topic}",
             tone_style=style,
             bgm_type="energetic",
             scenes=scenes_data,
-            tags=[clean_topic, "深度认知", "底层逻辑", "个人成长", "自律逆袭"]
+            tags=[clean_topic, "现场观察", "因果拆解", "观点边界"],
+            grounding_status="topic_only",
+            freshness_note="LLM 不可用且无事实核验材料，兜底稿不包含具体时效性断言",
         )

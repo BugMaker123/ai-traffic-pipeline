@@ -26,6 +26,8 @@ Copy-Item .env.example .env
 
 Web 渲染采用后台任务：`POST /api/jobs` 创建任务，`GET /api/jobs/{job_id}` 查询进度，`POST /cancel` 协作式取消，失败或服务重启中断后可调用 `POST /retry` 恢复。任务状态保存在 `output/jobs`。
 
+访问 `/tasks` 可查看跨项目任务历史、阶段耗时和完整日志。TTS 与素材抓取默认各 3 路并发，可通过 `TTS_CONCURRENCY`、`MEDIA_FETCH_CONCURRENCY` 调整；视频渲染本身仍由 `MAX_RENDER_JOBS` 控制，避免多个编码任务争抢 CPU。
+
 ## 真实素材与自然语音
 
 每个分镜都保留可编辑的英文素材关键词。素材顺序为 Pexels 竖屏视频、Pexels 竖屏图片、精选 Unsplash 摄影图片，最后才是本地背景；任务日志会记录实际来源。要启用 Pexels，请将新 Key 写入本地 `.env` 的 `PEXELS_API_KEY`，页面顶部会显示连接状态。
