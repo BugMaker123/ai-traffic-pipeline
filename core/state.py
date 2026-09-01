@@ -19,6 +19,11 @@ class SceneItem(BaseModel):
     duration: Optional[float] = None
     asset_file: Optional[str] = None
     asset_type: Optional[str] = None  # "video" | "image"
+    asset_locked: bool = False
+    trim_start: float = 0.0
+    playback_speed: float = 1.0
+    crop_x: float = 0.5
+    crop_y: float = 0.5
 
 class VideoProjectScript(BaseModel):
     """完整的视频结构化剧本"""
@@ -54,6 +59,7 @@ class PipelineState(TypedDict, total=False):
     voice: Optional[str]
     tts_rate: Optional[str]
     tts_pitch: Optional[str]
+    caption_template: Optional[str]
     bgm_type: Optional[str]
     raw_topic: Optional[Dict[str, Any]]
     

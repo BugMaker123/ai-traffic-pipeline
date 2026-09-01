@@ -253,6 +253,11 @@ class PexelsMediaClient:
         """批量获取/生成所有分镜真实素材"""
         updated = []
         for s in scenes:
+            if s.get("asset_locked") and s.get("asset_file") and Path(s["asset_file"]).is_file():
+                preserved = dict(s)
+                preserved.setdefault("asset_source", "uploaded")
+                updated.append(preserved)
+                continue
             s_idx = s.get("scene_index", len(updated) + 1)
             kws = s.get("visual_keywords", ["cinematic", "focus"])
             dur = float(s.get("duration", 4.0))

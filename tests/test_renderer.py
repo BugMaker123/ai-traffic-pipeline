@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from moviepy import ImageClip
 
 from compositors.moviepy_renderer import MoviePyRenderer
@@ -13,3 +14,10 @@ def test_cover_clip_preserves_aspect_and_fills_frame():
     finally:
         covered.close()
         clip.close()
+
+
+def test_validate_output_rejects_incomplete_file(tmp_path):
+    broken = tmp_path / "broken.mp4"
+    broken.write_bytes(b"partial")
+    with pytest.raises(RuntimeError, match="不完整"):
+        MoviePyRenderer.validate_output(broken)

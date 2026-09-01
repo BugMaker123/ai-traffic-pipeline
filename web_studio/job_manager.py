@@ -15,6 +15,11 @@ from core.orchestrator import PipelineCancelled, VideoPipelineRunner
 
 logger = logging.getLogger(__name__)
 TERMINAL_STATES = {"succeeded", "failed", "cancelled"}
+STAGE_PROGRESS = {
+    "queued": 0, "starting": 2, "topic_mining": 8, "script_writing": 18,
+    "audio_and_subtitles": 35, "media_sourcing": 58, "video_compositing": 75,
+    "completed": 100, "failed": 100, "cancelled": 100,
+}
 
 
 class JobManager:
@@ -68,6 +73,9 @@ class JobManager:
             "error": None,
             "logs": [],
             "checkpoint": checkpoint,
+            "started_at": None,
+            "finished_at": None,
+            "progress": 0,
         }
         with self._lock:
             self._jobs[job_id] = job
@@ -89,10 +97,10 @@ class JobManager:
         if event.is_set():
             self._update(job_id, status="cancelled", stage="cancelled")
             return
-        self._update(job_id, status="running", stage="starting", error=None)
+        self._update(job_id, status="running", stage="starting", error=None, started_at=self._now(), progress=2)
 
         def progress(stage: str) -> None:
-            self._update(job_id, stage=stage)
+            self._update(job_id, stage=stage, progress=STAGE_PROGRESS.get(stage, 0))
 
         def checkpoint(state: Dict[str, Any]) -> None:
             serializable = {key: value for key, value in state.items() if key not in {"progress_callback", "cancel_event"}}
@@ -106,6 +114,7 @@ class JobManager:
                 bgm_type=payload["bgm_type"],
                 tts_rate=payload.get("tts_rate"),
                 tts_pitch=payload.get("tts_pitch"),
+                caption_template=payload.get("caption_template", "impact"),
                 project_id=payload["project_id"],
                 progress_callback=progress,
                 cancel_event=event,
@@ -118,12 +127,39 @@ class JobManager:
                 "final_video_path": result.get("final_video_path"),
                 "jianying_draft_path": result.get("jianying_draft_path"),
             }
-            self._update(job_id, status="succeeded", stage="completed", result=public_result, logs=result.get("logs", []))
+            self._update(job_id, status="succeeded", stage="completed", result=public_result, logs=result.get("logs", []), progress=100, finished_at=self._now())
         except PipelineCancelled as exc:
-            self._update(job_id, status="cancelled", stage="cancelled", error=str(exc))
+            self._update(job_id, status="cancelled", stage="cancelled", error=str(exc), progress=100, finished_at=self._now())
         except Exception as exc:
             logger.exception("渲染任务 %s 失败", job_id)
-            self._update(job_id, status="failed", stage="failed", error=str(exc))
+            self._update(job_id, status="failed", stage="failed", error=str(exc), progress=100, finished_at=self._now())
+
+    def resume_interrupted(self) -> int:
+        """服务启动后从最近检查点自动恢复中断任务。"""
+        resumed = 0
+        with self._lock:
+            ids = [job_id for job_id, job in self._jobs.items() if job.get("status") == "interrupted"]
+            for job_id in ids:
+                self._cancel_events[job_id] = threading.Event()
+                job = self._jobs[job_id]
+                job.update(status="queued", stage="queued", error=None, progress=0)
+                self._persist(job)
+                self._executor.submit(self._run, job_id)
+                resumed += 1
+        return resumed
+
+    def list(self, limit: int = 50) -> list[Dict[str, Any]]:
+        with self._lock:
+            jobs = sorted(self._jobs.values(), key=lambda item: item.get("created_at", ""), reverse=True)
+            return [self.public(job) for job in jobs[:limit]]
+
+    def restart(self, job_id: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            old = self._jobs.get(job_id)
+            if not old or old["status"] not in TERMINAL_STATES | {"interrupted"}:
+                return None
+            payload = old["payload"]
+        return self.create(payload, checkpoint=None)
 
     def get(self, job_id: str) -> Optional[Dict[str, Any]]:
         with self._lock:
@@ -153,7 +189,20 @@ class JobManager:
 
     @staticmethod
     def public(job: Dict[str, Any]) -> Dict[str, Any]:
-        return {key: value for key, value in job.items() if key not in {"payload", "checkpoint"}}
+        result = {key: value for key, value in job.items() if key not in {"payload", "checkpoint"}}
+        started = job.get("started_at")
+        finished = job.get("finished_at")
+        if started:
+            try:
+                start_dt = datetime.fromisoformat(started)
+                end_dt = datetime.fromisoformat(finished) if finished else datetime.now(timezone.utc)
+                result["elapsed_seconds"] = max(0, round((end_dt - start_dt).total_seconds()))
+                progress = int(job.get("progress") or 0)
+                if not finished and 2 < progress < 100:
+                    result["eta_seconds"] = round(result["elapsed_seconds"] * (100 - progress) / progress)
+            except ValueError:
+                pass
+        return result
 
 
 job_manager = JobManager()

@@ -11,6 +11,7 @@ import os
 import sys
 import math
 import logging
+import uuid
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
@@ -37,11 +38,12 @@ logger = logging.getLogger(__name__)
 class MoviePyRenderer:
     """工业级竖屏短视频高性能合成器"""
     
-    def __init__(self, width: int = VIDEO_WIDTH, height: int = VIDEO_HEIGHT, fps: int = VIDEO_FPS):
+    def __init__(self, width: int = VIDEO_WIDTH, height: int = VIDEO_HEIGHT, fps: int = VIDEO_FPS, caption_template: str = "impact"):
         self.width = width
         self.height = height
         self.fps = fps
         self._font_path = self._find_system_font()
+        self.caption_template = caption_template
 
     def _find_system_font(self) -> Optional[str]:
         candidates = [
@@ -57,13 +59,15 @@ class MoviePyRenderer:
                 return p
         return None
 
-    def _cover_clip(self, clip):
+    def _cover_clip(self, clip, crop_x: float = 0.5, crop_y: float = 0.5):
         """等比缩放并居中裁剪，避免横版素材被强制拉伸。"""
         source_w, source_h = clip.size
         scale = max(self.width / source_w, self.height / source_h)
         target_size = (int(round(source_w * scale)), int(round(source_h * scale)))
         resized = clip.resized(target_size) if hasattr(clip, "resized") else clip.resize(target_size)
-        x_center, y_center = target_size[0] / 2, target_size[1] / 2
+        half_w, half_h = self.width / 2, self.height / 2
+        x_center = min(max(target_size[0] * crop_x, half_w), target_size[0] - half_w)
+        y_center = min(max(target_size[1] * crop_y, half_h), target_size[1] - half_h)
         if hasattr(resized, "cropped"):
             return resized.cropped(
                 x_center=x_center,
@@ -114,7 +118,13 @@ class MoviePyRenderer:
         img = Image.new("RGBA", (self.width, sub_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        font_size = 48
+        styles = {
+            "impact": (48, (255, 255, 255), (0, 0, 0, 175), 4),
+            "clean": (42, (255, 255, 255), (15, 18, 25, 130), 2),
+            "news": (44, (255, 238, 30), (10, 35, 80, 220), 3),
+            "warm": (46, (255, 247, 225), (92, 45, 34, 175), 3),
+        }
+        font_size, text_color, background_color, stroke_width = styles.get(self.caption_template, styles["impact"])
         try:
             font = ImageFont.truetype(self._font_path, font_size) if self._font_path else ImageFont.load_default()
         except Exception:
@@ -133,10 +143,10 @@ class MoviePyRenderer:
         draw.rounded_rectangle(
             [tx - pad_x, ty - pad_y, tx + tw + pad_x, ty + th + pad_y],
             radius=16,
-            fill=(0, 0, 0, 175)
+            fill=background_color
         )
         
-        draw.text((tx, ty), text, font=font, fill=(255, 255, 255), stroke_fill=(0, 0, 0), stroke_width=4)
+        draw.text((tx, ty), text, font=font, fill=text_color, stroke_fill=(0, 0, 0), stroke_width=stroke_width)
         return img
 
     def render_project(
@@ -149,7 +159,9 @@ class MoviePyRenderer:
         output_path: Optional[Path] = None
     ) -> str:
         """高性能流式短视频渲染合成"""
-        output_path = output_path or (FINAL_OUTPUT_DIR / f"{project_id}_final.mp4")
+        output_path = Path(output_path or (FINAL_OUTPUT_DIR / f"{project_id}_final.mp4"))
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_output = output_path.with_name(f".{output_path.stem}.{uuid.uuid4().hex[:8]}.tmp.mp4")
         
         sfx_mgr = SFXManager()
         whoosh_sfx = sfx_mgr.get_whoosh()
@@ -203,21 +215,29 @@ class MoviePyRenderer:
             # 视觉画面加载
             asset_file = scene.get("asset_file")
             asset_type = scene.get("asset_type", "image")
+            crop_x = float(scene.get("crop_x", 0.5))
+            crop_y = float(scene.get("crop_y", 0.5))
             v_clip = None
             
             if asset_file and Path(asset_file).exists():
                 try:
                     if asset_type == "video":
                         v_raw = VideoFileClip(asset_file)
+                        trim_start = min(float(scene.get("trim_start", 0.0)), max(0.0, v_raw.duration - 0.1))
+                        if trim_start > 0:
+                            v_raw = v_raw.subclipped(trim_start) if hasattr(v_raw, "subclipped") else v_raw.subclip(trim_start)
+                        speed = float(scene.get("playback_speed", 1.0))
+                        if speed != 1.0 and hasattr(v_raw, "with_speed_scaled"):
+                            v_raw = v_raw.with_speed_scaled(speed)
                         if v_raw.duration < dur:
                             loops = int(math.ceil(dur / v_raw.duration))
                             v_raw = concatenate_videoclips([v_raw] * loops)
                         v_sub = v_raw.subclipped(0, dur) if hasattr(v_raw, "subclipped") else v_raw.subclip(0, dur)
-                        v_clip = self._cover_clip(v_sub)
+                        v_clip = self._cover_clip(v_sub, crop_x, crop_y)
                     else:
                         img_raw = ImageClip(asset_file)
                         v_sub = img_raw.with_duration(dur) if hasattr(img_raw, "with_duration") else img_raw.set_duration(dur)
-                        v_clip = self._cover_clip(v_sub)
+                        v_clip = self._cover_clip(v_sub, crop_x, crop_y)
                 except Exception as e:
                     logger.warning("处理素材失败 file=%s error=%s", asset_file, e)
                     
@@ -306,13 +326,15 @@ class MoviePyRenderer:
         
         try:
             final_video_composite.write_videofile(
-                str(output_path),
+                str(temp_output),
                 fps=self.fps,
                 codec="libx264",
                 audio_codec="aac",
                 threads=4,
                 preset="ultrafast"
             )
+            self.validate_output(temp_output, expected_duration=total_duration)
+            temp_output.replace(output_path)
         finally:
             try:
                 final_video_composite.close()
@@ -322,5 +344,31 @@ class MoviePyRenderer:
                     a.close()
             except Exception:
                 pass
+            if temp_output.exists():
+                temp_output.unlink(missing_ok=True)
                 
         return str(output_path)
+
+    @staticmethod
+    def validate_output(path: Path, expected_duration: float = 0.0) -> None:
+        """在发布成品前验证容器、视频流、音频流和时长。"""
+        if not path.is_file() or path.stat().st_size < 1024:
+            raise RuntimeError("渲染产物为空或不完整")
+        clip = None
+        try:
+            clip = VideoFileClip(str(path))
+            duration = float(clip.duration or 0.0)
+            tolerance = max(1.5, expected_duration * 0.08)
+            if duration <= 0 or (expected_duration and abs(duration - expected_duration) > tolerance):
+                raise RuntimeError(f"渲染产物时长异常: {duration:.2f}s")
+            if not getattr(clip, "size", None):
+                raise RuntimeError("渲染产物缺少视频流")
+            if clip.audio is None:
+                raise RuntimeError("渲染产物缺少音频流")
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(f"渲染产物无法读取: {exc}") from exc
+        finally:
+            if clip is not None:
+                clip.close()

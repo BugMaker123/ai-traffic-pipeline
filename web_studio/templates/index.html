@@ -1232,6 +1232,7 @@
                     <span class="quick-tag" onclick="setQuickTopic('普通人如何利用AI工具实现信息差变现？')">AI变现</span>
                     <span class="quick-tag" onclick="setQuickTopic('为什么你越来越不想社交了？心理学真相')">深度心理</span>
                     <span class="quick-tag" onclick="setQuickTopic('月薪5000和50000的人，思维差异究竟在哪里？')">财富逻辑</span>
+                    <select id="scriptVariantPicker" class="input-control" style="display:none;width:auto;padding:3px 8px" onchange="applyScriptVariant(Number(this.value))"></select>
                 </div>
             </div>
 
@@ -1398,6 +1399,24 @@
                         <option value="+8%">轻快短视频 (+8%)</option>
                     </select>
                 </div>
+                <div class="audio-config-grid">
+                    <div class="input-group">
+                        <label>💬 字幕品牌模板</label>
+                        <select class="input-control" id="captionTemplateSelect">
+                            <option value="impact">爆款冲击 · 黄白描边</option>
+                            <option value="clean">极简干净 · 轻底板</option>
+                            <option value="news">新闻资讯 · 蓝黄</option>
+                            <option value="warm">温暖故事 · 暖棕</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>🪄 脚本候选数</label>
+                        <select class="input-control" id="scriptVariantCount">
+                            <option value="1">生成 1 版</option>
+                            <option value="3" selected>生成 3 版供选择</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <!-- Primary Action Button -->
@@ -1426,6 +1445,13 @@
                     <span class="terminal-msg info">Traffic Studio 工业级视频合成引擎已就绪</span>
                 </div>
             </div>
+            <div class="audio-config-card" style="margin-top:10px;">
+                <div class="scenes-header-bar">
+                    <label>📋 最近任务</label>
+                    <button class="btn-tts-listen" onclick="loadJobHistory()">刷新</button>
+                </div>
+                <div id="jobHistory" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:11px;"></div>
+            </div>
         </div>
     </section>
 </main>
@@ -1437,6 +1463,7 @@
     let currentJobId = "";
     let currentCategory = "resonance";
     let currentAudio = null;
+    let scriptVariants = [];
 
     const categoryLabels = {
         resonance: '🔥 多平台共振',
@@ -1454,6 +1481,8 @@
         loadTrends();
         loadMediaStatus();
         updateStats();
+        document.querySelectorAll('.scene-card').forEach(enhanceSceneCard);
+        loadJobHistory();
     });
 
     function setQuickTopic(text) {
@@ -1596,7 +1625,86 @@
             </div>
         `;
         container.appendChild(card);
+        enhanceSceneCard(card);
         updateStats();
+    }
+
+    function ensureProjectId() {
+        if (!currentProjectId) currentProjectId = `proj_web_${Date.now().toString(36)}`;
+        return currentProjectId;
+    }
+
+    function enhanceSceneCard(card) {
+        if (card.querySelector('.asset-review-panel')) return;
+        const actions = card.querySelector('.scene-actions');
+        if (actions) {
+            const rewrite = document.createElement('button');
+            rewrite.className = 'btn-tts-listen';
+            rewrite.innerHTML = '<span>🪄 单镜重写</span>';
+            rewrite.onclick = () => rewriteScene(rewrite);
+            actions.prepend(rewrite);
+        }
+        const panel = document.createElement('div');
+        panel.className = 'asset-review-panel';
+        panel.style.cssText = 'margin-top:8px;padding:8px;border:1px solid rgba(148,163,184,.18);border-radius:8px;background:rgba(15,23,42,.45)';
+        panel.innerHTML = `
+            <div class="asset-preview" style="height:110px;border-radius:6px;background:#0b1020;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#64748b">素材待选择</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+                <button class="btn-tts-listen asset-refresh">🔄 换一批</button>
+                <label class="btn-tts-listen" style="cursor:pointer">📤 上传素材<input class="asset-upload" type="file" accept="video/*,image/*" hidden></label>
+                <label class="btn-tts-listen" style="cursor:pointer"><input class="asset-lock" type="checkbox"> 🔒 锁定</label>
+                <label style="font-size:10px;color:#94a3b8">起点 <input class="asset-trim" type="number" value="0" min="0" max="600" step="0.5" style="width:48px"></label>
+                <label style="font-size:10px;color:#94a3b8">速度 <select class="asset-speed"><option>.75</option><option selected>1</option><option>1.25</option><option>1.5</option><option>2</option></select></label>
+            </div>`;
+        card.appendChild(panel);
+        panel.querySelector('.asset-refresh').onclick = () => refreshSceneAsset(card);
+        panel.querySelector('.asset-upload').onchange = event => uploadSceneAsset(card, event.target.files[0]);
+    }
+
+    function setSceneAsset(card, assetFile, assetType, assetUrl) {
+        card.dataset.assetFile = assetFile || '';
+        card.dataset.assetType = assetType || '';
+        const preview = card.querySelector('.asset-preview');
+        preview.innerHTML = assetType === 'video'
+            ? `<video src="${escapeHtml(assetUrl)}" muted controls style="width:100%;height:100%;object-fit:cover"></video>`
+            : `<img src="${escapeHtml(assetUrl)}" style="width:100%;height:100%;object-fit:cover">`;
+    }
+
+    async function refreshSceneAsset(card) {
+        const cards = [...document.querySelectorAll('.scene-card')];
+        const index = cards.indexOf(card) + 1;
+        const keywords = card.querySelector('.scene-keywords').value.trim();
+        if (!keywords) return addLog('请先填写素材关键词', 'warn');
+        const resp = await fetch(`/api/projects/${ensureProjectId()}/scenes/${index}/refresh-asset?keywords=${encodeURIComponent(keywords)}`, {method:'POST'});
+        const data = await resp.json();
+        if (!resp.ok) return addLog(data.detail || '素材检索失败', 'error');
+        setSceneAsset(card, data.scene.asset_file, data.scene.asset_type, data.asset_url);
+        addLog(`🎞️ 分镜 ${index} 已更换素材`, 'success');
+    }
+
+    async function uploadSceneAsset(card, file) {
+        if (!file) return;
+        const index = [...document.querySelectorAll('.scene-card')].indexOf(card) + 1;
+        const resp = await fetch(`/api/projects/${ensureProjectId()}/scenes/${index}/asset?filename=${encodeURIComponent(file.name)}`, {method:'POST', headers:{'Content-Type':'application/octet-stream'}, body:file});
+        const data = await resp.json();
+        if (!resp.ok) return addLog(data.detail || '上传失败', 'error');
+        setSceneAsset(card, data.asset_file, data.asset_type, data.asset_url);
+        card.querySelector('.asset-lock').checked = true;
+        addLog(`📤 分镜 ${index} 素材已上传并锁定`, 'success');
+    }
+
+    async function rewriteScene(btn) {
+        const card = btn.closest('.scene-card');
+        const textarea = card.querySelector('textarea');
+        btn.disabled = true;
+        const resp = await fetch('/api/rewrite_scene', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({topic:document.getElementById('topicInput').value, text:textarea.value, style:document.getElementById('videoStyleSelect').value})});
+        const data = await resp.json();
+        if (resp.ok && data.scene) {
+            textarea.value = data.scene.voiceover_text;
+            card.querySelector('.scene-keywords').value = (data.scene.visual_keywords || []).join(', ');
+            updateStats();
+        } else addLog(data.detail || '单镜重写失败', 'error');
+        btn.disabled = false;
     }
 
     async function generateScript() {
@@ -1614,11 +1722,15 @@
             const resp = await fetch('/api/generate_script', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic, style, duration_tier })
+                body: JSON.stringify({ topic, style, duration_tier, variants: Number(document.getElementById('scriptVariantCount').value) })
             });
             const data = await resp.json();
             if (data.success && data.script) {
                 const s = data.script;
+                scriptVariants = data.variants || [s];
+                const picker = document.getElementById('scriptVariantPicker');
+                picker.innerHTML = scriptVariants.map((_, i) => `<option value="${i}">候选脚本 ${i + 1}</option>`).join('');
+                picker.style.display = scriptVariants.length > 1 ? 'inline-block' : 'none';
                 document.getElementById('videoTitleInput').value = s.title;
                 const container = document.getElementById('scenesContainer');
                 container.innerHTML = '';
@@ -1642,7 +1754,9 @@
                         </div>
                     `;
                     container.appendChild(scCard);
+                    enhanceSceneCard(scCard);
                 });
+                if (scriptVariants.length > 1) addLog(`🧪 已生成 ${scriptVariants.length} 版候选，当前展示第 1 版`, 'success');
                 updateStats();
                 addLog(`✅ 分镜创作完成！包含 ${s.scenes.length} 个镜头剧本已装载。`, 'success');
             }
@@ -1651,6 +1765,26 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<span>🪄 AI 深度拆解分镜</span>';
+        }
+    }
+
+    function applyScriptVariant(index) {
+        const script = scriptVariants[index];
+        if (!script) return;
+        document.getElementById('videoTitleInput').value = script.title;
+        const cards = [...document.querySelectorAll('.scene-card')];
+        if (cards.length === script.scenes.length) {
+            script.scenes.forEach((scene, i) => {
+                cards[i].querySelector('textarea').value = scene.voiceover_text;
+                cards[i].querySelector('.scene-keywords').value = (scene.visual_keywords || []).join(', ');
+                cards[i].dataset.assetFile = '';
+                cards[i].dataset.assetType = '';
+                cards[i].querySelector('.asset-preview').textContent = '素材待选择';
+            });
+            updateStats();
+            addLog(`🧪 已切换到候选脚本 ${index + 1}`, 'success');
+        } else {
+            addLog('候选脚本分镜数不同，请重新生成后选择', 'warn');
         }
     }
 
@@ -1713,7 +1847,12 @@
                 scenes.push({
                     scene_index: idx + 1,
                     voiceover_text: ta.value.trim(),
-                    visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8)
+                    visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8),
+                    asset_file: card.dataset.assetFile || null,
+                    asset_type: card.dataset.assetType || null,
+                    asset_locked: card.querySelector('.asset-lock')?.checked || false,
+                    trim_start: Number(card.querySelector('.asset-trim')?.value || 0),
+                    playback_speed: Number(card.querySelector('.asset-speed')?.value || 1)
                 });
             }
         });
@@ -1733,7 +1872,7 @@
             const resp = await fetch('/api/jobs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, scenes, voice, bgm_type: bgm, tts_rate: ttsRate, tts_pitch: '-2Hz' })
+                body: JSON.stringify({ project_id: ensureProjectId(), title, scenes, voice, bgm_type: bgm, tts_rate: ttsRate, tts_pitch: '-2Hz', caption_template: document.getElementById('captionTemplateSelect').value })
             });
             const data = await resp.json();
             if (data.success && data.job) {
@@ -1763,7 +1902,7 @@
             const job = data.job;
             if (job.stage !== previousStage) {
                 previousStage = job.stage;
-                addLog(`⚙️ 当前阶段: ${job.stage}`, 'info');
+                addLog(`⚙️ 当前阶段: ${job.stage} · ${job.progress || 0}% · 已用 ${job.elapsed_seconds || 0}s`, 'info');
             }
             if (job.status === 'succeeded') {
                 currentVideoUrl = job.video_url;
@@ -1785,6 +1924,7 @@
                     job.logs.forEach(l => addLog(l, 'info'));
                 }
                 addLog('🎉 1080x1920 视频渲染完成！可在监视器中预览或打开剪映。', 'success');
+                loadJobHistory();
                 break;
             }
             if (['failed', 'cancelled', 'interrupted'].includes(job.status)) {
@@ -1820,6 +1960,26 @@
             a.download = 'traffic_studio_export.mp4';
             a.click();
         }
+    }
+
+    async function loadJobHistory() {
+        const box = document.getElementById('jobHistory');
+        if (!box) return;
+        try {
+            const data = await (await fetch('/api/jobs?limit=8')).json();
+            box.innerHTML = (data.jobs || []).map(job => `<div style="display:flex;align-items:center;gap:5px;padding:6px;background:rgba(15,23,42,.55);border-radius:6px"><span style="flex:1">${escapeHtml(job.project_id)} · ${escapeHtml(job.status)} · ${job.progress || 0}% · ${job.elapsed_seconds || 0}s</span>${['failed','cancelled','interrupted'].includes(job.status) ? `<button class="btn-tts-listen" onclick="jobAction('${job.job_id}','retry')">续跑</button><button class="btn-tts-listen" onclick="jobAction('${job.job_id}','restart')">重开</button>` : ''}${['queued','running','cancelling'].includes(job.status) ? `<button class="btn-tts-listen" onclick="jobAction('${job.job_id}','cancel')">取消</button>` : ''}</div>`).join('') || '<span style="color:#64748b">暂无任务</span>';
+        } catch (_) { box.innerHTML = '<span style="color:#fb7185">任务记录加载失败</span>'; }
+    }
+
+    async function jobAction(jobId, action) {
+        const resp = await fetch(`/api/jobs/${jobId}/${action}`, {method:'POST'});
+        const data = await resp.json();
+        if (resp.ok && data.job) {
+            currentJobId = data.job.job_id;
+            currentProjectId = data.job.project_id;
+            loadJobHistory();
+            if (action !== 'cancel') pollRenderJob(currentJobId);
+        } else addLog(data.detail || '任务操作失败', 'error');
     }
 
     function addLog(msg, type = 'info') {

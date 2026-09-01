@@ -50,3 +50,22 @@ def test_media_status_is_explicit():
     response = client.get("/api/media/status")
     assert response.status_code == 200
     assert isinstance(response.json()["pexels_configured"], bool)
+
+
+def test_upload_scene_asset(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, "ASSETS_OUTPUT_DIR", tmp_path)
+    response = client.post(
+        "/api/projects/proj_upload/scenes/1/asset?filename=cover.jpg",
+        content=b"fake-image-content",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert response.status_code == 200
+    assert response.json()["asset_type"] == "image"
+    assert len(list(tmp_path.glob("proj_upload_upload_scene_1_*.jpg"))) == 1
+
+
+def test_list_jobs_endpoint(monkeypatch):
+    monkeypatch.setattr(server.job_manager, "list", lambda limit: [{"job_id": "job_1", "progress": 75}])
+    response = client.get("/api/jobs?limit=8")
+    assert response.status_code == 200
+    assert response.json()["jobs"][0]["progress"] == 75

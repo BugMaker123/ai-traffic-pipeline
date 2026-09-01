@@ -183,7 +183,7 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
     bgm_path = state.get("bgm_path")
     
     logs.append("🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (含转场音效与大标题)...")
-    renderer = MoviePyRenderer()
+    renderer = MoviePyRenderer(caption_template=state.get("caption_template", "impact"))
     final_video = renderer.render_project(
         project_id=project_id,
         title=title,
@@ -240,6 +240,7 @@ class VideoPipelineRunner:
         checkpoint_callback=None,
         tts_rate: Optional[str] = None,
         tts_pitch: Optional[str] = None,
+        caption_template: str = "impact",
     ) -> PipelineState:
         proj_id = project_id or f"proj_{uuid.uuid4().hex[:8]}"
         initial_state: PipelineState = {
@@ -254,6 +255,7 @@ class VideoPipelineRunner:
             , "cancel_event": cancel_event
             , "tts_rate": tts_rate
             , "tts_pitch": tts_pitch
+            , "caption_template": caption_template
         }
         if resume_state:
             initial_state.update(resume_state)
