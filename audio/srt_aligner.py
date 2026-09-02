@@ -60,11 +60,21 @@ class SubtitleAligner:
                 if clean_text:
                     c_start = current_chunk_words[0]["start"] + start_offset
                     c_end = current_chunk_words[-1]["end"] + start_offset
+                    chunk_words = [
+                        {
+                            "text": w["text"].strip("，。！？；,!?;、 \t\n"),
+                            "start": round(w["start"] + start_offset, 3),
+                            "end": round(w["end"] + start_offset, 3),
+                        }
+                        for w in current_chunk_words
+                        if w["text"].strip("，。！？；,!?;、 \t\n")
+                    ]
                     chunks.append({
                         "text": clean_text,
                         "start": round(c_start, 3),
                         "end": round(c_end, 3),
-                        "duration": round(c_end - c_start, 3)
+                        "duration": round(c_end - c_start, 3),
+                        "words": chunk_words,
                     })
                 current_chunk_words = []
                 current_chunk_text = ""
@@ -75,11 +85,21 @@ class SubtitleAligner:
             if clean_text:
                 c_start = current_chunk_words[0]["start"] + start_offset
                 c_end = current_chunk_words[-1]["end"] + start_offset
+                chunk_words = [
+                    {
+                        "text": w["text"].strip("，。！？；,!?;、 \t\n"),
+                        "start": round(w["start"] + start_offset, 3),
+                        "end": round(w["end"] + start_offset, 3),
+                    }
+                    for w in current_chunk_words
+                    if w["text"].strip("，。！？；,!?;、 \t\n")
+                ]
                 chunks.append({
                     "text": clean_text,
                     "start": round(c_start, 3),
                     "end": round(c_end, 3),
-                    "duration": round(c_end - c_start, 3)
+                    "duration": round(c_end - c_start, 3),
+                    "words": chunk_words,
                 })
                 
         return chunks

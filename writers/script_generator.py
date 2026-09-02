@@ -86,6 +86,36 @@ class ScriptGenerator:
         # 2. 深度多幕剧本兜底生成
         return self._generate_deep_fallback_script(topic_or_content, style, proj_id)
 
+    def generate_script_from_reference(
+        self,
+        ref_title: str,
+        ref_transcript: str,
+        style: str = "干货科普",
+        duration_tier: str = "deep_60s",
+        project_id: Optional[str] = None,
+        source_platform: str = "短视频提取",
+    ) -> VideoProjectScript:
+        """
+        基于原视频转写文案或参考材料进行爆款重构仿写：
+        分析其 Hook 破题法、论点层层递进与互动转折，去粗取精输出高质量原创分镜。
+        """
+        prompt_topic = f"【爆款重构】原视频主题：《{ref_title}》"
+        prompt_source = (
+            f"以下为原视频/文章的参考提取文案（提取自 {source_platform}）：\n\n"
+            f"--- 原文开始 ---\n{ref_transcript[:3000]}\n--- 原文结束 ---\n\n"
+            "请深入解构该内容的爆款内核与认知痛点，重新组织表达，去除口水话与赘述，"
+            "使用全新的抓人开头（黄金3秒Hook）与更清晰有力的层次结构，重构出适合短视频口播的全新原创分镜脚本。"
+        )
+        return self.generate_script(
+            topic_or_content=prompt_topic,
+            style=style,
+            duration_tier=duration_tier,
+            project_id=project_id,
+            source_content=prompt_source,
+            source_platform=source_platform,
+            captured_at=str(date.today()),
+        )
+
     @staticmethod
     def _unsupported_temporal_claims(script: Dict[str, Any], allowed_text: str) -> list[str]:
         """拦截来源材料中不存在的高时效年份、型号与价格断言。"""

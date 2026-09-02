@@ -186,14 +186,19 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
     subtitles = state.get("subtitles", [])
     bgm_path = state.get("bgm_path")
     
-    logs.append("🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (含转场音效与大标题)...")
+    video_layout = state.get("video_layout", "impact")
+    enable_karaoke = state.get("enable_karaoke", True)
+    
+    logs.append(f"🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (版式: {video_layout}, 卡拉OK: {enable_karaoke})...")
     renderer = MoviePyRenderer()
     final_video = renderer.render_project(
         project_id=project_id,
         title=title,
         scenes=scenes,
         subtitles=subtitles,
-        bgm_path=bgm_path
+        bgm_path=bgm_path,
+        layout_template=video_layout,
+        enable_karaoke=enable_karaoke,
     )
     logs.append(f"🎉 短视频成品渲染成功: {final_video}")
     
@@ -244,6 +249,8 @@ class VideoPipelineRunner:
         checkpoint_callback=None,
         tts_rate: Optional[str] = None,
         tts_pitch: Optional[str] = None,
+        video_layout: str = "impact",
+        enable_karaoke: bool = True,
     ) -> PipelineState:
         proj_id = project_id or f"proj_{uuid.uuid4().hex[:8]}"
         initial_state: PipelineState = {
@@ -252,6 +259,8 @@ class VideoPipelineRunner:
             "script_data": script_data,
             "voice": voice,
             "bgm_type": bgm_type,
+            "video_layout": video_layout,
+            "enable_karaoke": enable_karaoke,
             "logs": [],
             "status": "init"
             , "progress_callback": progress_callback

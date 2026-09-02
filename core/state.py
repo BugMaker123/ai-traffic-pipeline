@@ -59,6 +59,8 @@ class PipelineState(TypedDict, total=False):
     tts_rate: Optional[str]
     tts_pitch: Optional[str]
     bgm_type: Optional[str]
+    video_layout: Optional[str]
+    enable_karaoke: Optional[bool]
     raw_topic: Optional[Dict[str, Any]]
     
     # 脚本创作输出

@@ -79,13 +79,15 @@ class PexelsMediaClient:
         scene_idx: int,
         project_id: str,
         duration: float = 4.0,
-        prefer_video: bool = True
+        prefer_video: bool = True,
+        image_prompt: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         获取分镜素材：
-        1. 优先调用 Pexels API 检索真实视频
-        2. 根据关键词语义从 1080x1920 超清实拍商用摄影库中匹配真实大片 (0 散点，100% 真实实景)
-        3. 保底生成纯净深色弥散流光
+        1. 优先调用 Pexels API 检索真实竖屏视频
+        2. 根据关键词语义从 1080x1920 超清实拍商用摄影库中匹配真实大片 (Unsplash 直链)
+        3. 若有 AI 生图需求或未匹配到，调用 AIImageGenerator 生图
+        4. 保底生成纯净深色弥散流光
         """
         kw_str = " ".join(keywords).lower() if keywords else ""
         
@@ -104,9 +106,25 @@ class PexelsMediaClient:
             if res_photo:
                 return res_photo
         except Exception as e:
-            logger.warning("实景图片匹配失败，生成本地后备素材: %s", e)
+            logger.warning("实景图片匹配失败，尝试 AI 生图兜底: %s", e)
 
-        # 3. 保底纯净深色弥散流光 (绝不画任何粗糙白点)
+        # 3. AI 生图引擎兜底
+        try:
+            from media.ai_image_gen import AIImageGenerator
+            ai_gen = AIImageGenerator()
+            prompt = image_prompt or kw_str or "cinematic abstract portrait"
+            ai_img = ai_gen.generate_image(prompt=prompt, project_id=project_id, scene_index=scene_idx)
+            if ai_img and os.path.exists(ai_img):
+                return {
+                    "asset_file": ai_img,
+                    "asset_type": "image",
+                    "source": "ai_gen",
+                    "keyword": prompt,
+                }
+        except Exception as e:
+            logger.warning("AI 生图失败，切换至本地渐变保底: %s", e)
+
+        # 4. 保底纯净深色弥散流光
         return self._generate_pure_mesh_gradient(scene_idx, project_id)
 
     def _match_and_download_curated_photo(
@@ -256,7 +274,8 @@ class PexelsMediaClient:
             s_idx = s.get("scene_index", 1)
             kws = s.get("visual_keywords", ["cinematic", "focus"])
             dur = float(s.get("duration", 4.0))
-            res = self.fetch_scene_asset(kws, s_idx, project_id, duration=dur)
+            img_prompt = s.get("image_prompt")
+            res = self.fetch_scene_asset(kws, s_idx, project_id, duration=dur, image_prompt=img_prompt)
             s_copy = dict(s)
             s_copy["asset_file"] = res.get("asset_file")
             s_copy["asset_type"] = res.get("asset_type")

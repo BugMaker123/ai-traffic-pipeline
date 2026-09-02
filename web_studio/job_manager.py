@@ -130,6 +130,8 @@ class JobManager:
                 bgm_type=payload["bgm_type"],
                 tts_rate=payload.get("tts_rate"),
                 tts_pitch=payload.get("tts_pitch"),
+                video_layout=payload.get("video_layout", "impact"),
+                enable_karaoke=payload.get("enable_karaoke", True),
                 project_id=payload["project_id"],
                 progress_callback=progress,
                 cancel_event=event,

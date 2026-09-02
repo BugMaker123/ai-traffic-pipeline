@@ -1215,24 +1215,51 @@
         </div>
 
         <div class="col-body">
-            <!-- Topic Input AI Box -->
-            <div class="prompt-engine-box">
-                <div class="prompt-input-row">
-                    <div class="prompt-input-wrapper">
-                        <span class="prompt-icon">✨</span>
-                        <input type="text" id="topicInput" placeholder="输入短视频创作主题，或直接点击左侧爆款热点..." value="为什么真正自律的人从不靠意志力死撑？">
+            <!-- Mode Switch Tabs -->
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 10px; border: 1px solid var(--border-subtle);">
+                <button class="btn-action-outline" id="tabModeTopic" style="flex: 1; border: none; background: var(--primary-gradient); color: #020408; font-weight: 700;" onclick="switchCreationMode('topic')">✨ 主题灵感创作</button>
+                <button class="btn-action-outline" id="tabModeExtract" style="flex: 1; border: none; color: var(--text-secondary);" onclick="switchCreationMode('extract')">🔗 原视频提取仿写</button>
+            </div>
+
+            <!-- Panel 1: Topic Input AI Box -->
+            <div id="panelTopicMode">
+                <div class="prompt-engine-box">
+                    <div class="prompt-input-row">
+                        <div class="prompt-input-wrapper">
+                            <span class="prompt-icon">✨</span>
+                            <input type="text" id="topicInput" placeholder="输入短视频创作主题，或直接点击左侧爆款热点..." value="为什么真正自律的人从不靠意志力死撑？">
+                        </div>
+                        <button class="btn-magic-ai" id="btnGenScript" onclick="generateScript()">
+                            <span>🪄 AI 深度拆解分镜</span>
+                        </button>
                     </div>
-                    <button class="btn-magic-ai" id="btnGenScript" onclick="generateScript()">
-                        <span>🪄 AI 深度拆解分镜</span>
-                    </button>
+                    <!-- Quick Topic Tags -->
+                    <div class="quick-tag-strip">
+                        <span>灵感推荐:</span>
+                        <span class="quick-tag" onclick="setQuickTopic('为什么真正自律的人从不靠意志力死撑？')">自律认知</span>
+                        <span class="quick-tag" onclick="setQuickTopic('普通人如何利用AI工具实现信息差变现？')">AI变现</span>
+                        <span class="quick-tag" onclick="setQuickTopic('为什么你越来越不想社交了？心理学真相')">深度心理</span>
+                        <span class="quick-tag" onclick="setQuickTopic('月薪5000和50000的人，思维差异究竟在哪里？')">财富逻辑</span>
+                    </div>
                 </div>
-                <!-- Quick Topic Tags -->
-                <div class="quick-tag-strip">
-                    <span>灵感推荐:</span>
-                    <span class="quick-tag" onclick="setQuickTopic('为什么真正自律的人从不靠意志力死撑？')">自律认知</span>
-                    <span class="quick-tag" onclick="setQuickTopic('普通人如何利用AI工具实现信息差变现？')">AI变现</span>
-                    <span class="quick-tag" onclick="setQuickTopic('为什么你越来越不想社交了？心理学真相')">深度心理</span>
-                    <span class="quick-tag" onclick="setQuickTopic('月薪5000和50000的人，思维差异究竟在哪里？')">财富逻辑</span>
+            </div>
+
+            <!-- Panel 2: Video URL Extraction & Rewrite Box -->
+            <div id="panelExtractMode" style="display: none;">
+                <div class="prompt-engine-box" style="border-color: rgba(168, 85, 247, 0.4); background: linear-gradient(180deg, rgba(168, 85, 247, 0.08) 0%, rgba(15, 20, 32, 0.6) 100%);">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="videoUrlInput" class="input-control" style="background: rgba(0,0,0,0.4); border-color: rgba(168, 85, 247, 0.3);" placeholder="粘贴抖音 / B站 / 小红书 / YouTube 分享链接或带文本的口令...">
+                        <button class="btn-magic-ai" id="btnExtractUrl" style="background: linear-gradient(135deg, #A855F7 0%, #6366F1 100%); white-space: nowrap;" onclick="extractAndRewriteVideo()">
+                            <span>⚡ 提取并仿写分镜</span>
+                        </button>
+                    </div>
+                    <div id="extractResultBox" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
+                        <div style="display: flex; justify-content: space-between; color: #A855F7; font-weight: 700; margin-bottom: 4px;">
+                            <span id="extractTitleText">原视频：</span>
+                            <span id="extractAuthorText">来源平台</span>
+                        </div>
+                        <div id="extractTranscriptText" style="color: #94A3B8; max-height: 80px; overflow-y: auto; line-height: 1.5;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1277,13 +1304,18 @@
                                 <button class="btn-tts-listen" onclick="previewVoice(this)">
                                     <span>🔊 试听配音</span>
                                 </button>
+                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 1)">
+                                    <span>🎨 AI 生图</span>
+                                </button>
                             </div>
                         </div>
                         <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！</textarea>
                         <div class="scene-asset-bar">
                             <input class="scene-keywords-input scene-keywords" value="disciplined person morning habit, brain thinking, focus" placeholder="实拍画面英文关键词 (Pexels检索)">
-                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                            <input class="scene-keywords-input scene-image-prompt" value="hyperrealistic portrait of determined person with sunrise backlight, cinematic lighting, 9:16" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                            <span class="scene-asset-tag">实拍/AI 生图</span>
                         </div>
+                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
                     </div>
 
                     <!-- Scene 2 -->
@@ -1294,13 +1326,18 @@
                                 <button class="btn-tts-listen" onclick="previewVoice(this)">
                                     <span>🔊 试听配音</span>
                                 </button>
+                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 2)">
+                                    <span>🎨 AI 生图</span>
+                                </button>
                             </div>
                         </div>
                         <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。</textarea>
                         <div class="scene-asset-bar">
                             <input class="scene-keywords-input scene-keywords" value="brain psychology, exhausted person working, micro habits" placeholder="实拍画面英文关键词">
-                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                            <input class="scene-keywords-input scene-image-prompt" value="modern abstract neon glowing neural network gears turning, cinematic" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                            <span class="scene-asset-tag">实拍/AI 生图</span>
                         </div>
+                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
                     </div>
 
                     <!-- Scene 3 -->
@@ -1311,13 +1348,18 @@
                                 <button class="btn-tts-listen" onclick="previewVoice(this)">
                                     <span>🔊 试听配音</span>
                                 </button>
+                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 3)">
+                                    <span>🎨 AI 生图</span>
+                                </button>
                             </div>
                         </div>
                         <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！</textarea>
                         <div class="scene-asset-bar">
                             <input class="scene-keywords-input scene-keywords" value="stopwatch timer 2 minutes, easy start, smiling productive" placeholder="实拍画面英文关键词">
-                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                            <input class="scene-keywords-input scene-image-prompt" value="glowing gold hourglass timer on minimal wooden table, warm sunlight" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                            <span class="scene-asset-tag">实拍/AI 生图</span>
                         </div>
+                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
                     </div>
 
                     <!-- Scene 4 -->
@@ -1328,13 +1370,18 @@
                                 <button class="btn-tts-listen" onclick="previewVoice(this)">
                                     <span>🔊 试听配音</span>
                                 </button>
+                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 4)">
+                                    <span>🎨 AI 生图</span>
+                                </button>
                             </div>
                         </div>
                         <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！</textarea>
                         <div class="scene-asset-bar">
                             <input class="scene-keywords-input scene-keywords" value="sun rise motivation, successful lifestyle, like and subscribe" placeholder="实拍画面英文关键词">
-                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                            <input class="scene-keywords-input scene-image-prompt" value="confident person standing at mountain summit sunrise, dramatic golden rays" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                            <span class="scene-asset-tag">实拍/AI 生图</span>
                         </div>
+                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
                     </div>
                 </div>
             </div>
@@ -1375,10 +1422,15 @@
                     <div class="input-group">
                         <label>🎙️ 解说音色</label>
                         <select class="input-control" id="voiceSelect">
-                            <option value="zh-CN-XiaoxiaoNeural" selected>晓晓 · 自然知性 (推荐)</option>
-                            <option value="zh-CN-YunxiNeural">云希 · 青年叙事</option>
-                            <option value="zh-CN-YunjianNeural">云健 · 稳重大气</option>
-                            <option value="zh-CN-YunyangNeural">云扬 · 专业干货</option>
+                            <option value="zh-CN-YunxiNeural" selected>云希 · 活力解说 (最推荐)</option>
+                            <option value="zh-CN-YunjianNeural">云健 · 稳重大气沉浸</option>
+                            <option value="zh-CN-XiaoxiaoNeural">晓晓 · 自然知性女声</option>
+                            <option value="zh-CN-YunzeNeural">云泽 · 激情热血男声</option>
+                            <option value="zh-CN-XiaomengNeural">晓梦 · 温柔治愈女声</option>
+                            <option value="zh-CN-YunjieNeural">云杰 · 悬疑故事播报</option>
+                            <option value="zh-CN-liaoning-XiaobeiNeural">东北小北 · 幽默老铁</option>
+                            <option value="zh-CN-YunyangNeural">云扬 · 专业新闻干货</option>
+                            <option value="zh-CN-XiaoyiNeural">晓伊 · 甜美自然女声</option>
                         </select>
                     </div>
                     <div class="input-group">
@@ -1387,17 +1439,35 @@
                             <option value="energetic" selected>轻快律动 (Lo-Fi)</option>
                             <option value="suspense">悬疑反转 (深沉)</option>
                             <option value="emotional">治愈温暖 (钢琴)</option>
+                            <option value="chill">轻松日常 (Chill)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label>⚡ 语音语速节奏</label>
-                    <select class="input-control" id="voiceRateSelect">
-                        <option value="-5%">舒缓自然 (-5%)</option>
-                        <option value="+0%" selected>自然对话 · 推荐 (+0%)</option>
-                        <option value="+8%">轻快短视频 (+8%)</option>
-                    </select>
+                <div class="audio-config-grid">
+                    <div class="input-group">
+                        <label>📐 视频排版模版</label>
+                        <select class="input-control" id="layoutSelect">
+                            <option value="impact" selected>📱 沉浸大字 · 爆款全屏</option>
+                            <option value="split_screen">🪟 上下分屏 · 动态双轨</option>
+                            <option value="card_quote">📜 磨砂卡片 · 杂志金句</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>⚡ 语音语速节奏</label>
+                        <select class="input-control" id="voiceRateSelect">
+                            <option value="-5%">舒缓自然 (-5%)</option>
+                            <option value="+0%" selected>自然对话 · 推荐 (+0%)</option>
+                            <option value="+8%">轻快短视频 (+8%)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <label style="font-size: 11.5px; color: #CBD5E1; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" id="karaokeToggle" checked style="accent-color: #38BDF8;">
+                        <span>✨ 启用卡拉OK逐字亮金放大动效 (完播率倍增)</span>
+                    </label>
                 </div>
             </div>
 
@@ -1577,6 +1647,158 @@
         document.getElementById('sceneCountText').textContent = `${cards.length} 分镜 / 共 ${totalWords} 字 / 预估 ${estSeconds} 秒`;
     }
 
+    function switchCreationMode(mode) {
+        const btnTopic = document.getElementById('tabModeTopic');
+        const btnExtract = document.getElementById('tabModeExtract');
+        const panelTopic = document.getElementById('panelTopicMode');
+        const panelExtract = document.getElementById('panelExtractMode');
+
+        if (mode === 'extract') {
+            btnTopic.style.background = 'transparent';
+            btnTopic.style.color = 'var(--text-secondary)';
+            btnExtract.style.background = 'linear-gradient(135deg, #A855F7 0%, #6366F1 100%)';
+            btnExtract.style.color = '#FFFFFF';
+            btnExtract.style.fontWeight = '700';
+            panelTopic.style.display = 'none';
+            panelExtract.style.display = 'block';
+        } else {
+            btnExtract.style.background = 'transparent';
+            btnExtract.style.color = 'var(--text-secondary)';
+            btnTopic.style.background = 'var(--primary-gradient)';
+            btnTopic.style.color = '#020408';
+            btnTopic.style.fontWeight = '700';
+            panelExtract.style.display = 'none';
+            panelTopic.style.display = 'block';
+        }
+    }
+
+    async function extractAndRewriteVideo() {
+        const input = document.getElementById('videoUrlInput');
+        const rawText = input.value.trim();
+        if (!rawText) return;
+
+        const btn = document.getElementById('btnExtractUrl');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ 提取音视频与转写中...</span>';
+        addLog(`🔗 正在解析视频链接: ${rawText.slice(0, 50)}...`, 'info');
+
+        try {
+            const resp = await fetch('/api/extract_video_content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url_or_text: rawText })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                throw new Error(data.detail || '提取失败');
+            }
+
+            document.getElementById('extractResultBox').style.display = 'block';
+            document.getElementById('extractTitleText').textContent = `原视频：《${data.title}》`;
+            document.getElementById('extractAuthorText').textContent = `${data.platform} · ${data.author}`;
+            document.getElementById('extractTranscriptText').textContent = data.transcript || data.description;
+            addLog(`✅ 成功提取原片！转写文案共 ${data.transcript.length} 字，正在智能仿写重构...`, 'success');
+
+            // 触发仿写重构
+            btn.innerHTML = '<span>🪄 AI 正在重构原创分镜...</span>';
+            const style = document.getElementById('videoStyleSelect').value;
+            const duration_tier = document.getElementById('durationSelect').value;
+
+            const refResp = await fetch('/api/generate_script_from_ref', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ref_title: data.title,
+                    ref_transcript: data.transcript,
+                    style,
+                    duration_tier,
+                    source_platform: data.platform
+                })
+            });
+            const refData = await refResp.json();
+            if (refData.success && refData.script) {
+                const s = refData.script;
+                document.getElementById('videoTitleInput').value = s.title;
+                const container = document.getElementById('scenesContainer');
+                container.innerHTML = '';
+                s.scenes.forEach(sc => {
+                    const scCard = document.createElement('div');
+                    scCard.className = 'scene-card';
+                    scCard.innerHTML = `
+                        <div class="scene-top-row">
+                            <span class="scene-index-badge">分镜 ${sc.scene_index} · ${sc.transition} (${sc.voiceover_text.length}字)</span>
+                            <div class="scene-actions">
+                                <button class="btn-tts-listen" onclick="previewVoice(this)">
+                                    <span>🔊 试听配音</span>
+                                </button>
+                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, ${sc.scene_index})">
+                                    <span>🎨 AI 生图</span>
+                                </button>
+                            </div>
+                        </div>
+                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">${escapeHtml(sc.voiceover_text)}</textarea>
+                        <div class="scene-asset-bar">
+                            <input class="scene-keywords-input scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="实拍画面英文关键词">
+                            <input class="scene-keywords-input scene-image-prompt" value="${escapeHtml(sc.image_prompt || '')}" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                            <span class="scene-asset-tag">实拍/AI 生图</span>
+                        </div>
+                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
+                    `;
+                    container.appendChild(scCard);
+                });
+                updateStats();
+                addLog(`🎉 爆款重构完成！全新原创分镜剧本已就绪（共 ${s.scenes.length} 个分镜）。`, 'success');
+            }
+        } catch (e) {
+            addLog(`❌ 提取重构失败: ${e.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    async function generateAiImageForScene(btn, sceneIndex) {
+        const card = btn.closest('.scene-card');
+        const promptInput = card.querySelector('.scene-image-prompt');
+        const keywordInput = card.querySelector('.scene-keywords');
+        const prompt = (promptInput?.value || keywordInput?.value || '').trim();
+        if (!prompt) {
+            addLog('⚠️ 请先输入分镜 Prompt 或关键词再触发生图', 'warn');
+            return;
+        }
+
+        const previewContainer = card.querySelector('.scene-ai-img-preview');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ 生图中</span>';
+        addLog(`🎨 正在为分镜 #${sceneIndex} 生成 AI 竖屏视觉配图...`, 'info');
+
+        try {
+            const resp = await fetch('/api/generate_ai_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, scene_index: sceneIndex })
+            });
+            const data = await resp.json();
+            if (data.success && data.image_url) {
+                previewContainer.style.display = 'block';
+                previewContainer.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px; background: rgba(0,0,0,0.3); padding:4px 8px; border-radius:6px; border:1px solid rgba(56,189,248,0.2);">
+                        <img src="${data.image_url}" style="width: 36px; height: 64px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
+                        <span style="font-size: 11px; color: #38BDF8;">✓ AI 9:16 竖屏图片生成就绪</span>
+                    </div>
+                `;
+                addLog(`✅ 分镜 #${sceneIndex} AI 生图成功！`, 'success');
+            }
+        } catch (e) {
+            addLog(`❌ 生图失败: ${e.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
     function addNewScene() {
         const container = document.getElementById('scenesContainer');
         const count = container.querySelectorAll('.scene-card').length + 1;
@@ -1589,6 +1811,9 @@
                     <button class="btn-tts-listen" onclick="previewVoice(this)">
                         <span>🔊 试听配音</span>
                     </button>
+                    <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, ${count})">
+                        <span>🎨 AI 生图</span>
+                    </button>
                     <button class="btn-tts-listen" style="border-color: rgba(244,63,94,0.3); color:#FB7185;" onclick="this.closest('.scene-card').remove(); updateStats();">
                         <span>🗑</span>
                     </button>
@@ -1597,8 +1822,10 @@
             <textarea class="scene-voiceover-area" rows="2" placeholder="输入本分镜旁白解说文案..." oninput="updateStats()"></textarea>
             <div class="scene-asset-bar">
                 <input class="scene-keywords-input scene-keywords" placeholder="实拍画面英文关键词 (例如: cinematic urban office)">
-                <span class="scene-asset-tag">Pexels 实拍优先</span>
+                <input class="scene-keywords-input scene-image-prompt" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                <span class="scene-asset-tag">实拍/AI 生图</span>
             </div>
+            <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
         `;
         container.appendChild(card);
         updateStats();
@@ -1645,13 +1872,18 @@
                                 <button class="btn-tts-listen" onclick="previewVoice(this)">
                                     <span>🔊 试听配音</span>
                                 </button>
+                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, ${sc.scene_index})">
+                                    <span>🎨 AI 生图</span>
+                                </button>
                             </div>
                         </div>
                         <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">${escapeHtml(sc.voiceover_text)}</textarea>
                         <div class="scene-asset-bar">
                             <input class="scene-keywords-input scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="实拍画面英文关键词">
-                            <span class="scene-asset-tag">Pexels 实拍优先</span>
+                            <input class="scene-keywords-input scene-image-prompt" value="${escapeHtml(sc.image_prompt || '')}" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
+                            <span class="scene-asset-tag">实拍/AI 生图</span>
                         </div>
+                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
                     `;
                     container.appendChild(scCard);
                 });
@@ -1715,17 +1947,21 @@
         const title = document.getElementById('videoTitleInput').value.trim();
         const voice = document.getElementById('voiceSelect').value;
         const bgm = document.getElementById('bgmSelect').value;
+        const layout = document.getElementById('layoutSelect').value;
+        const enableKaraoke = document.getElementById('karaokeToggle').checked;
         const ttsRate = document.getElementById('voiceRateSelect').value;
 
         const scenes = [];
         document.querySelectorAll('.scene-card').forEach((card, idx) => {
             const ta = card.querySelector('textarea');
             const keywordInput = card.querySelector('.scene-keywords');
+            const promptInput = card.querySelector('.scene-image-prompt');
             if (ta && ta.value.trim()) {
                 scenes.push({
                     scene_index: idx + 1,
                     voiceover_text: ta.value.trim(),
-                    visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8)
+                    visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8),
+                    image_prompt: promptInput?.value || ''
                 });
             }
         });
@@ -1739,13 +1975,22 @@
         btn.disabled = true;
         btn.innerHTML = '<span>⚙️ 全自动流水线极速渲染中...</span>';
 
-        addLog('🚀 启动全自动流水线：TTS合成 -> 毫秒字幕 -> 动态素材 -> 音效混音 -> 视频导出...', 'info');
+        addLog(`🚀 启动全自动流水线：TTS合成 -> 毫秒字幕 -> 动态素材 -> 音效混音 -> 视频导出 (版式: ${layout}, 卡拉OK: ${enableKaraoke})...`, 'info');
 
         try {
             const resp = await fetch('/api/jobs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, scenes, voice, bgm_type: bgm, tts_rate: ttsRate, tts_pitch: '-2Hz' })
+                body: JSON.stringify({
+                    title,
+                    scenes,
+                    voice,
+                    bgm_type: bgm,
+                    video_layout: layout,
+                    enable_karaoke: enableKaraoke,
+                    tts_rate: ttsRate,
+                    tts_pitch: '-2Hz'
+                })
             });
             const data = await resp.json();
             if (data.success && data.job) {

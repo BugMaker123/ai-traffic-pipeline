@@ -6,6 +6,7 @@ dynamic = ["dependencies"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = ["integration: requires network access and multimedia rendering"]
 addopts = "-m 'not integration'"
 asyncio_default_fixture_loop_scope = "function"

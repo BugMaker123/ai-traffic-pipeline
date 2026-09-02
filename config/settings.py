@@ -43,11 +43,15 @@ MEDIA_FETCH_CONCURRENCY = max(1, min(6, int(os.getenv("MEDIA_FETCH_CONCURRENCY",
 MAX_SCENES = max(1, int(os.getenv("MAX_SCENES", "12")))
 OUTPUT_RETENTION_HOURS = max(1, int(os.getenv("OUTPUT_RETENTION_HOURS", "72")))
 
-# 常用高质量音色预设
+# 常用高质量音色预设 (覆盖活力解说、稳重、情感、激情、幽默等赛道)
 VOICE_PRESETS = {
-    "yunxi": "zh-CN-YunxiNeural",       # 活力解说 (最推荐)
-    "yunjian": "zh-CN-YunjianNeural",   # 稳重大气沉浸
-    "xiaoxiao": "zh-CN-XiaoxiaoNeural", # 亲切知性女声
-    "yunyang": "zh-CN-YunyangNeural",   # 专业新闻干货
-    "xiaoyi": "zh-CN-XiaoyiNeural",     # 甜美自然女声
+    "yunxi": "zh-CN-YunxiNeural",               # 活力解说 (最推荐)
+    "yunjian": "zh-CN-YunjianNeural",           # 稳重大气沉浸
+    "xiaoxiao": "zh-CN-XiaoxiaoNeural",         # 亲切知性女声
+    "yunyang": "zh-CN-YunyangNeural",           # 专业新闻干货
+    "xiaoyi": "zh-CN-XiaoyiNeural",             # 甜美自然女声
+    "yunze": "zh-CN-YunzeNeural",               # 激情热血男声
+    "xiaomeng": "zh-CN-XiaomengNeural",         # 温柔治愈女声
+    "yunjie": "zh-CN-YunjieNeural",             # 悬疑故事播报
+    "liaoning_xiaobei": "zh-CN-liaoning-XiaobeiNeural",  # 幽默东北风
 }
