@@ -120,6 +120,7 @@ class TTSPreviewRequest(StrictModel):
 class RenderSceneRequest(StrictModel):
     scene_index: int = Field(ge=1, le=MAX_SCENES)
     voiceover_text: str = Field(min_length=1, max_length=1000)
+    scene_type: Literal["", "hook", "context", "evidence", "action", "turn", "outro"] = ""
     visual_keywords: list[str] = Field(default_factory=list, max_length=8)
     caption_highlight: list[str] = Field(default_factory=list, max_length=12)
     image_prompt: str | None = Field(default="", max_length=500)

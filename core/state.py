@@ -9,6 +9,7 @@ class SceneItem(BaseModel):
     """单个视频分镜数据结构"""
     scene_index: int = Field(description="分镜序号，从 1 开始")
     voiceover_text: str = Field(min_length=1, max_length=1000, description="该分镜旁白台词")
+    scene_type: str = Field(default="", description="镜头叙事职责: hook/context/evidence/action/turn/outro")
     visual_keywords: List[str] = Field(default_factory=list, max_length=8, description="用于免版权图库检索的英文关键词")
     image_prompt: Optional[str] = Field(default="", description="若使用 AI 生图时的详细 Prompt")
     caption_highlight: Optional[List[str]] = Field(default_factory=list, description="需要特别高亮着色的核心词")

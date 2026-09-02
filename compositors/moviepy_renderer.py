@@ -102,12 +102,12 @@ class MoviePyRenderer:
         )
 
     def create_title_banner_image(self, title: str, layout: str = "impact") -> Image.Image:
-        """渲染爆款双色大标题 + 磨砂深色胶囊底板 (1080x280)"""
-        banner_h = 280
+        """渲染克制的短标题卡，避免大面积常驻遮挡画面。"""
+        banner_h = 220
         img = Image.new("RGBA", (self.width, banner_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
 
-        font_size = 52 if len(title) > 12 else 56
+        font_size = 46 if len(title) > 12 else 52
         try:
             font = ImageFont.truetype(self._font_path, font_size) if self._font_path else ImageFont.load_default()
         except Exception:
@@ -121,16 +121,16 @@ class MoviePyRenderer:
         tx = (self.width - tw) // 2
         ty = (banner_h - th) // 2
 
-        padding_x = 36
-        padding_y = 16
+        padding_x = 32
+        padding_y = 13
         pill_rect = [tx - padding_x, ty - padding_y, tx + tw + padding_x, ty + th + padding_y]
 
         if layout == "card_quote":
             draw.rounded_rectangle(pill_rect, radius=20, fill=(20, 24, 36, 235), outline=(99, 102, 241, 200), width=3)
             draw.text((tx, ty), clean_title, font=font, fill=(255, 255, 255), stroke_fill=(0, 0, 0), stroke_width=4)
         else:
-            draw.rounded_rectangle(pill_rect, radius=22, fill=(10, 12, 18, 225), outline=(255, 215, 0, 160), width=3)
-            draw.text((tx, ty), clean_title, font=font, fill=(255, 230, 20), stroke_fill=(0, 0, 0), stroke_width=5)
+            draw.rounded_rectangle(pill_rect, radius=18, fill=(8, 12, 20, 192), outline=(255, 255, 255, 45), width=2)
+            draw.text((tx, ty), clean_title, font=font, fill=(255, 238, 110), stroke_fill=(5, 8, 14), stroke_width=3)
 
         return img
 
@@ -144,7 +144,7 @@ class MoviePyRenderer:
         """
         渲染高网感工业级字幕花字（支持 6 大爆款风格：爆款黄白、赛博霓虹、综艺花字、电影纪实、极简胶囊、烈焰金榜）
         """
-        sub_h = 240
+        sub_h = 220
         img = Image.new("RGBA", (self.width, sub_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
 
@@ -243,11 +243,33 @@ class MoviePyRenderer:
         except Exception:
             font = ImageFont.load_default()
 
-        # 计算总文本包围盒
-        bbox = draw.textbbox((0, 0), full_text, font=font, stroke_width=cfg["stroke_w"])
-        total_w = bbox[2] - bbox[0]
-        total_h = bbox[3] - bbox[1]
+        # 按实际像素宽度自动换成最多两行，避免长句冲出安全区。
+        max_text_w = self.width - 150
+        lines: List[str] = []
+        current = ""
+        for char in full_text.strip():
+            candidate = current + char
+            box = draw.textbbox((0, 0), candidate, font=font, stroke_width=cfg["stroke_w"])
+            if current and box[2] - box[0] > max_text_w:
+                lines.append(current)
+                current = char
+            else:
+                current = candidate
+        if current:
+            lines.append(current)
+        if len(lines) > 2:
+            lines = [lines[0], "".join(lines[1:])]
+            while draw.textbbox((0, 0), lines[1] + "…", font=font)[2] > max_text_w and len(lines[1]) > 2:
+                lines[1] = lines[1][:-1]
+            lines[1] += "…"
 
+        line_gap = 12
+        line_metrics = []
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font, stroke_width=cfg["stroke_w"])
+            line_metrics.append((bbox[2] - bbox[0], bbox[3] - bbox[1]))
+        total_w = max((m[0] for m in line_metrics), default=0)
+        total_h = sum(m[1] for m in line_metrics) + line_gap * max(0, len(lines) - 1)
         start_x = (self.width - total_w) // 2
         start_y = (sub_h - total_h) // 2
 
@@ -263,65 +285,50 @@ class MoviePyRenderer:
                 width=2,
             )
 
-        # 逐字分段渲染（支持立体阴影与卡拉OK高亮）
-        cur_x = start_x
+        # 逐字分段渲染：每行独立居中，激活词只轻微提亮，不做廉价跳字。
         active_found = False
-        i = 0
+        global_offset = 0
+        cur_y = start_y
+        for line, (line_w, line_h) in zip(lines, line_metrics):
+            cur_x = (self.width - line_w) // 2
+            i = 0
+            while i < len(line):
+                is_active_part = bool(active_word and not active_found and full_text[global_offset + i:global_offset + i + len(active_word)] == active_word)
+                match_len = len(active_word) if is_active_part else 1
+                word_slice = line[i:i + match_len]
+                ch_bbox = draw.textbbox((0, 0), word_slice, font=font, stroke_width=cfg["stroke_w"])
+                ch_w = ch_bbox[2] - ch_bbox[0]
 
-        while i < len(full_text):
-            is_active_part = False
-            if active_word and not active_found and full_text[i:i+len(active_word)] == active_word:
-                is_active_part = True
-                match_len = len(active_word)
-                active_found = True
-            else:
-                match_len = 1
-
-            word_slice = full_text[i:i+match_len]
-            ch_bbox = draw.textbbox((0, 0), word_slice, font=font, stroke_width=cfg["stroke_w"])
-            ch_w = ch_bbox[2] - ch_bbox[0]
-
-            if is_active_part:
-                # 绘制激活词阴影
-                so_x, so_y = cfg["shadow_offset"]
-                if so_x != 0 or so_y != 0:
+                if is_active_part:
+                    active_found = True
+                    so_x, so_y = cfg["shadow_offset"]
+                    if so_x != 0 or so_y != 0:
+                        draw.text(
+                            (cur_x + so_x, cur_y + so_y - 1), word_slice,
+                            font=font, fill=cfg["shadow_color"],
+                        )
                     draw.text(
-                        (cur_x + so_x, start_y + so_y - 2),
-                        word_slice,
-                        font=font,
-                        fill=cfg["shadow_color"],
+                        (cur_x, cur_y - 1), word_slice, font=font,
+                        fill=cfg["active_color"], stroke_fill=cfg["active_stroke"],
+                        stroke_width=cfg["active_stroke_w"],
                     )
-                # 绘制激活词高亮本体
-                draw.text(
-                    (cur_x, start_y - 3),
-                    word_slice,
-                    font=font,
-                    fill=cfg["active_color"],
-                    stroke_fill=cfg["active_stroke"],
-                    stroke_width=cfg["active_stroke_w"],
-                )
-            else:
-                # 绘制基础字阴影
-                so_x, so_y = cfg["shadow_offset"]
-                if so_x != 0 or so_y != 0:
+                else:
+                    so_x, so_y = cfg["shadow_offset"]
+                    if so_x != 0 or so_y != 0:
+                        draw.text(
+                            (cur_x + so_x, cur_y + so_y), word_slice,
+                            font=font, fill=cfg["shadow_color"],
+                        )
                     draw.text(
-                        (cur_x + so_x, start_y + so_y),
-                        word_slice,
-                        font=font,
-                        fill=cfg["shadow_color"],
+                        (cur_x, cur_y), word_slice, font=font,
+                        fill=cfg["base_color"], stroke_fill=cfg["base_stroke"],
+                        stroke_width=cfg["stroke_w"],
                     )
-                # 绘制基础字本体
-                draw.text(
-                    (cur_x, start_y),
-                    word_slice,
-                    font=font,
-                    fill=cfg["base_color"],
-                    stroke_fill=cfg["base_stroke"],
-                    stroke_width=cfg["stroke_w"],
-                )
 
-            cur_x += ch_w
-            i += match_len
+                cur_x += ch_w
+                i += match_len
+            global_offset += len(line)
+            cur_y += line_h + line_gap
 
         return img
 
@@ -332,6 +339,18 @@ class MoviePyRenderer:
     ) -> Image.Image:
         """渲染高对比度短视频静态字幕 (1080x240)"""
         return self.create_karaoke_subtitle_image(text, active_word="", subtitle_style=subtitle_style)
+
+    def _add_camera_motion(self, clip, duration: float, scene_index: int):
+        """为静帧加入克制且交替的推拉运动，让镜头有呼吸而不眩晕。"""
+        zoom_in = scene_index % 3 != 1
+        def scale_at(t: float) -> float:
+            progress = min(1.0, max(0.0, t / max(duration, 0.1)))
+            eased = progress * progress * (3.0 - 2.0 * progress)
+            return (1.0 + 0.055 * eased) if zoom_in else (1.055 - 0.055 * eased)
+        moving = clip.resized(scale_at) if hasattr(clip, "resized") else clip.resize(scale_at)
+        moving = moving.with_position(("center", "center")) if hasattr(moving, "with_position") else moving.set_position(("center", "center"))
+        canvas = CompositeVideoClip([moving], size=(int(clip.size[0]), int(clip.size[1])))
+        return canvas.with_duration(duration) if hasattr(canvas, "with_duration") else canvas.set_duration(duration)
 
     def render_project(
         self,
@@ -422,6 +441,7 @@ class MoviePyRenderer:
                         img_raw = ImageClip(asset_file)
                         v_sub = img_raw.with_duration(dur) if hasattr(img_raw, "with_duration") else img_raw.set_duration(dur)
                         v_clip = self._cover_clip(v_sub, target_w=render_w, target_h=render_h)
+                        v_clip = self._add_camera_motion(v_clip, dur, idx)
                 except Exception as e:
                     logger.warning("处理素材失败 file=%s error=%s", asset_file, e)
 
@@ -442,7 +462,7 @@ class MoviePyRenderer:
 
             # 字幕生成 (支持卡拉OK逐字高亮切分)
             scene_sub_clips = []
-            sub_y_pos = int(self.height * 0.76) if layout_template != "split_screen" else int(self.height * 0.70)
+            sub_y_pos = int(self.height * 0.69) if layout_template != "split_screen" else int(self.height * 0.66)
 
             for sub in subtitles:
                 s_start = sub.get("start", 0.0)
@@ -509,7 +529,7 @@ class MoviePyRenderer:
         title_np = np.array(title_img)
         title_clip = ImageClip(title_np)
         title_clip = title_clip.with_duration(total_duration) if hasattr(title_clip, "with_duration") else title_clip.set_duration(total_duration)
-        title_y = int(self.height * 0.10) if layout_template != "split_screen" else int(self.height * 0.05)
+        title_y = int(self.height * 0.055) if layout_template != "split_screen" else int(self.height * 0.035)
         if hasattr(title_clip, "with_position"):
             title_clip = title_clip.with_position(("center", title_y))
         else:

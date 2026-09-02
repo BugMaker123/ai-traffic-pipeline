@@ -2038,6 +2038,7 @@
                     const promptText = s.image_prompt || `${(s.visual_keywords || []).join(' ')}, ${s.voiceover_text.slice(0, 30)}`;
                     return {
                         idx: i + 1,
+                        scene_type: s.scene_type || '',
                         name: s.transition || (i === 0 ? 'HOOK 留人' : (i === 1 ? 'MECHANISM 机制' : (i === data.script.scenes.length - 1 ? 'CTA 闭环' : 'ACTION 论证'))),
                         voice: s.voiceover_text,
                         img: buildDynamicAiImageUrl(promptText, (s.visual_keywords || []).join(', '), s.voiceover_text, i + 1),
@@ -2185,6 +2186,7 @@
             const scenesPayload = currentScenes.map((s, idx) => ({
                 scene_index: idx + 1,
                 voiceover_text: s.voice,
+                scene_type: s.scene_type || '',
                 visual_keywords: (s.keywords || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8),
                 image_prompt: s.prompt || '',
                 asset_file: s.asset_file || null,

@@ -221,53 +221,60 @@ class ScriptGenerator:
             f"关于【{clean_topic}】，有两种说法听起来都对，却会把人带向相反的行动。分歧究竟藏在哪里？",
         ]
         
+        topic_visual = re.sub(r"[【】《》：:，。！？!?]", " ", clean_topic).strip() or "daily life topic"
         scenes_data = [
             {
                 "scene_index": 1,
                 "voiceover_text": openings[variant],
-                "visual_keywords": ["documentary close up", "street observation", "notebook detail"],
-                "image_prompt": "cinematic dark portrait of a focused person with intense eye contact and neon edge light",
+                "scene_type": "hook",
+                "visual_keywords": [f"{topic_visual} real scene", "human reaction close up", "documentary detail"],
+                "image_prompt": f"documentary close-up showing a real moment about {topic_visual}, expressive human reaction, natural available light, authentic location, vertical composition",
                 "caption_highlight": [clean_topic[:12], "被忽略的细节"],
                 "transition": "zoom_in"
             },
             {
                 "scene_index": 2,
                 "voiceover_text": f"先拆掉一个常见混淆：讨论【{clean_topic}】时，人们经常把现象、原因和结果揉成一句话。信息越热闹，因果关系反而越容易被省略。",
-                "visual_keywords": ["news wall investigation", "cause effect diagram", "crowded discussion"],
-                "image_prompt": "abstract futuristic neural network with glowing synapses and gears",
-                "caption_highlight": ["表象当本质", "对抗本能", "报复性摆烂"],
+                "scene_type": "context",
+                "visual_keywords": [f"{topic_visual} discussion", "people talking candidly", "news detail"],
+                "image_prompt": f"handheld medium shot of people discussing {topic_visual} in a believable everyday setting, layered foreground, natural light, documentary photography",
+                "caption_highlight": ["现象、原因和结果", "因果关系"],
                 "transition": "fade"
             },
             {
                 "scene_index": 3,
                 "voiceover_text": "判断它，不妨连续问三次：谁在做选择，谁承担代价，谁从这个叙事中获益。三个答案如果不是同一群人，关键通常就在这里。",
-                "visual_keywords": ["three people negotiation", "receipt cost closeup", "decision making office"],
-                "image_prompt": "glowing golden geometric loops and upward momentum in modern studio",
-                "caption_highlight": ["正向反馈闭环", "环境推着往前走", "骗过大脑"],
+                "scene_type": "evidence",
+                "visual_keywords": [f"{topic_visual} decision", "receipt hands closeup", "three people negotiation"],
+                "image_prompt": f"overhead editorial photograph of hands comparing evidence, receipts and notes related to {topic_visual}, tactile details, warm side light",
+                "caption_highlight": ["谁承担代价", "谁从中获益"],
                 "transition": "slide_left"
             },
             {
                 "scene_index": 4,
                 "voiceover_text": f"把方法落到【{clean_topic}】：先记录一个可观察事实，再找一个反例，最后写下结论成立的边界。少一个步骤，都可能只是立场，不是判断。",
-                "visual_keywords": ["field notes writing", "fact checking documents", "counterexample cards"],
-                "image_prompt": "determined athlete at starting line bathed in golden morning sun",
-                "caption_highlight": ["戒掉完美主义", "微小动作", "惯性接管执行力"],
+                "scene_type": "action",
+                "visual_keywords": [f"{topic_visual} field notes", "fact checking documents", "writing checklist closeup"],
+                "image_prompt": f"macro shot of a person writing a three-step fact check about {topic_visual}, pen moving across paper, realistic desk, soft window light",
+                "caption_highlight": ["可观察事实", "找一个反例"],
                 "transition": "fade"
             },
             {
                 "scene_index": 5,
                 "voiceover_text": "更稳妥的答案往往没那么痛快：它允许例外，也承认信息不足。但正是这些边界，让观点能经得住下一条新闻和下一次现实检验。",
-                "visual_keywords": ["quiet newsroom desk", "boundary line map", "editor reviewing notes"],
-                "image_prompt": "inspirational panoramic mountain peak view with cinematic soft rays",
-                "caption_highlight": ["最大差距", "底层认知", "思维一变"],
+                "scene_type": "turn",
+                "visual_keywords": [f"{topic_visual} review", "editor reviewing notes", "quiet newsroom wide shot"],
+                "image_prompt": f"quiet wide shot of an editor reviewing conflicting notes about {topic_visual}, negative space, restrained cinematic daylight, realistic newsroom",
+                "caption_highlight": ["允许例外", "承认信息不足"],
                 "transition": "zoom_in"
             },
             {
                 "scene_index": 6,
                 "voiceover_text": f"所以把问题留给你：在【{clean_topic}】里，你亲眼见过的事实，和最流行的说法一致吗？说一个具体经历，比站队更有价值。",
-                "visual_keywords": ["street interview microphone", "real people conversation", "community testimony"],
-                "image_prompt": "confident person smiling in golden hour with warm welcoming lighting",
-                "caption_highlight": ["双击收藏", "第一步微行动", "见证蜕变"],
+                "scene_type": "outro",
+                "visual_keywords": [f"{topic_visual} street interview", "microphone closeup", "real people conversation"],
+                "image_prompt": f"candid street interview about {topic_visual}, listener reacting before answering, golden hour but realistic, shallow depth of field, vertical frame",
+                "caption_highlight": ["亲眼见过的事实", "具体经历"],
                 "transition": "fade"
             }
         ]

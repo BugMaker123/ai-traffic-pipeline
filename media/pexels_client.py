@@ -8,6 +8,7 @@
 import os
 import math
 import random
+import re
 import logging
 import hashlib
 import requests
@@ -135,6 +136,8 @@ class PexelsMediaClient:
         prefer_video: bool = True,
         image_prompt: Optional[str] = None,
         explicit_url: Optional[str] = None,
+        voiceover_text: str = "",
+        scene_type: str = "",
     ) -> Dict[str, Any]:
         """
         获取分镜素材：
@@ -143,7 +146,8 @@ class PexelsMediaClient:
         3. 若配置了 Pexels API，检索真实 9:16 免版权视频
         4. 语义匹配实拍摄影大片 / 本地弥散渐变兜底
         """
-        kw_str = " ".join(keywords).lower() if keywords else ""
+        precise_keywords = [str(k).strip() for k in keywords if str(k).strip()][:3]
+        kw_str = " ".join(precise_keywords).lower()
         save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.jpg"
 
         # 1. 前端传入的动态图片 URL (如 Pollinations Flux AI 图像)
@@ -163,8 +167,18 @@ class PexelsMediaClient:
             except Exception as e:
                 logger.warning("下载指定画面失败 (%s)，进入动态 AI 生图管线", e)
 
-        # 2. 动态 AI 生图管线 (针对每个分镜 prompt 动态生成唯一定制画面)
-        prompt = image_prompt or kw_str
+        prompt = self._build_scene_prompt(image_prompt, precise_keywords, voiceover_text, scene_type)
+
+        # 2. 优先使用可检索、可验证的实拍视频，避免所有镜头退化成风格相近的 AI 静帧。
+        if self.api_key and kw_str:
+            try:
+                res = self._search_pexels(kw_str, scene_idx, project_id)
+                if res:
+                    return res
+            except Exception as e:
+                logger.warning("Pexels 检索失败: %s", e)
+
+        # 3. 动态 AI 生图；提示词同时锚定台词、主体动作、场所和景别。
         if prompt:
             try:
                 from media.ai_image_gen import AIImageGenerator
@@ -180,15 +194,6 @@ class PexelsMediaClient:
             except Exception as e:
                 logger.warning("分镜 #%d 动态 AI 生图异常: %s", scene_idx, e)
 
-        # 3. Pexels 官方视频 API (若配置)
-        if self.api_key:
-            try:
-                res = self._search_pexels(kw_str, scene_idx, project_id)
-                if res:
-                    return res
-            except Exception as e:
-                logger.warning("Pexels 检索失败: %s", e)
-
         # 4. 语义智能匹配实拍大片兜底
         try:
             res_photo = self._match_and_download_curated_photo(kw_str or prompt or "technology", scene_idx, project_id)
@@ -199,6 +204,26 @@ class PexelsMediaClient:
 
         # 5. 保底纯净深色弥散流光
         return self._generate_pure_mesh_gradient(scene_idx, project_id)
+
+    @staticmethod
+    def _build_scene_prompt(
+        image_prompt: Optional[str], keywords: List[str], voiceover_text: str, scene_type: str
+    ) -> str:
+        """把抽象分镜约束为可见的主体、动作和环境，降低万能图与跑题图概率。"""
+        base = (image_prompt or "").strip()
+        searchable = ", ".join(keywords)
+        spoken_anchor = re.sub(r"\s+", " ", voiceover_text).strip()[:90]
+        role_shots = {
+            "hook": "tight documentary close-up, immediate action, strong foreground",
+            "context": "handheld medium shot, environmental context, candid people",
+            "evidence": "overhead detail shot, physical evidence and readable objects",
+            "action": "close-up of hands performing a concrete action",
+            "turn": "wide observational shot with visual contrast and negative space",
+            "outro": "candid reaction shot, human eye contact, open composition",
+        }
+        shot = role_shots.get(scene_type, "natural documentary medium shot")
+        parts = [base, searchable, f"spoken scene meaning: {spoken_anchor}" if spoken_anchor else "", shot]
+        return ", ".join(p for p in parts if p) + ", one clear subject, authentic location, natural light, no text, no collage"
 
     def _match_and_download_curated_photo(
         self,
@@ -374,7 +399,8 @@ class PexelsMediaClient:
 
             res = self.fetch_scene_asset(
                 kws, s_idx, project_id, duration=dur,
-                image_prompt=img_prompt, explicit_url=explicit_url
+                image_prompt=img_prompt, explicit_url=explicit_url,
+                voiceover_text=s.get("voiceover_text", ""), scene_type=s.get("scene_type", ""),
             )
             s_copy = dict(s)
             s_copy["asset_file"] = res.get("asset_file")

@@ -18,6 +18,7 @@ from audio.transcriber import AudioTranscriber
 from audio.srt_aligner import SubtitleAligner
 from writers.script_generator import ScriptGenerator
 from media.ai_image_gen import AIImageGenerator
+from media.pexels_client import PexelsMediaClient
 from compositors.moviepy_renderer import MoviePyRenderer
 from compositors.jianying_draft import JianYingDraftGenerator
 
@@ -88,7 +89,32 @@ def test_moviepy_karaoke_image_generation():
     assert img.size == (1080, 220)
 
     title_img = renderer.create_title_banner_image("爆款大标题测试", layout="card_quote")
-    assert title_img.size == (1080, 280)
+    assert title_img.size == (1080, 220)
+
+    long_img = renderer.create_karaoke_subtitle_image(
+        "这是一句需要自动换行并始终留在竖屏安全区域内的较长字幕文案",
+        active_word="自动换行",
+    )
+    assert long_img.getbbox() is not None
+
+
+def test_scene_prompt_is_grounded_in_voiceover_and_shot_role():
+    prompt = PexelsMediaClient._build_scene_prompt(
+        "person checking a bill",
+        ["restaurant receipt", "hands checking price"],
+        "结账时他才发现套餐里多收了服务费。",
+        "evidence",
+    )
+    assert "restaurant receipt" in prompt
+    assert "服务费" in prompt
+    assert "overhead detail shot" in prompt
+
+
+def test_fallback_script_visuals_and_highlights_follow_the_topic():
+    script = ScriptGenerator(api_key="")._generate_deep_fallback_script("外卖平台涨价", "商业认知", "proj_visual")
+    assert all("外卖平台涨价" in scene.image_prompt for scene in script.scenes)
+    assert all(scene.scene_type for scene in script.scenes)
+    assert "双击收藏" not in {word for scene in script.scenes for word in scene.caption_highlight}
 
 
 def test_jianying_draft_multi_track(tmp_path):
