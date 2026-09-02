@@ -40,6 +40,10 @@ class RawTopicItem(BaseModel):
     raw_content: str
     category: str = "social"  # "resonance", "tech", "finance", "social", "entertainment", "growth"
     category_name: str = "社会民生"
+    signal: str = "all"  # "resonance", "surge", "longtail", "controversial"
+    niche: str = "growth"  # "tech", "growth", "finance", "workplace", "history", "science", "social"
+    growth_rate: str = "+320%/h"
+    retention_estimate: str = "80%"
     is_resonance: bool = False  # 是否为多平台共振登顶爆款
     resonating_platforms: List[str] = Field(default_factory=list)  # 如 ["douyin", "weibo"]
     video_url: Optional[str] = None

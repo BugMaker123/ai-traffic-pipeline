@@ -51,12 +51,12 @@ class AIImageGenerator:
 
         enhanced_p = self.enhance_prompt(prompt)
 
-        # 1. 尝试调用 OpenAI / 兼容 /v1/images/generations
-        if self.api_key:
+        # 1. 尝试调用 OpenAI / DALL-E 3 / 兼容生图 API
+        if self.api_key and "deepseek" not in str(self.base_url).lower():
             try:
                 base = self.base_url.rstrip("/")
                 endpoint = f"{base}/images/generations"
-                logger.info("正在调用 AI 生图 API (分镜 #%d): %s", scene_index, prompt[:40])
+                logger.info("正在调用 OpenAI/兼容 AI 生图 API (分镜 #%d): %s", scene_index, prompt[:40])
 
                 payload = {
                     "prompt": enhanced_p,
@@ -69,7 +69,7 @@ class AIImageGenerator:
                     "Content-Type": "application/json",
                 }
 
-                resp = requests.post(endpoint, json=payload, headers=headers, timeout=45)
+                resp = requests.post(endpoint, json=payload, headers=headers, timeout=25)
                 if resp.status_code == 200:
                     data = resp.json()
                     item = data["data"][0]
@@ -79,19 +79,52 @@ class AIImageGenerator:
                             f.write(img_bytes)
                     elif "url" in item:
                         img_url = item["url"]
-                        r_img = requests.get(img_url, timeout=30)
+                        r_img = requests.get(img_url, timeout=20)
                         if r_img.status_code == 200:
                             with open(file_path, "wb") as f:
                                 f.write(r_img.content)
 
                     if file_path.exists():
                         self._resize_and_crop(file_path)
-                        logger.info("AI 生图成功保存至: %s", file_path)
+                        logger.info("OpenAI AI 生图成功保存至: %s", file_path)
                         return str(file_path)
             except Exception as e:
-                logger.warning("AI 生图 API 调用未成功 (%s)，使用高质感渐变海报兜底", e)
+                logger.warning("OpenAI 生图 API 调用失败 (%s)，降级至 Pollinations / 多模态引擎", e)
 
-        # 2. 本地高质感海报渲染保底
+        # 2. 免费高速 Flux / SDXL AI 生图引擎 (Pollinations AI)
+        try:
+            import urllib.parse
+            clean_kw = prompt.replace("\n", " ").strip()
+            encoded_prompt = urllib.parse.quote(f"{clean_kw}, cinematic, highly detailed 8k, photorealistic, 9:16 vertical")
+            seed = abs(hash(prompt + str(scene_index))) % 1000000
+            poll_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&model=flux&nologo=true&seed={seed}"
+            logger.info("正在调用 Flux AI 多模态生成引擎 (分镜 #%d)...", scene_index)
+            r_poll = requests.get(poll_url, timeout=18)
+            if r_poll.status_code == 200 and len(r_poll.content) > 10000:
+                with open(file_path, "wb") as f:
+                    f.write(r_poll.content)
+                if file_path.exists():
+                    self._resize_and_crop(file_path)
+                    logger.info("Flux AI 生图成功保存至: %s", file_path)
+                    return str(file_path)
+        except Exception as e:
+            logger.warning("Pollinations Flux 生图连接超时 (%s)，切换至真实高清垂直摄影素材", e)
+
+        # 3. 真实高清免版权垂直图库检索 (Unsplash / Pexels 150+ 领域镜头分发)
+        try:
+            from media.pexels_client import PexelsMediaClient
+            pexels_client = PexelsMediaClient()
+            asset_res = pexels_client._match_and_download_curated_photo(prompt, scene_index, project_id)
+            if asset_res and asset_res.get("asset_file"):
+                src_path = Path(asset_res["asset_file"])
+                if src_path.exists():
+                    self._resize_and_crop(src_path)
+                    logger.info("成功匹配并下载分镜 #%d 垂直摄影素材: %s", scene_index, src_path)
+                    return str(src_path)
+        except Exception as e:
+            logger.warning("摄影素材库检索失败 (%s)，降级至本地海报渲染", e)
+
+        # 4. 本地高质感海报渲染保底
         return self._generate_styled_graphic(prompt, file_path, scene_index)
 
     def _resize_and_crop(self, image_path: Path) -> None:

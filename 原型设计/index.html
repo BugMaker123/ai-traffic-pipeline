@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Traffic Pipeline - 工业级短视频全链路创作控制台 (Professional Studio)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 工业级深冷色板 (Solid Matte Slate & Neutral) */
+            --bg-canvas: #09090B;
+            --bg-sidebar: #0C0D0E;
+            --bg-surface-0: #121316;
+            --bg-surface-1: #18191D;
+            --bg-surface-2: #202227;
+            --bg-surface-active: #272A30;
+
+            --border-subtle: #1F2127;
+            --border-default: #2A2D35;
+            --border-emphasis: #3F434E;
+            --border-focus: #38BDF8;
+
+            --text-primary: #EDEDEF;
+            --text-secondary: #9B9FA9;
+            --text-muted: #656976;
+            --text-disabled: #444751;
+
+            --accent-primary: #38BDF8;
+            --accent-primary-hover: #0EA5E9;
+            --accent-success: #10B981;
+            --accent-warning: #F59E0B;
+            --accent-danger: #EF4444;
+            --accent-purple: #A855F7;
+
+            --radius-xs: 2px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* ---------------- LEFT PRO SIDEBAR (EXPANDED TAXONOMY) ---------------- */
+        aside.studio-sidebar {
+            width: 235px;
+            min-width: 235px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 8px;
+            z-index: 50;
+            overflow-y: auto;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 10px 12px 10px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .brand-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: var(--radius-sm);
+            background: #1E293B;
+            border: 1px solid #38BDF8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38BDF8;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .brand-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            color: var(--text-primary);
+        }
+
+        .brand-version {
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            background: var(--bg-surface-0);
+            padding: 1px 4px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-subtle);
+            margin-left: 4px;
+        }
+
+        /* Nav Hierarchy */
+        .nav-group {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            padding: 10px 10px 4px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.12s, color 0.12s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-surface-1);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-surface-2);
+            color: var(--text-primary);
+            font-weight: 600;
+            border-color: var(--border-default);
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item-icon {
+            font-size: 13px;
+            width: 16px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .nav-item.active .nav-item-icon {
+            color: var(--accent-primary);
+        }
+
+        .nav-badge-count {
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-surface-0);
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .nav-item.active .nav-badge-count {
+            color: var(--accent-primary);
+            border-color: rgba(56, 189, 248, 0.3);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .sidebar-bottom-status {
+            padding: 8px 10px;
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-success);
+        }
+
+        /* ---------------- MAIN STUDIO LAYOUT ---------------- */
+        main.studio-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-canvas);
+            overflow: hidden;
+        }
+
+        /* Header / Command Bar */
+        header.studio-header {
+            height: 44px;
+            min-height: 44px;
+            padding: 0 18px;
+            background: var(--bg-surface-0);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+        }
+
+        .breadcrumb-active {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .breadcrumb-divider {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn-studio {
+            height: 28px;
+            padding: 0 10px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-surface-1);
+            color: var(--text-primary);
+            transition: all 0.12s;
+            white-space: nowrap;
+        }
+
+        .btn-studio:hover {
+            background: var(--bg-surface-2);
+            border-color: var(--border-emphasis);
+        }
+
+        .btn-studio-primary {
+            background: #2563EB;
+            border-color: #3B82F6;
+            color: #FFFFFF;
+        }
+
+        .btn-studio-primary:hover {
+            background: #1D4ED8;
+        }
+
+        .btn-studio-accent {
+            background: #0284C7;
+            border-color: #38BDF8;
+            color: #FFFFFF;
+        }
+
+        .btn-studio-accent:hover {
+            background: #0369A1;
+        }
+
+        /* ---------------- WORKSPACE CONTENT ---------------- */
+        .studio-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .workspace-view {
+            display: none;
+        }
+
+        .workspace-view.active {
+            display: block;
+        }
+
+        /* ---------------- VIEW 1: 选题雷达 (MULTI-DIMENSIONAL FILTER SYSTEM) ---------------- */
+        .filter-matrix {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11.5px;
+        }
+
+        .filter-label {
+            width: 68px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 10.5px;
+            flex-shrink: 0;
+        }
+
+        .filter-pills-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .pill-btn {
+            padding: 3px 8px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-surface-1);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 11.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+        .pill-btn:hover {
+            background: var(--bg-surface-2);
+            color: var(--text-primary);
+        }
+
+        .pill-btn.active {
+            background: #1E293B;
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* Table */
+        .trends-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .trends-data-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg-surface-1);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-subtle);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trends-data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .trends-data-table tr:hover td {
+            background: var(--bg-surface-1);
+        }
+
+        .tag-source {
+            font-size: 10.5px;
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            display: inline-block;
+        }
+
+        .tag-source.resonance {
+            color: #FB7185;
+            border-color: rgba(244, 63, 94, 0.3);
+            background: rgba(244, 63, 94, 0.08);
+            font-weight: 600;
+        }
+
+        .tag-niche {
+            font-size: 10.5px;
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+        }
+
+        .score-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .growth-rate {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            color: var(--accent-success);
+            margin-top: 2px;
+        }
+
+        /* ---------------- VIEW 2: 视频解构工坊 ---------------- */
+        .url-ingest-bar {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .input-studio {
+            flex: 1;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+        }
+
+        .input-studio:focus {
+            border-color: var(--border-focus);
+        }
+
+        .workbench-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .studio-panel {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-toolbar {
+            padding: 8px 12px;
+            background: var(--bg-surface-1);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .panel-body {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .code-textarea {
+            width: 100%;
+            height: 240px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xs);
+            padding: 8px 10px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+        }
+
+        /* ---------------- VIEW 3: 分镜导演台 ---------------- */
+        .scene-item-row {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 120px 1fr 260px;
+            overflow: hidden;
+            transition: border-color 0.12s;
+        }
+
+        .scene-item-row:hover {
+            border-color: var(--border-default);
+        }
+
+        .scene-asset-column {
+            background: #000;
+            border-right: 1px solid var(--border-subtle);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 130px;
+        }
+
+        .scene-asset-column img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-gen-compact {
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            right: 6px;
+            height: 22px;
+            background: rgba(18, 19, 22, 0.9);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xs);
+            color: var(--text-primary);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-gen-compact:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .scene-editor-column {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .scene-header-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .scene-index-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+        }
+
+        .scene-textarea-flat {
+            width: 100%;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xs);
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12.5px;
+            line-height: 1.5;
+            min-height: 52px;
+            outline: none;
+            resize: vertical;
+        }
+
+        .scene-params-column {
+            background: var(--bg-surface-1);
+            border-left: 1px solid var(--border-subtle);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .param-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .param-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* ---------------- VIEW 4: 监视器与合成导出 ---------------- */
+        .composer-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .monitor-frame {
+            background: #000;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 14px 12px;
+            position: relative;
+        }
+
+        .monitor-header-timecode {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .monitor-title-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--border-emphasis);
+            border-radius: var(--radius-xs);
+            padding: 5px 8px;
+            text-align: center;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #FFE600;
+        }
+
+        .monitor-karaoke-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: var(--radius-xs);
+            padding: 7px 8px;
+            text-align: center;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .karaoke-focus-word {
+            color: #FFE600;
+            font-weight: 800;
+            padding: 0 2px;
+        }
+
+        .control-grid-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .select-studio {
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            outline: none;
+            width: 100%;
+        }
+
+        .layout-options-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .layout-option-box {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .layout-option-box:hover {
+            border-color: var(--border-emphasis);
+        }
+
+        .layout-option-box.active {
+            border-color: var(--accent-primary);
+            background: var(--bg-surface-1);
+        }
+
+        /* ---------------- VIEW 5: 资产中心 ---------------- */
+        .asset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .asset-row {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .asset-row:hover {
+            background: var(--bg-surface-1);
+            border-color: var(--border-default);
+        }
+
+        .asset-thumb {
+            width: 40px;
+            height: 56px;
+            border-radius: var(--radius-xs);
+            object-fit: cover;
+            border: 1px solid var(--border-subtle);
+            background: #000;
+        }
+
+        /* Toast */
+        .studio-toast {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-emphasis);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 11.5px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 🧭 LEFT PRO SIDEBAR (EXPANDED TO 12+ FOCUSED MODULES) -->
+    <aside class="studio-sidebar">
+        <div>
+            <!-- Brand -->
+            <div class="brand-header">
+                <div class="brand-icon">TP</div>
+                <div>
+                    <span class="brand-title">Traffic Pipeline</span>
+                    <span class="brand-version">v3.0</span>
+                </div>
+            </div>
+
+            <!-- Navigation Categories -->
+            <nav class="nav-group">
+                <!-- Group 1: 选题与情报雷达 -->
+                <div class="nav-section-label">
+                    <span>选题与情报雷达</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">INTEL</span>
+                </div>
+
+                <div class="nav-item active" onclick="switchStudioView('trends', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">⚡</span>
+                        <span>全网爆款雷达</span>
+                    </div>
+                    <span class="nav-badge-count" id="countViralBadge">24</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('trends', this); filterDimension('resonance')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🔥</span>
+                        <span>共振爆发预警</span>
+                    </div>
+                    <span class="nav-badge-count" style="color:#FB7185;">TOP 6</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('对标账号侦测功能：正在监控 12 个行业对标账号近7日爆款...')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎯</span>
+                        <span>对标账号侦测</span>
+                    </div>
+                    <span class="nav-badge-count">12</span>
+                </div>
+
+                <!-- Group 2: 智能创作工坊 -->
+                <div class="nav-section-label">
+                    <span>智能创作工坊</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">STUDIO</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('extractor', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🔗</span>
+                        <span>原片重塑工坊</span>
+                    </div>
+                    <span class="nav-badge-count">STT</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('storyboard', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎬</span>
+                        <span>分镜导演工作台</span>
+                    </div>
+                    <span class="nav-badge-count" id="navSceneCount">4 镜</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('视觉生图实验室：支持 Midjourney / Flux / DALL-E 3 批量提示词生成')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎨</span>
+                        <span>视觉配图实验室</span>
+                    </div>
+                    <span class="nav-badge-count">SDXL</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('声音克隆与音色库：内置 9+ 款情感解说音色与音效轨道')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎙️</span>
+                        <span>声音克隆与音色库</span>
+                    </div>
+                    <span class="nav-badge-count">9 音</span>
+                </div>
+
+                <!-- Group 3: 渲染与多轨剪映 -->
+                <div class="nav-section-label">
+                    <span>渲染与多轨剪映</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">RENDER</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('composer', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎛️</span>
+                        <span>监视器与合成导出</span>
+                    </div>
+                    <span class="nav-badge-count">60fps</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('批量矩阵生成：支持根据 1 组选题批量裂变 10 条不同风格分镜与音画')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎞️</span>
+                        <span>批量矩阵生成</span>
+                    </div>
+                    <span class="nav-badge-count">PRO</span>
+                </div>
+
+                <!-- Group 4: 资产与分发矩阵 -->
+                <div class="nav-section-label">
+                    <span>资产与分发中心</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">ASSETS</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('assets', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">📂</span>
+                        <span>成片与剪映工程</span>
+                    </div>
+                    <span class="nav-badge-count">3 部</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('多平台矩阵分发：一键直连抖音、视频号、B站、小红书创作者开放接口')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🚀</span>
+                        <span>多平台矩阵分发</span>
+                    </div>
+                    <span class="nav-badge-count">API</span>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Engine Status -->
+        <div class="sidebar-bottom-status">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="status-indicator"></span>
+                <span style="font-size: 11px; color: var(--text-secondary);">MoviePy · 剪映 Draft API</span>
+            </div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);">READY</span>
+        </div>
+    </aside>
+
+    <!-- 🖥️ MAIN STUDIO INTERFACE -->
+    <main class="studio-main">
+        <!-- Command Header Bar -->
+        <header class="studio-header">
+            <div class="header-breadcrumb">
+                <span class="breadcrumb-active" id="headerViewTitle">全网爆款雷达</span>
+                <span class="breadcrumb-divider">/</span>
+                <span class="breadcrumb-sub" id="headerViewSub">多维赛道、共振信号与爆款选题发现</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-studio" onclick="toast('已向知乎、抖音、B站、微博、头条、小红书发起实时数据同步')">
+                    <span>🔄 刷新多平台榜单</span>
+                </button>
+                <button class="btn-studio btn-studio-primary" onclick="switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4])">
+                    <span>+ 新建分镜工程</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Studio Views -->
+        <div class="studio-content">
+
+            <!-- ================= VIEW 1: 选题雷达 (MULTI-DIMENSIONAL MATRIX) ================= -->
+            <section id="view-trends" class="workspace-view active">
+                <!-- Multi-Dimension Filter Matrix -->
+                <div class="filter-matrix">
+                    <!-- Row 1: 爆款信号维度 -->
+                    <div class="filter-row">
+                        <span class="filter-label">爆发信号</span>
+                        <div class="filter-pills-wrap">
+                            <button class="pill-btn active" onclick="setFilter('signal', 'all', this)">全部信号</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'resonance', this)">🔥 多平台共振 (登顶)</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'surge', this)">⚡ 突发飙升 (1h增速>300%)</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'longtail', this)">📈 持续长尾 (7天连榜)</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'controversial', this)">💬 强互动争议 (评赞比>15%)</button>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: 细分赛道领域 -->
+                    <div class="filter-row">
+                        <span class="filter-label">细分赛道</span>
+                        <div class="filter-pills-wrap">
+                            <button class="pill-btn active" onclick="setFilter('niche', 'all', this)">全部赛道</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'tech', this)">💻 前沿科技 & AI</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'growth', this)">🧠 认知觉醒 & 自律心理</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'finance', this)">💰 商业财富 & 副业思维</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'workplace', this)">👔 职场生存 & 升维破局</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'history', this)">📜 历史人文 & 深度解密</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'science', this)">🔬 生活硬核科普</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'social', this)">🌐 热门民生民生议题</button>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: 抓取平台来源 -->
+                    <div class="filter-row">
+                        <span class="filter-label">数据来源</span>
+                        <div class="filter-pills-wrap">
+                            <button class="pill-btn active" onclick="setFilter('platform', 'all', this)">全部平台</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'douyin', this)">抖音热点榜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'bilibili', this)">B站热门日榜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'zhihu', this)">知乎热议榜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'xiaohongshu', this)">小红书探索</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'weibo', this)">微博热搜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'toutiao', this)">今日头条</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High-Density Data Table -->
+                <table class="trends-data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 130px;">平台 / 赛道</th>
+                            <th>爆款选题与核心矛盾切入点</th>
+                            <th style="width: 100px;">爆发指数</th>
+                            <th style="width: 90px;">预估完播</th>
+                            <th style="width: 320px;">AI 爆款底层逻辑与分镜建议</th>
+                            <th style="width: 110px; text-align: right;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trendsTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ================= VIEW 2: 视频解构工坊 ================= -->
+            <section id="view-extractor" class="workspace-view">
+                <div class="url-ingest-bar">
+                    <input type="text" class="input-studio" id="extractorUrlInput" placeholder="输入视频分享 URL (支持抖音/B站/小红书/YouTube)..." value="https://v.douyin.com/iJ8x999/ 为什么高手都在悄悄戒掉情绪？">
+                    <button class="btn-studio btn-studio-accent" onclick="simulateExtraction()">
+                        <span>执行音视频提取 & Whisper 转写</span>
+                    </button>
+                </div>
+
+                <div class="workbench-grid-2col">
+                    <!-- Left: Original Transcript -->
+                    <div class="studio-panel">
+                        <div class="panel-toolbar">
+                            <span>原片提取文案 (Whisper STT)</span>
+                            <span class="tag-source">抖音 · 00:01:12</span>
+                        </div>
+                        <div class="panel-body">
+                            <textarea class="code-textarea" id="extractedTranscriptArea">很多人以为控制情绪是靠忍耐，但真正厉害的人早就发现了大脑的机制。
+情绪本质上是大脑在受到外界刺激时的防御反应。当你把注意力从“对方的态度”转移到“事件的目标”上，你就会发现根本不需要忍，因为情绪自然就消散了。
+记住这三句话：不要把别人的评价当成自己的价值，不要用别人的错误惩罚自己的大脑，把精力百分之百投入到可控的行动中。</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right: AI Structural Remaster -->
+                    <div class="studio-panel">
+                        <div class="panel-toolbar">
+                            <span>LLM 爆款结构化解构 (原创分镜)</span>
+                            <button class="btn-studio" style="height: 22px; font-size: 11px;" onclick="transferToStoryboard()">
+                                <span>载入分镜台 →</span>
+                            </button>
+                        </div>
+                        <div class="panel-body" style="gap: 6px;">
+                            <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); padding: 8px 10px; border-radius: var(--radius-xs);">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--accent-primary); font-family: 'JetBrains Mono';">SCENE 1 · HOOK (00:00 - 00:03)</div>
+                                <div style="font-size: 12px; color: var(--text-primary); margin-top: 2px;">“你以为情绪稳定靠硬忍？真相是：90% 的人都在用自残式的方式忍耐！”</div>
+                            </div>
+                            <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); padding: 8px 10px; border-radius: var(--radius-xs);">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--accent-primary); font-family: 'JetBrains Mono';">SCENE 2 · MECHANISM (00:03 - 00:15)</div>
+                                <div style="font-size: 12px; color: var(--text-primary); margin-top: 2px;">“大脑杏仁核受到刺激时会自动开启防御，越压抑反弹越猛烈。高手从不忍耐，他们直接改变注意力的锚点。”</div>
+                            </div>
+                            <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); padding: 8px 10px; border-radius: var(--radius-xs);">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--accent-primary); font-family: 'JetBrains Mono';">SCENE 3 · ACTIONABLE TIPS (00:15 - 00:35)</div>
+                                <div style="font-size: 12px; color: var(--text-primary); margin-top: 2px;">“分离评价与自我、拒绝内耗情绪、聚焦微小行动闭环。思维一变，格局彻底打开。”</div>
+                            </div>
+                            <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); padding: 8px 10px; border-radius: var(--radius-xs);">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--accent-primary); font-family: 'JetBrains Mono';">SCENE 4 · CTA (00:35 - 00:48)</div>
+                                <div style="font-size: 12px; color: var(--text-primary); margin-top: 2px;">“点赞收藏这篇，下次想发火前深呼吸 3 秒，看清谁在真正主导你的情绪！”</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 3: 分镜导演台 ================= -->
+            <section id="view-storyboard" class="workspace-view">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: var(--bg-surface-0); border: 1px solid var(--border-subtle); padding: 6px 10px; border-radius: var(--radius-sm);">
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                        <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Project:</span>
+                        <input type="text" class="input-studio" id="studioProjectTitle" value="90%的人都误解了【情绪控制】的底层逻辑" style="max-width: 480px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">分镜规模:</span>
+                            <select class="select-studio" id="selectDurationTier" style="width: 155px; height: 28px; padding: 2px 6px; font-size: 11.5px;">
+                                <option value="quick_30s">⚡ 30s 紧凑 (4~5 镜)</option>
+                                <option value="deep_60s" selected>🎬 60s 深度 (6~8 镜)</option>
+                                <option value="long_120s">📜 120s 精解 (9~12 镜)</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">风格:</span>
+                            <select class="select-studio" id="selectScriptStyle" style="width: 145px; height: 28px; padding: 2px 6px; font-size: 11.5px;">
+                                <optgroup label="🧠 认知硬核">
+                                    <option value="干货科普" selected>🧠 干货科普</option>
+                                    <option value="商业认知">💡 商业认知</option>
+                                    <option value="避坑实操">⚡ 避坑实操</option>
+                                    <option value="思维模型">📐 思维模型</option>
+                                </optgroup>
+                                <optgroup label="🎭 幽默反转">
+                                    <option value="幽默反转">🎭 幽默反转</option>
+                                    <option value="犀利吐槽">🔥 犀利吐槽</option>
+                                    <option value="沉浸式嘴替">🗣️ 沉浸式嘴替</option>
+                                </optgroup>
+                                <optgroup label="💖 情感故事">
+                                    <option value="情感共鸣">💖 情感共鸣</option>
+                                    <option value="悬疑探秘">🕵️ 悬疑探秘</option>
+                                    <option value="燃系励志">⚡ 燃系励志</option>
+                                    <option value="历史故事">📜 历史故事</option>
+                                </optgroup>
+                                <optgroup label="🎬 影视纪实">
+                                    <option value="深度拉片">🎬 深度拉片</option>
+                                    <option value="客观评述">⚖️ 客观评述</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <button class="btn-studio" onclick="addNewSceneRow()">+ 添加镜头</button>
+                        <button class="btn-studio btn-studio-accent" onclick="switchStudioView('composer', document.querySelectorAll('.nav-item')[6])">进入监视器合成 →</button>
+                    </div>
+                </div>
+
+                <div id="scenesTimelineContainer">
+                    <!-- Scene Rows Generated by JS -->
+                </div>
+            </section>
+
+            <!-- ================= VIEW 4: 监视器与合成导出 ================= -->
+            <section id="view-composer" class="workspace-view">
+                <div class="composer-layout">
+                    <!-- Left: 9:16 Solid Monitor -->
+                    <div>
+                        <div class="monitor-frame">
+                            <div class="monitor-header-timecode">
+                                <span>1080×1920</span>
+                                <span style="color: var(--accent-danger); font-weight: 700;">● LIVE REC 60FPS</span>
+                            </div>
+
+                            <div class="monitor-title-overlay">
+                                90%的人都误解了情绪控制
+                            </div>
+
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
+                                <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=720&q=80" style="width: 100%; height: 190px; object-fit: cover; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);" id="monitorPosterImg">
+                            </div>
+
+                            <div class="monitor-karaoke-overlay">
+                                你以为情绪稳定靠 <span class="karaoke-focus-word">硬忍</span> ？
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Parameters -->
+                    <div class="control-grid-form">
+                        <!-- Layout Templates -->
+                        <div class="studio-panel">
+                            <div class="panel-toolbar">视频版式选择 (MoviePy 渲染模版)</div>
+                            <div class="panel-body">
+                                <div class="layout-options-bar">
+                                    <div class="layout-option-box active" onclick="chooseLayout('impact', this)">
+                                        <div style="font-size: 12.5px; font-weight: 700;">沉浸全屏</div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">爆款大字 · 视觉主导</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseLayout('split_screen', this)">
+                                        <div style="font-size: 12.5px; font-weight: 700;">上下分屏</div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">双轨内容 · 解说卡片</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseLayout('card_quote', this)">
+                                        <div style="font-size: 12.5px; font-weight: 700;">磨砂金句</div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">极简高端 · 杂志质感</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice & BGM Options -->
+                        <div class="studio-panel">
+                            <div class="panel-toolbar">音频引擎与字幕参数</div>
+                            <div class="panel-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="param-field">
+                                    <label class="param-label">解说音色选择</label>
+                                    <select class="select-studio">
+                                        <option>云希 · 活力解说男声 (推荐)</option>
+                                        <option>云健 · 沉稳纪录片男声</option>
+                                        <option>晓晓 · 自然知性女声</option>
+                                        <option>云泽 · 激情热血男声</option>
+                                    </select>
+                                </div>
+                                <div class="param-field">
+                                    <label class="param-label">背景情绪 BGM</label>
+                                    <select class="select-studio">
+                                        <option>Lo-Fi 沉浸节奏</option>
+                                        <option>轻度悬疑反差</option>
+                                        <option>深沉钢琴旋律</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Render Action -->
+                        <button class="btn-studio btn-studio-primary" style="height: 36px; font-size: 12.5px; justify-content: center;" onclick="executeRenderPipeline()">
+                            <span>▶ 启动全自动渲染流水线 (生成 MP4 + 剪映 Draft 工程)</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 5: 资产中心 ================= -->
+            <section id="view-assets" class="workspace-view">
+                <div class="studio-panel">
+                    <div class="panel-toolbar">
+                        <span>已完成视频与剪映工程资产</span>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);">TOTAL: 3 ITEMS</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="asset-list">
+                            <div class="asset-row">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=200&q=80" class="asset-thumb">
+                                    <div>
+                                        <div style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">《90%的人都误解了情绪控制的底层逻辑》</div>
+                                        <div style="font-size: 10.5px; font-family: 'JetBrains Mono'; color: var(--accent-success); margin-top: 2px;">1080×1920 · 48s · JianYing Draft Exported</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn-studio" onclick="toast('已调起剪映并打开多轨工程')">在剪映中打开</button>
+                                    <button class="btn-studio" onclick="toast('开始下载 MP4 视频文件')">下载 MP4</button>
+                                </div>
+                            </div>
+
+                            <div class="asset-row">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&q=80" class="asset-thumb">
+                                    <div>
+                                        <div style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">《为什么真正自律的人从不靠意志力死撑？》</div>
+                                        <div style="font-size: 10.5px; font-family: 'JetBrains Mono'; color: var(--accent-success); margin-top: 2px;">1080×1920 · 62s · JianYing Draft Exported</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn-studio" onclick="toast('已调起剪映并打开多轨工程')">在剪映中打开</button>
+                                    <button class="btn-studio" onclick="toast('开始下载 MP4 视频文件')">下载 MP4</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Unified Toast -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // Expanded Realistic Multi-Niche & Multi-Platform Dataset
+        const EXPANDED_TRENDS = [
+            {
+                platform: "douyin",
+                platform_label: "抖音 · 微博",
+                niche: "growth",
+                niche_label: "自律心理",
+                signal: "resonance",
+                title: "为什么真正自律的人从不靠意志力死撑？",
+                score: "99.4",
+                growth: "+480%/h",
+                retention: "84%",
+                reason: "多平台共振登顶：反直觉微习惯机制，前3秒反常识 Hook 完播极高"
+            },
+            {
+                platform: "toutiao",
+                platform_label: "头条 · 财经",
+                niche: "finance",
+                niche_label: "商业财富",
+                signal: "resonance",
+                title: "月薪5000与月薪50000的人，底层认知差距在哪？",
+                score: "98.2",
+                growth: "+320%/h",
+                retention: "79%",
+                reason: "时间杠杆与商业认知深度拆解，30-45岁高净值群体强烈共鸣"
+            },
+            {
+                platform: "zhihu",
+                platform_label: "知乎热议",
+                niche: "tech",
+                niche_label: "前沿AI",
+                signal: "surge",
+                title: "普通人如何利用 AI Agent 实现自动化信息差套利？",
+                score: "96.8",
+                growth: "+350%/h",
+                retention: "82%",
+                reason: "实操提示词流与轻量落地案例，自媒体/自由职业者极高收藏率"
+            },
+            {
+                platform: "bilibili",
+                platform_label: "B站热门",
+                niche: "tech",
+                niche_label: "科技前沿",
+                signal: "longtail",
+                title: "2026 算力跃迁：未来的超级个体如何打破组织垄断？",
+                score: "95.1",
+                growth: "+190%/h",
+                retention: "88%",
+                reason: "产业洞察与职业路径硬核推演，中长视频长尾流量充沛"
+            },
+            {
+                platform: "xiaohongshu",
+                platform_label: "小红书",
+                niche: "growth",
+                niche_label: "认知成长",
+                signal: "controversial",
+                title: "断舍离的最高境界：不是扔东西，而是停止精神内耗",
+                score: "94.6",
+                growth: "+210%/h",
+                retention: "76%",
+                reason: "情感共鸣金句密度高，评论区产生强烈自我投射与讨论"
+            },
+            {
+                platform: "douyin",
+                platform_label: "抖音热榜",
+                niche: "workplace",
+                niche_label: "职场破局",
+                signal: "surge",
+                title: "职场老好人如何用【课题分离】摆脱廉价勤劳陷阱？",
+                score: "93.8",
+                growth: "+310%/h",
+                retention: "81%",
+                reason: "痛点直击：解决不敢拒绝、吃力不讨好的困境，实操话术直接落地"
+            },
+            {
+                platform: "bilibili",
+                platform_label: "B站日榜",
+                niche: "history",
+                niche_label: "历史人文",
+                signal: "longtail",
+                title: "重读张居正改革：为什么触动利益比触及灵魂还难？",
+                score: "92.5",
+                growth: "+140%/h",
+                retention: "91%",
+                reason: "历史深度拉片与现实映射，文案厚重感强，完播完播率奇高"
+            },
+            {
+                platform: "zhihu",
+                platform_label: "知乎 · 科普",
+                niche: "science",
+                niche_label: "硬核科普",
+                signal: "resonance",
+                title: "人类大脑是如何被短视频算法‘劫持’多巴胺回路的？",
+                score: "97.1",
+                growth: "+410%/h",
+                retention: "85%",
+                reason: "神经科学机制+反省思考，天然适合搭配高科技 9:16 动态视觉"
+            },
+            {
+                platform: "weibo",
+                platform_label: "微博热搜",
+                niche: "social",
+                niche_label: "社会民生",
+                signal: "controversial",
+                title: "一线城市年轻人为何开始流行‘县城养老式生活’？",
+                score: "91.9",
+                growth: "+280%/h",
+                retention: "78%",
+                reason: "社会情绪热点，生活成本与生存焦虑引发两极分化热烈讨论"
+            },
+            {
+                platform: "xiaohongshu",
+                platform_label: "小红书",
+                niche: "finance",
+                niche_label: "副业变现",
+                signal: "surge",
+                title: "零成本做海外短剧出海：普通人避坑的5个核心认知",
+                score: "95.5",
+                growth: "+390%/h",
+                retention: "83%",
+                reason: "出海红利风口，兼具搞钱干货与实操链路，点赞转发转化极高"
+            }
+        ];
+
+        const SCENES_DATA = [
+            {
+                idx: 1,
+                name: "HOOK 留人",
+                voice: "很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！",
+                img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=300&q=80",
+                keywords: "disciplined person morning habit, focus",
+                prompt: "cinematic dark portrait of a focused person, 9:16 vertical"
+            },
+            {
+                idx: 2,
+                name: "MECHANISM 机制",
+                voice: "大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。",
+                img: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&q=80",
+                keywords: "brain psychology, micro habits",
+                prompt: "abstract glowing neural network gears turning, high tech cinematic, 9:16"
+            },
+            {
+                idx: 3,
+                name: "ACTION 实操",
+                voice: "每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！",
+                img: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=300&q=80",
+                keywords: "stopwatch 2 minutes, productive desk",
+                prompt: "minimalist wooden desk with stopwatch 2 min, 9:16 vertical"
+            },
+            {
+                idx: 4,
+                name: "CTA 闭环",
+                voice: "记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！",
+                img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&q=80",
+                keywords: "sun rise motivation, mountain summit",
+                prompt: "determined adventurer on mountain summit at sunrise, dramatic rays, 9:16"
+            }
+        ];
+
+        // Filter state
+        let currentFilter = {
+            signal: 'all',
+            niche: 'all',
+            platform: 'all'
+        };
+
+        const metaViews = {
+            trends: { title: "全网爆款雷达", sub: "多维赛道、共振信号与爆款选题发现" },
+            extractor: { title: "原片重塑工坊", sub: "Whisper 语音转写与 LLM 爆款结构化解构" },
+            storyboard: { title: "分镜导演工作台", sub: "影视分镜编排、AI 试生图与台词精修" },
+            composer: { title: "监视器与合成导出", sub: "9:16 画框监视、MoviePy 排版模版与剪映 Draft 导出" },
+            assets: { title: "成片与剪映工程", sub: "已生成短视频与剪映草稿工程资产" },
+        };
+
+        function switchStudioView(viewKey, el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            document.querySelectorAll('.workspace-view').forEach(v => v.classList.remove('active'));
+            const target = document.getElementById(`view-${viewKey}`);
+            if (target) target.classList.add('active');
+
+            const m = metaViews[viewKey];
+            if (m) {
+                document.getElementById('headerViewTitle').textContent = m.title;
+                document.getElementById('headerViewSub').textContent = m.sub;
+            }
+        }
+
+        function setFilter(type, value, btn) {
+            currentFilter[type] = value;
+            if (btn) {
+                const parent = btn.closest('.filter-pills-wrap');
+                parent.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            renderTrendsTable();
+        }
+
+        function filterDimension(signalType) {
+            currentFilter.signal = signalType;
+            const signalWrap = document.querySelectorAll('.filter-pills-wrap')[0];
+            if (signalWrap) {
+                signalWrap.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = Array.from(signalWrap.querySelectorAll('.pill-btn')).find(b => b.textContent.includes('共振') || b.textContent.includes('全部'));
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+            renderTrendsTable();
+        }
+
+        function renderTrendsTable() {
+            const tbody = document.getElementById('trendsTableBody');
+            tbody.innerHTML = '';
+
+            const list = EXPANDED_TRENDS.filter(item => {
+                const matchSignal = currentFilter.signal === 'all' || item.signal === currentFilter.signal;
+                const matchNiche = currentFilter.niche === 'all' || item.niche === currentFilter.niche;
+                const matchPlatform = currentFilter.platform === 'all' || item.platform === currentFilter.platform;
+                return matchSignal && matchNiche && matchPlatform;
+            });
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                            当前组合筛选条件下暂无热点，请切换分类条件
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            list.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <span class="tag-source ${item.signal === 'resonance' ? 'resonance' : ''}">${item.platform_label}</span>
+                            <span class="tag-niche">${item.niche_label}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 12.5px;">${item.title}</div>
+                        <div class="growth-rate">⚡ 爆发增速: ${item.growth}</div>
+                    </td>
+                    <td>
+                        <span class="score-num">${item.score}</span>
+                    </td>
+                    <td>
+                        <span style="font-family:'JetBrains Mono'; color:#38BDF8; font-weight:600;">${item.retention}</span>
+                    </td>
+                    <td>
+                        <div style="color: var(--text-muted); font-size: 11.5px; line-height: 1.45;">${item.reason}</div>
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn-studio" onclick="createProjectFromTrend('${item.title}')">以此立项 →</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function createProjectFromTrend(title) {
+            document.getElementById('studioProjectTitle').value = title;
+            toast(`已以《${title}》立项并装载至分镜导演台`);
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4]);
+        }
+
+        function renderScenesList() {
+            const container = document.getElementById('scenesTimelineContainer');
+            container.innerHTML = '';
+
+            SCENES_DATA.forEach(sc => {
+                const row = document.createElement('div');
+                row.className = 'scene-item-row';
+                row.innerHTML = `
+                    <div class="scene-asset-column">
+                        <img src="${sc.img}" id="scene-thumb-${sc.idx}">
+                        <button class="btn-gen-compact" onclick="triggerAiGen(${sc.idx}, this)">AI 试生图</button>
+                    </div>
+                    <div class="scene-editor-column">
+                        <div class="scene-header-line">
+                            <span class="scene-index-tag">SCENE #${sc.idx} · ${sc.name}</span>
+                            <button class="btn-studio" style="height: 20px; font-size: 10px;" onclick="toast('🔊 正在试听旁白 TTS 音轨...')">试听配音</button>
+                        </div>
+                        <textarea class="scene-textarea-flat">${sc.voice}</textarea>
+                    </div>
+                    <div class="scene-params-column">
+                        <div class="param-field">
+                            <span class="param-label">Pexels 检索词</span>
+                            <input class="input-studio" value="${sc.keywords}" style="font-size: 11px; padding: 3px 6px;">
+                        </div>
+                        <div class="param-field">
+                            <span class="param-label">AI 生图 Prompt</span>
+                            <input class="input-studio" value="${sc.prompt}" style="font-size: 11px; padding: 3px 6px; color: var(--accent-primary);">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function triggerAiGen(idx, btn) {
+            btn.textContent = '生图中...';
+            setTimeout(() => {
+                btn.textContent = '重新生成';
+                toast(`分镜 #${idx} 9:16 图像已由 AI 引擎生成`);
+            }, 600);
+        }
+
+        function simulateExtraction() {
+            toast('正在下载原片并调用 Whisper 执行语音转写...');
+            setTimeout(() => {
+                toast('转写完毕，LLM 已输出四段式爆款解构');
+            }, 800);
+        }
+
+        function transferToStoryboard() {
+            toast('解构分镜已装载至分镜导演台');
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4]);
+        }
+
+        function chooseLayout(layoutName, el) {
+            document.querySelectorAll('.layout-option-box').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            toast(`已切换渲染排版为【${el.querySelector('div').textContent}】`);
+        }
+
+        function executeRenderPipeline() {
+            toast('已触发渲染流水线：MoviePy 合成 + 剪映 Draft 导出中...');
+            setTimeout(() => {
+                switchStudioView('assets', document.querySelectorAll('.nav-item')[8]);
+                toast('渲染完成！剪映工程已就绪。');
+            }, 1200);
+        }
+
+        function addNewSceneRow() {
+            const count = SCENES_DATA.length + 1;
+            SCENES_DATA.push({
+                idx: count,
+                name: "补充镜头",
+                voice: "输入补充的镜头台词文案...",
+                img: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&q=80",
+                keywords: "lifestyle, focus",
+                prompt: "modern productive office, 9:16 vertical"
+            });
+            renderScenesList();
+            document.getElementById('navSceneCount').textContent = `${count} 镜`;
+            toast(`已添加分镜 #${count}`);
+        }
+
+        function toast(msg) {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'studio-toast';
+            el.innerHTML = `<span>⚡</span><span>${msg}</span>`;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTrendsTable();
+            renderScenesList();
+        });
+    </script>
+</body>
+</html>

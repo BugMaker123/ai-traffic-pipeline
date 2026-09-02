@@ -138,43 +138,137 @@ class MoviePyRenderer:
         self,
         full_text: str,
         active_word: str = "",
-        font_size: int = 48,
+        font_size: int = 50,
+        subtitle_style: str = "impact_yellow",
     ) -> Image.Image:
-        """渲染卡拉OK式逐字高亮字幕（当前朗读词呈现高光亮黄色与加粗强调）"""
-        sub_h = 220
+        """
+        渲染高网感工业级字幕花字（支持 6 大爆款风格：爆款黄白、赛博霓虹、综艺花字、电影纪实、极简胶囊、烈焰金榜）
+        """
+        sub_h = 240
         img = Image.new("RGBA", (self.width, sub_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
+
+        # 样式配置定义
+        style_config = {
+            "impact_yellow": {
+                "base_color": (255, 255, 255),
+                "base_stroke": (0, 0, 0),
+                "stroke_w": 5,
+                "shadow_color": (0, 0, 0, 180),
+                "shadow_offset": (3, 4),
+                "active_color": (255, 235, 0),
+                "active_stroke": (0, 0, 0),
+                "active_stroke_w": 7,
+                "bg_fill": (0, 0, 0, 190),
+                "bg_outline": (255, 235, 0, 80),
+                "bg_radius": 20,
+                "has_bg": True,
+            },
+            "cyber_neon": {
+                "base_color": (56, 189, 248),
+                "base_stroke": (10, 15, 30),
+                "stroke_w": 4,
+                "shadow_color": (56, 189, 248, 120),
+                "shadow_offset": (0, 0),
+                "active_color": (232, 70, 255),
+                "active_stroke": (10, 15, 30),
+                "active_stroke_w": 6,
+                "bg_fill": (10, 16, 32, 215),
+                "bg_outline": (56, 189, 248, 160),
+                "bg_radius": 16,
+                "has_bg": True,
+            },
+            "variety_pop": {
+                "base_color": (255, 245, 120),
+                "base_stroke": (15, 10, 25),
+                "stroke_w": 6,
+                "shadow_color": (255, 70, 120, 180),
+                "shadow_offset": (4, 4),
+                "active_color": (255, 46, 147),
+                "active_stroke": (0, 0, 0),
+                "active_stroke_w": 7,
+                "bg_fill": (25, 12, 35, 205),
+                "bg_outline": (255, 46, 147, 180),
+                "bg_radius": 22,
+                "has_bg": True,
+            },
+            "cinema_white": {
+                "base_color": (248, 250, 252),
+                "base_stroke": (15, 23, 42),
+                "stroke_w": 3,
+                "shadow_color": (0, 0, 0, 200),
+                "shadow_offset": (2, 3),
+                "active_color": (251, 191, 36),
+                "active_stroke": (15, 23, 42),
+                "active_stroke_w": 4,
+                "bg_fill": (0, 0, 0, 120),
+                "bg_outline": (255, 255, 255, 20),
+                "bg_radius": 12,
+                "has_bg": True,
+            },
+            "minimal_capsule": {
+                "base_color": (15, 23, 42),
+                "base_stroke": (255, 255, 255),
+                "stroke_w": 0,
+                "shadow_color": (0, 0, 0, 60),
+                "shadow_offset": (0, 3),
+                "active_color": (79, 70, 229),
+                "active_stroke": (255, 255, 255),
+                "active_stroke_w": 1,
+                "bg_fill": (255, 255, 255, 238),
+                "bg_outline": (99, 102, 241, 120),
+                "bg_radius": 24,
+                "has_bg": True,
+            },
+            "flame_gold": {
+                "base_color": (251, 191, 36),
+                "base_stroke": (50, 8, 8),
+                "stroke_w": 5,
+                "shadow_color": (239, 68, 68, 160),
+                "shadow_offset": (3, 3),
+                "active_color": (255, 69, 0),
+                "active_stroke": (255, 235, 59),
+                "active_stroke_w": 6,
+                "bg_fill": (18, 8, 8, 225),
+                "bg_outline": (239, 68, 68, 160),
+                "bg_radius": 18,
+                "has_bg": True,
+            },
+        }
+
+        cfg = style_config.get(subtitle_style, style_config["impact_yellow"])
 
         try:
             font = ImageFont.truetype(self._font_path, font_size) if self._font_path else ImageFont.load_default()
         except Exception:
             font = ImageFont.load_default()
 
-        bbox = draw.textbbox((0, 0), full_text, font=font, stroke_width=4)
+        # 计算总文本包围盒
+        bbox = draw.textbbox((0, 0), full_text, font=font, stroke_width=cfg["stroke_w"])
         total_w = bbox[2] - bbox[0]
         total_h = bbox[3] - bbox[1]
 
         start_x = (self.width - total_w) // 2
         start_y = (sub_h - total_h) // 2
 
-        # 磨砂黑圆角背景底板
-        pad_x, pad_y = 30, 12
-        draw.rounded_rectangle(
-            [start_x - pad_x, start_y - pad_y, start_x + total_w + pad_x, start_y + total_h + pad_y],
-            radius=18,
-            fill=(0, 0, 0, 180),
-            outline=(255, 255, 255, 30),
-            width=1,
-        )
+        # 绘制背景装饰板
+        if cfg["has_bg"]:
+            pad_x, pad_y = 28, 14
+            pill_box = [start_x - pad_x, start_y - pad_y, start_x + total_w + pad_x, start_y + total_h + pad_y]
+            draw.rounded_rectangle(
+                pill_box,
+                radius=cfg["bg_radius"],
+                fill=cfg["bg_fill"],
+                outline=cfg["bg_outline"],
+                width=2,
+            )
 
-        # 逐字绘制，高亮激活词
+        # 逐字分段渲染（支持立体阴影与卡拉OK高亮）
         cur_x = start_x
-        # 简单字级拆分
         active_found = False
         i = 0
+
         while i < len(full_text):
-            ch = full_text[i]
-            # 检查是否匹配 active_word
             is_active_part = False
             if active_word and not active_found and full_text[i:i+len(active_word)] == active_word:
                 is_active_part = True
@@ -184,24 +278,60 @@ class MoviePyRenderer:
                 match_len = 1
 
             word_slice = full_text[i:i+match_len]
-            ch_bbox = draw.textbbox((0, 0), word_slice, font=font, stroke_width=4)
+            ch_bbox = draw.textbbox((0, 0), word_slice, font=font, stroke_width=cfg["stroke_w"])
             ch_w = ch_bbox[2] - ch_bbox[0]
 
             if is_active_part:
-                # 高亮为亮金色 + 醒目描边
-                draw.text((cur_x, start_y - 2), word_slice, font=font, fill=(255, 235, 59), stroke_fill=(0, 0, 0), stroke_width=6)
+                # 绘制激活词阴影
+                so_x, so_y = cfg["shadow_offset"]
+                if so_x != 0 or so_y != 0:
+                    draw.text(
+                        (cur_x + so_x, start_y + so_y - 2),
+                        word_slice,
+                        font=font,
+                        fill=cfg["shadow_color"],
+                    )
+                # 绘制激活词高亮本体
+                draw.text(
+                    (cur_x, start_y - 3),
+                    word_slice,
+                    font=font,
+                    fill=cfg["active_color"],
+                    stroke_fill=cfg["active_stroke"],
+                    stroke_width=cfg["active_stroke_w"],
+                )
             else:
-                # 默认纯白文字
-                draw.text((cur_x, start_y), word_slice, font=font, fill=(255, 255, 255), stroke_fill=(0, 0, 0), stroke_width=4)
+                # 绘制基础字阴影
+                so_x, so_y = cfg["shadow_offset"]
+                if so_x != 0 or so_y != 0:
+                    draw.text(
+                        (cur_x + so_x, start_y + so_y),
+                        word_slice,
+                        font=font,
+                        fill=cfg["shadow_color"],
+                    )
+                # 绘制基础字本体
+                draw.text(
+                    (cur_x, start_y),
+                    word_slice,
+                    font=font,
+                    fill=cfg["base_color"],
+                    stroke_fill=cfg["base_stroke"],
+                    stroke_width=cfg["stroke_w"],
+                )
 
             cur_x += ch_w
             i += match_len
 
         return img
 
-    def create_dynamic_subtitle_image(self, text: str) -> Image.Image:
-        """渲染加粗高对比度短视频字幕 (1080x220)"""
-        return self.create_karaoke_subtitle_image(text, active_word="")
+    def create_dynamic_subtitle_image(
+        self,
+        text: str,
+        subtitle_style: str = "impact_yellow",
+    ) -> Image.Image:
+        """渲染高对比度短视频静态字幕 (1080x240)"""
+        return self.create_karaoke_subtitle_image(text, active_word="", subtitle_style=subtitle_style)
 
     def render_project(
         self,
@@ -213,7 +343,9 @@ class MoviePyRenderer:
         output_path: Optional[Path] = None,
         layout_template: str = "impact",
         enable_karaoke: bool = True,
+        subtitle_style: str = "impact_yellow",
     ) -> str:
+        """高性能流式短视频渲染合成 (支持 6 大字幕排版花字预设)"""
         """高性能流式短视频渲染合成"""
         output_path = output_path or (FINAL_OUTPUT_DIR / f"{project_id}_final.mp4")
 
@@ -337,7 +469,7 @@ class MoviePyRenderer:
                             w_local_start = max(0.0, w_start - scene_start)
                             w_local_dur = max(0.12, min(w_end, scene_end) - max(w_start, scene_start))
 
-                            sub_img = self.create_karaoke_subtitle_image(sub_text, active_word=w_text)
+                            sub_img = self.create_karaoke_subtitle_image(sub_text, active_word=w_text, subtitle_style=subtitle_style)
                             sub_np = np.array(sub_img)
                             sub_clip = ImageClip(sub_np)
 
@@ -348,7 +480,7 @@ class MoviePyRenderer:
                             scene_sub_clips.append(sub_clip)
                     else:
                         # 默认静态整句字幕
-                        sub_img = self.create_dynamic_subtitle_image(sub_text)
+                        sub_img = self.create_dynamic_subtitle_image(sub_text, subtitle_style=subtitle_style)
                         sub_np = np.array(sub_img)
                         sub_clip = ImageClip(sub_np)
 

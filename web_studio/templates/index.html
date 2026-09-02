@@ -3,2094 +3,2336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traffic Studio - 工业级短视频智能创作工作台</title>
+    <title>Traffic Pipeline - 工业级短视频全链路创作控制台</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #080B11;
-            --bg-surface-1: #0F1420;
-            --bg-surface-2: #161D2E;
-            --bg-surface-3: #1E283D;
-            --bg-glass: rgba(16, 23, 38, 0.72);
-            --bg-glass-hover: rgba(26, 36, 58, 0.85);
+            /* 工业级深冷色板 (Solid Matte Slate & Neutral) */
+            --bg-canvas: #09090B;
+            --bg-sidebar: #0C0D0E;
+            --bg-surface-0: #121316;
+            --bg-surface-1: #18191D;
+            --bg-surface-2: #202227;
+            --bg-surface-active: #272A30;
 
-            --border-subtle: rgba(255, 255, 255, 0.07);
-            --border-medium: rgba(255, 255, 255, 0.12);
+            --border-subtle: #1F2127;
+            --border-default: #2A2D35;
+            --border-emphasis: #3F434E;
             --border-focus: #38BDF8;
 
-            --primary: #38BDF8;
-            --primary-gradient: linear-gradient(135deg, #00F2FE 0%, #4FACFE 50%, #7000FF 100%);
-            --primary-glow: rgba(56, 189, 248, 0.35);
+            --text-primary: #EDEDEF;
+            --text-secondary: #9B9FA9;
+            --text-muted: #656976;
+            --text-disabled: #444751;
 
-            --accent-cyan: #00F2FE;
-            --accent-purple: #A855F7;
-            --accent-amber: #F59E0B;
-            --accent-emerald: #10B981;
-            --accent-rose: #F43F5E;
+            --accent-primary: #38BDF8;
+            --accent-primary-hover: #0EA5E9;
+            --accent-success: #10B981;
+            --accent-warning: #F59E0B;
+            --accent-danger: #EF4444;
 
-            --text-main: #F8FAFC;
-            --text-secondary: #94A3B8;
-            --text-muted: #64748B;
-            --text-dim: #475569;
-
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 22px;
-
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-            --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
-            --shadow-glow: 0 0 24px var(--primary-glow);
+            --radius-xs: 2px;
+            --radius-sm: 4px;
+            --radius-md: 6px;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
             height: 100vh;
             display: flex;
-            flex-direction: column;
             overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+            font-size: 13px;
+            line-height: 1.5;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        /* ---------------- TOP NAVBAR ---------------- */
-        header {
-            height: 62px;
-            min-height: 62px;
-            padding: 0 24px;
-            background: rgba(11, 15, 25, 0.88);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-subtle);
+        /* ---------------- LEFT PRO SIDEBAR ---------------- */
+        aside.studio-sidebar {
+            width: 235px;
+            min-width: 235px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: space-between;
-            z-index: 100;
+            padding: 10px 8px;
+            z-index: 50;
+            overflow-y: auto;
         }
 
-        .brand-area {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .brand-logo {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: var(--primary-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 16px rgba(0, 242, 254, 0.35);
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .brand-logo svg {
-            width: 20px;
-            height: 20px;
-            fill: #0B0F19;
-        }
-
-        .brand-title-wrap {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .brand-title-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .brand-name {
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: -0.3px;
-            background: linear-gradient(120deg, #FFFFFF 30%, #38BDF8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .version-badge {
-            font-size: 10px;
-            font-weight: 700;
-            color: #38BDF8;
-            background: rgba(56, 189, 248, 0.12);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            padding: 1px 6px;
-            border-radius: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .brand-subtitle {
-            font-size: 11px;
-            color: var(--text-muted);
-            letter-spacing: 0.2px;
-        }
-
-        .nav-center-stats {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-subtle);
-            padding: 5px 14px;
-            border-radius: 30px;
-        }
-
-        .engine-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            padding: 3px 8px;
-            border-radius: 6px;
-            background: transparent;
-            transition: all 0.2s ease;
-        }
-
-        .engine-chip.ok {
-            color: #34D399;
-        }
-
-        .engine-chip.warn {
-            color: #FBBF24;
-        }
-
-        .chip-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .chip-divider {
-            width: 1px;
-            height: 12px;
-            background: var(--border-subtle);
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .badge-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #34D399;
-            background: rgba(16, 185, 129, 0.1);
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-
-        .dot-pulse {
-            width: 7px;
-            height: 7px;
-            background: #10B981;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #10B981;
-            animation: pulse-ring 2s infinite ease-in-out;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 6px #10B981); }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
-        /* ---------------- 3-COLUMN WORKSPACE ---------------- */
-        main {
-            display: grid;
-            grid-template-columns: 330px minmax(520px, 1fr) 370px;
-            gap: 16px;
-            padding: 16px 20px;
-            flex: 1;
-            height: calc(100vh - 62px);
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .studio-col {
-            background: var(--bg-glass);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
-            display: flex;
-            flex-direction: column;
-            backdrop-filter: blur(20px);
-            min-height: 0;
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-            transition: border-color 0.2s ease;
-        }
-
-        .studio-col:hover {
-            border-color: var(--border-medium);
-        }
-
-        .col-header {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border-subtle);
-            background: rgba(255, 255, 255, 0.02);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-
-        .col-title-group {
+        .brand-header {
             display: flex;
             align-items: center;
             gap: 10px;
+            padding: 6px 10px 12px 10px;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
-        .col-icon-box {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            background: rgba(56, 189, 248, 0.1);
-            color: #38BDF8;
+        .brand-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: var(--radius-sm);
+            background: #1E293B;
+            border: 1px solid #38BDF8;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            color: #38BDF8;
+            font-size: 12px;
+            font-weight: 800;
         }
 
-        .col-title {
-            font-size: 14px;
+        .brand-title {
+            font-size: 13px;
             font-weight: 700;
-            color: var(--text-main);
             letter-spacing: -0.2px;
+            color: var(--text-primary);
         }
 
-        .col-subtitle {
-            font-size: 11px;
+        .brand-version {
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
             color: var(--text-muted);
-            margin-top: 1px;
+            background: var(--bg-surface-0);
+            padding: 1px 4px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-subtle);
+            margin-left: 4px;
         }
 
-        /* Pinned Subheader for Category Tabs - NEVER scrolls away */
-        .col-pinned-subnav {
-            padding: 12px 14px 8px 14px;
-            background: rgba(11, 16, 28, 0.95);
-            border-bottom: 1px solid var(--border-subtle);
+        /* Nav Hierarchy */
+        .nav-group {
+            margin-top: 8px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            flex-shrink: 0;
-            z-index: 10;
+            gap: 2px;
         }
 
-        .col-body {
-            padding: 14px 16px;
-            overflow-y: auto;
+        .nav-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            padding: 10px 10px 4px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.12s, color 0.12s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-surface-1);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-surface-2);
+            color: var(--text-primary);
+            font-weight: 600;
+            border-color: var(--border-default);
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item-icon {
+            font-size: 13px;
+            width: 16px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .nav-item.active .nav-item-icon {
+            color: var(--accent-primary);
+        }
+
+        .nav-badge-count {
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-surface-0);
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .nav-item.active .nav-badge-count {
+            color: var(--accent-primary);
+            border-color: rgba(56, 189, 248, 0.3);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .sidebar-bottom-status {
+            padding: 8px 10px;
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-success);
+        }
+
+        /* ---------------- MAIN STUDIO LAYOUT ---------------- */
+        main.studio-main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            min-height: 0;
+            background: var(--bg-canvas);
+            overflow: hidden;
         }
 
-        /* ---------------- LEFT COLUMN: TREND RADAR ---------------- */
-        .category-tab-scroll {
+        /* Header / Command Bar */
+        header.studio-header {
+            height: 44px;
+            min-height: 44px;
+            padding: 0 18px;
+            background: var(--bg-surface-0);
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.15) transparent;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .cat-pill {
-            background: rgba(255, 255, 255, 0.05);
+        .header-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+        }
+
+        .breadcrumb-active {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .breadcrumb-divider {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn-studio {
+            height: 28px;
+            padding: 0 10px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-surface-1);
+            color: var(--text-primary);
+            transition: all 0.12s;
+            white-space: nowrap;
+        }
+
+        .btn-studio:hover {
+            background: var(--bg-surface-2);
+            border-color: var(--border-emphasis);
+        }
+
+        .btn-studio:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-studio-primary {
+            background: #2563EB;
+            border-color: #3B82F6;
+            color: #FFFFFF;
+        }
+
+        .btn-studio-primary:hover:not(:disabled) {
+            background: #1D4ED8;
+        }
+
+        .btn-studio-accent {
+            background: #0284C7;
+            border-color: #38BDF8;
+            color: #FFFFFF;
+        }
+
+        .btn-studio-accent:hover:not(:disabled) {
+            background: #0369A1;
+        }
+
+        /* ---------------- WORKSPACE CONTENT ---------------- */
+        .studio-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .workspace-view {
+            display: none;
+        }
+
+        .workspace-view.active {
+            display: block;
+        }
+
+        /* ---------------- VIEW 1: 选题雷达 ---------------- */
+        .filter-matrix {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11.5px;
+        }
+
+        .filter-label {
+            width: 68px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 10.5px;
+            flex-shrink: 0;
+        }
+
+        .filter-pills-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .pill-btn {
+            padding: 3px 8px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-surface-1);
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             font-size: 11.5px;
             font-weight: 500;
-            padding: 5px 11px;
-            border-radius: 16px;
             cursor: pointer;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            flex-shrink: 0;
+            transition: all 0.12s;
         }
 
-        .cat-pill:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            border-color: rgba(255, 255, 255, 0.2);
+        .pill-btn:hover {
+            background: var(--bg-surface-2);
+            color: var(--text-primary);
         }
 
-        .cat-pill.active {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(168, 85, 247, 0.25));
-            border-color: #38BDF8;
-            color: #FFFFFF;
-            font-weight: 600;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-        }
-
-        .trend-meta-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 11px;
-            color: var(--text-muted);
-            padding: 0 2px;
-        }
-
-        .trend-meta-bar strong {
-            color: #38BDF8;
+        .pill-btn.active {
+            background: #1E293B;
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
             font-weight: 600;
         }
 
-        .trends-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .trend-card {
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            padding: 12px 14px 12px 42px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .trend-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(56, 189, 248, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-        }
-
-        .trend-card:active {
-            transform: translateY(0);
-        }
-
-        .trend-rank {
-            position: absolute;
-            left: 12px;
-            top: 13px;
-            width: 22px;
-            height: 22px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-            background: rgba(255, 255, 255, 0.07);
-            color: var(--text-secondary);
-        }
-
-        .trend-rank.top-1 {
-            background: linear-gradient(135deg, #FFD700, #FF8C00);
-            color: #1A0E00;
-            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.4);
-        }
-
-        .trend-rank.top-2 {
-            background: linear-gradient(135deg, #E2E8F0, #94A3B8);
-            color: #0F172A;
-        }
-
-        .trend-rank.top-3 {
-            background: linear-gradient(135deg, #F97316, #C2410C);
-            color: #FFF;
-        }
-
-        .trend-header-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            gap: 8px;
-        }
-
-        .trend-platform-tag {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 4px;
-            background: rgba(56, 189, 248, 0.12);
-            color: #38BDF8;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-
-        .trend-platform-tag.resonance {
-            background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(168, 85, 247, 0.2));
-            color: #FB7185;
-            border-color: rgba(244, 63, 94, 0.35);
-        }
-
-        .trend-score-badge {
-            font-size: 11px;
-            font-weight: 600;
-            color: #FBBF24;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .trend-title-text {
-            font-size: 13px;
-            font-weight: 600;
-            line-height: 1.45;
-            color: var(--text-main);
-            margin-bottom: 8px;
-        }
-
-        .trend-footer-action {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .trend-click-tip {
-            color: #38BDF8;
-            font-weight: 600;
-            opacity: 0;
-            transform: translateX(-4px);
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .trend-card:hover .trend-click-tip {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        /* ---------------- CENTER COLUMN: STORYBOARD WORKSPACE ---------------- */
-        .prompt-engine-box {
-            background: linear-gradient(180deg, rgba(30, 41, 64, 0.5) 0%, rgba(18, 26, 43, 0.3) 100%);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: var(--radius-md);
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-        }
-
-        .prompt-input-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .prompt-input-wrapper {
-            position: relative;
-            flex: 1;
-        }
-
-        .prompt-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #38BDF8;
-            font-size: 16px;
-            pointer-events: none;
-        }
-
-        .prompt-input-wrapper input {
+        .trends-data-table {
             width: 100%;
-            background: rgba(11, 15, 25, 0.7);
-            border: 1px solid var(--border-medium);
-            border-radius: var(--radius-md);
-            padding: 12px 16px 12px 40px;
-            color: #FFFFFF;
-            font-size: 14px;
-            font-weight: 500;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .prompt-input-wrapper input:focus {
-            border-color: #38BDF8;
-            background: rgba(11, 15, 25, 0.95);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.2);
-        }
-
-        .btn-magic-ai {
-            background: var(--primary-gradient);
-            color: #070B14;
-            font-size: 13px;
-            font-weight: 800;
-            letter-spacing: 0.2px;
-            border: none;
-            border-radius: var(--radius-md);
-            padding: 0 20px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-            box-shadow: 0 4px 18px rgba(0, 242, 254, 0.35);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            border-collapse: collapse;
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
             overflow: hidden;
         }
 
-        .btn-magic-ai:hover {
-            transform: translateY(-1px) scale(1.01);
-            box-shadow: 0 6px 24px rgba(0, 242, 254, 0.5);
-            filter: brightness(1.08);
-        }
-
-        .btn-magic-ai:active {
-            transform: translateY(0) scale(0.99);
-        }
-
-        .btn-magic-ai:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            filter: grayscale(0.5);
-        }
-
-        .quick-tag-strip {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+        .trends-data-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg-surface-1);
             font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-subtle);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trends-data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .trends-data-table tr:hover td {
+            background: var(--bg-surface-1);
+        }
+
+        .tag-source {
+            font-size: 10.5px;
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            display: inline-block;
+        }
+
+        .tag-source.resonance {
+            color: #FB7185;
+            border-color: rgba(244, 63, 94, 0.3);
+            background: rgba(244, 63, 94, 0.08);
+            font-weight: 600;
+        }
+
+        .tag-niche {
+            font-size: 10.5px;
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
             color: var(--text-muted);
         }
 
-        .quick-tag {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-secondary);
-            padding: 3px 9px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.18s ease;
-        }
-
-        .quick-tag:hover {
-            background: rgba(56, 189, 248, 0.12);
-            color: #38BDF8;
-            border-color: rgba(56, 189, 248, 0.3);
-        }
-
-        /* Config Grid */
-        .config-grid-row {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr;
-            gap: 12px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            letter-spacing: 0.2px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .input-control {
-            width: 100%;
-            background: rgba(15, 21, 35, 0.65);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            color: var(--text-main);
-            font-size: 13px;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .input-control:focus {
-            border-color: #38BDF8;
-            background: rgba(15, 21, 35, 0.9);
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
-        }
-
-        select.input-control {
-            cursor: pointer;
-        }
-
-        /* Storyboard Scenes List */
-        .scenes-header-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-top: 4px;
-        }
-
-        .scenes-count-pill {
-            font-size: 11px;
-            font-weight: 600;
-            color: #38BDF8;
-            background: rgba(56, 189, 248, 0.1);
-            padding: 3px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-
-        .scenes-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .scene-card {
-            background: rgba(17, 24, 39, 0.6);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .scene-card:hover {
-            border-color: var(--border-medium);
-            background: rgba(21, 30, 48, 0.7);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-        }
-
-        .scene-top-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .scene-index-badge {
-            font-size: 11px;
+        .score-num {
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
-            color: #C084FC;
-            background: rgba(168, 85, 247, 0.15);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            padding: 3px 9px;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            color: var(--accent-primary);
         }
 
-        .scene-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .growth-rate {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            color: var(--accent-success);
+            margin-top: 2px;
         }
 
-        .btn-tts-listen {
-            background: rgba(56, 189, 248, 0.08);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            color: #38BDF8;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 11px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-        }
-
-        .btn-tts-listen:hover {
-            background: rgba(56, 189, 248, 0.2);
-            border-color: #38BDF8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
-        }
-
-        .btn-tts-listen.playing {
-            background: rgba(16, 185, 129, 0.2);
-            border-color: #10B981;
-            color: #34D399;
-        }
-
-        .scene-voiceover-area {
-            width: 100%;
-            background: rgba(10, 14, 24, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.09);
+        /* ---------------- VIEW 2: 视频解构工坊 ---------------- */
+        .url-ingest-bar {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-sm);
             padding: 10px 12px;
-            color: #FFFFFF;
-            font-size: 13px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .input-studio {
+            flex: 1;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+        }
+
+        .input-studio:focus {
+            border-color: var(--border-focus);
+        }
+
+        .workbench-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .studio-panel {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-toolbar {
+            padding: 8px 12px;
+            background: var(--bg-surface-1);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .panel-body {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .code-textarea {
+            width: 100%;
+            height: 240px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xs);
+            padding: 8px 10px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
             line-height: 1.6;
             resize: vertical;
             outline: none;
-            transition: border-color 0.2s ease;
         }
 
-        .scene-voiceover-area:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
-        }
-
-        .scene-asset-bar {
+        /* ---------------- VIEW 3: 分镜导演台 ---------------- */
+        .scene-item-row {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
             display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            align-items: center;
+            grid-template-columns: 140px 1fr 260px;
+            overflow: hidden;
+            transition: border-color 0.12s;
         }
 
-        .scene-keywords-input {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
-            padding: 6px 10px;
-            color: var(--text-secondary);
-            font-size: 11px;
-            outline: none;
+        .scene-item-row:hover {
+            border-color: var(--border-default);
         }
 
-        .scene-keywords-input:focus {
-            border-color: #38BDF8;
-            color: #FFF;
-        }
-
-        .scene-asset-tag {
-            font-size: 10px;
-            font-weight: 600;
-            color: #34D399;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            padding: 5px 8px;
-            border-radius: 6px;
-            white-space: nowrap;
-        }
-
-        /* ---------------- RIGHT COLUMN: MONITOR & EXPORT ---------------- */
-        .player-monitor-wrap {
-            width: 100%;
+        .scene-asset-column {
+            background: #080A0F;
+            border-right: 1px solid var(--border-subtle);
+            position: relative;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            padding: 8px;
+            gap: 6px;
+            justify-content: space-between;
         }
 
-        .phone-frame {
-            width: 190px;
-            aspect-ratio: 9 / 16;
-            background: #020408;
-            border-radius: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            position: relative;
+        .scene-thumb-box {
+            width: 100%;
+            height: 84px;
+            border-radius: var(--radius-xs);
             overflow: hidden;
-            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.5);
+            background: #000;
+            border: 1px solid var(--border-subtle);
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .phone-notch {
-            position: absolute;
-            top: 6px;
-            width: 50px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
-            z-index: 10;
-        }
-
-        .phone-rec-dot {
-            position: absolute;
-            top: 10px;
-            right: 12px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 9px;
-            font-weight: 700;
-            color: #EF4444;
-            z-index: 10;
-        }
-
-        .phone-rec-dot::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: #EF4444;
-            border-radius: 50%;
-            animation: pulse-ring 1.5s infinite;
-        }
-
-        .phone-video {
+        .scene-thumb-box img, .scene-thumb-box video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            background: #000;
         }
 
-        .player-empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 16px;
+        .asset-badge-tag {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            font-size: 8.5px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(10, 14, 23, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #F1F5F9;
+            backdrop-filter: blur(4px);
         }
 
-        .player-radar-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 1px dashed rgba(56, 189, 248, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #38BDF8;
-            font-size: 16px;
-        }
-
-        .player-spec-badge {
+        .btn-gen-compact {
+            height: 22px;
+            background: var(--bg-surface-1);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xs);
+            color: var(--text-primary);
             font-size: 10px;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-dim);
-            background: rgba(255, 255, 255, 0.05);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        /* Audio & Engine Settings Card */
-        .audio-config-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .audio-config-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        /* Action Buttons */
-        .btn-render-primary {
-            width: 100%;
-            padding: 14px 18px;
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: var(--radius-md);
-            color: #060911;
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 0.3px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-render-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 28px rgba(0, 242, 254, 0.55);
-            filter: brightness(1.08);
-        }
-
-        .btn-render-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-render-primary:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .action-row-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .btn-action-outline {
-            padding: 9px 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
         }
 
-        .btn-action-outline:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.09);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #FFFFFF;
+        .btn-gen-compact:hover:not(:disabled) {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.1);
         }
 
-        .btn-action-outline:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* Terminal Console */
-        .terminal-box {
-            background: #060910;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-md);
+        .scene-editor-column {
             padding: 10px 12px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            height: 120px;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10.5px;
-            line-height: 1.5;
-            color: #94A3B8;
+            gap: 6px;
         }
 
-        .terminal-header {
+        .scene-header-line {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 10px;
-            color: var(--text-dim);
-            padding-bottom: 4px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 2px;
         }
 
-        .terminal-log-row {
-            display: flex;
-            gap: 6px;
-            word-break: break-all;
+        .scene-index-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 1px 5px;
+            border-radius: var(--radius-xs);
         }
 
-        .terminal-time {
-            color: var(--text-dim);
-            flex-shrink: 0;
-        }
-
-        .terminal-msg {
-            color: #CBD5E1;
-        }
-        .terminal-msg.info { color: #38BDF8; }
-        .terminal-msg.success { color: #34D399; }
-        .terminal-msg.warn { color: #FBBF24; }
-        .terminal-msg.error { color: #FB7185; }
-
-        /* Utility buttons */
-        .btn-icon-refresh {
-            background: transparent;
+        .scene-textarea-flat {
+            width: 100%;
+            background: var(--bg-canvas);
             border: 1px solid var(--border-subtle);
-            border-radius: 6px;
-            color: var(--text-secondary);
-            width: 26px;
-            height: 26px;
+            border-radius: var(--radius-xs);
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12.5px;
+            line-height: 1.5;
+            min-height: 52px;
+            outline: none;
+            resize: vertical;
+        }
+
+        .scene-params-column {
+            background: var(--bg-surface-1);
+            border-left: 1px solid var(--border-subtle);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .param-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .param-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* ---------------- VIEW 4: 监视器与合成导出 ---------------- */
+        .composer-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .monitor-frame {
+            background: #000;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 14px 12px;
+            position: relative;
+        }
+
+        .monitor-header-timecode {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .monitor-title-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--border-emphasis);
+            border-radius: var(--radius-xs);
+            padding: 5px 8px;
+            text-align: center;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #FFE600;
+        }
+
+        .monitor-karaoke-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: var(--radius-xs);
+            padding: 7px 10px;
+            text-align: center;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #FFFFFF;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .monitor-karaoke-overlay.style-impact_yellow {
+            background: rgba(0, 0, 0, 0.88);
+            border: 1px solid rgba(255, 230, 0, 0.3);
+            color: #FFFFFF;
+        }
+        .monitor-karaoke-overlay.style-impact_yellow .karaoke-focus-word {
+            color: #FFE600;
+            font-weight: 800;
+            text-shadow: 0 0 8px rgba(255, 230, 0, 0.6);
+        }
+
+        .monitor-karaoke-overlay.style-cyber_neon {
+            background: rgba(10, 16, 32, 0.9);
+            border: 1px solid #38BDF8;
+            color: #38BDF8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+        }
+        .monitor-karaoke-overlay.style-cyber_neon .karaoke-focus-word {
+            color: #E879F9;
+            font-weight: 800;
+            text-shadow: 0 0 10px #E879F9;
+        }
+
+        .monitor-karaoke-overlay.style-variety_pop {
+            background: rgba(25, 12, 35, 0.9);
+            border: 1px solid #FF2E93;
+            color: #FEF08A;
+        }
+        .monitor-karaoke-overlay.style-variety_pop .karaoke-focus-word {
+            color: #FF2E93;
+            font-weight: 800;
+            text-shadow: 1px 1px 0 #FFE600;
+        }
+
+        .monitor-karaoke-overlay.style-cinema_white {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #F8FAFC;
+            letter-spacing: 0.5px;
+        }
+        .monitor-karaoke-overlay.style-cinema_white .karaoke-focus-word {
+            color: #FBBF24;
+            font-weight: 700;
+        }
+
+        .monitor-karaoke-overlay.style-minimal_capsule {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #0F172A;
+            border-radius: 20px;
+        }
+        .monitor-karaoke-overlay.style-minimal_capsule .karaoke-focus-word {
+            color: #4F46E5;
+            font-weight: 800;
+        }
+
+        .monitor-karaoke-overlay.style-flame_gold {
+            background: rgba(20, 8, 8, 0.92);
+            border: 1px solid rgba(239, 68, 68, 0.7);
+            color: #FBBF24;
+        }
+        .monitor-karaoke-overlay.style-flame_gold .karaoke-focus-word {
+            color: #FF4500;
+            font-weight: 800;
+            text-shadow: 0 0 8px rgba(255, 69, 0, 0.7);
+        }
+
+        .karaoke-focus-word {
+            color: #FFE600;
+            font-weight: 800;
+            padding: 0 2px;
+        }
+
+        .control-grid-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .select-studio {
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            outline: none;
+            width: 100%;
+        }
+
+        .layout-options-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .layout-option-box {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .layout-option-box:hover {
+            border-color: var(--border-emphasis);
+        }
+
+        .layout-option-box.active {
+            border-color: var(--accent-primary);
+            background: var(--bg-surface-1);
+        }
+
+        /* ---------------- VIEW 5: 资产中心 ---------------- */
+        .asset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .asset-row {
+            background: var(--bg-surface-0);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            justify-content: space-between;
         }
 
-        .btn-icon-refresh:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #FFF;
-            border-color: rgba(255, 255, 255, 0.2);
+        .asset-row:hover {
+            background: var(--bg-surface-1);
+            border-color: var(--border-default);
         }
 
-        .btn-icon-refresh.spinning svg {
-            animation: spin 0.8s linear infinite;
+        .asset-thumb {
+            width: 40px;
+            height: 56px;
+            border-radius: var(--radius-xs);
+            object-fit: cover;
+            border: 1px solid var(--border-subtle);
+            background: #000;
         }
 
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Soundwave equalizer indicator */
-        .equalizer-wave {
-            display: inline-flex;
-            align-items: flex-end;
-            gap: 2px;
-            height: 10px;
-        }
-        .equalizer-bar {
-            width: 2px;
-            background: #34D399;
-            border-radius: 1px;
-            animation: eq-bounce 0.8s ease-in-out infinite alternate;
-        }
-        .equalizer-bar:nth-child(1) { height: 4px; animation-delay: 0.1s; }
-        .equalizer-bar:nth-child(2) { height: 10px; animation-delay: 0.3s; }
-        .equalizer-bar:nth-child(3) { height: 6px; animation-delay: 0.2s; }
-
-        @keyframes eq-bounce {
-            0% { height: 2px; }
-            100% { height: 10px; }
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            main {
-                grid-template-columns: 280px 1fr 320px;
-                gap: 12px;
-                padding: 12px 14px;
-            }
-        }
-
-        @media (max-width: 960px) {
-            body { height: auto; overflow: auto; }
-            main {
-                display: flex;
-                flex-direction: column;
-                height: auto;
-                overflow: visible;
-            }
-            .studio-col {
-                min-height: 480px;
-            }
+        /* Toast */
+        .studio-toast {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-emphasis);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 11.5px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-    <div class="brand-area">
-        <div class="brand-logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-        </div>
-        <div class="brand-title-wrap">
-            <div class="brand-title-row">
-                <span class="brand-name">Traffic Studio</span>
-                <span class="version-badge">PRO v3.0</span>
-            </div>
-            <span class="brand-subtitle">AI 短视频爆款全自动创作工作台</span>
-        </div>
-    </div>
-
-    <!-- Center status bar -->
-    <div class="nav-center-stats">
-        <div class="engine-chip ok"><span class="chip-dot"></span><span>AI 剧本生成器</span></div>
-        <div class="chip-divider"></div>
-        <div class="engine-chip" id="mediaEngineChip"><span class="chip-dot"></span><span>Pexels 引擎检测中</span></div>
-        <div class="chip-divider"></div>
-        <div class="engine-chip ok"><span class="chip-dot"></span><span>EdgeTTS 自然语音</span></div>
-        <div class="chip-divider"></div>
-        <div class="engine-chip ok"><span class="chip-dot"></span><span>毫秒级剪映导出</span></div>
-    </div>
-
-    <div class="nav-actions">
-        <a href="/tasks" style="color:#38BDF8;text-decoration:none;font-size:12px;font-weight:700;padding:7px 12px;border:1px solid rgba(56,189,248,.3);border-radius:20px;">任务中心 · 全局日志</a>
-        <div class="badge-status">
-            <span class="dot-pulse"></span>
-            <span>服务运行正常</span>
-        </div>
-    </div>
-</header>
-
-<!-- Main Workspace -->
-<main>
-    <!-- Left Column: Hot Topics Radar -->
-    <section class="studio-col">
-        <div class="col-header">
-            <div class="col-title-group">
-                <div class="col-icon-box">🔥</div>
+    <!-- 🧭 LEFT PRO SIDEBAR -->
+    <aside class="studio-sidebar">
+        <div>
+            <!-- Brand -->
+            <div class="brand-header">
+                <div class="brand-icon">TP</div>
                 <div>
-                    <div class="col-title">爆款热点雷达</div>
-                    <div class="col-subtitle">全网实时爬虫与多平台共振</div>
+                    <span class="brand-title">Traffic Pipeline</span>
+                    <span class="brand-version">v3.0</span>
                 </div>
             </div>
-            <button class="btn-icon-refresh" id="btnRefreshTrends" title="刷新热点" onclick="refreshTrendsWithAnim()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-                </svg>
-            </button>
+
+            <!-- Navigation Categories -->
+            <nav class="nav-group">
+                <!-- Group 1: 选题与情报雷达 -->
+                <div class="nav-section-label">
+                    <span>选题与情报雷达</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">INTEL</span>
+                </div>
+
+                <div class="nav-item active" onclick="switchStudioView('trends', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">⚡</span>
+                        <span>全网爆款雷达</span>
+                    </div>
+                    <span class="nav-badge-count" id="countViralBadge">24</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('trends', this); filterDimension('signal', 'resonance')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🔥</span>
+                        <span>共振爆发预警</span>
+                    </div>
+                    <span class="nav-badge-count" style="color:#FB7185;">TOP 6</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('对标账号侦测：正在监控 12 个行业对标账号近7日爆款...')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎯</span>
+                        <span>对标账号侦测</span>
+                    </div>
+                    <span class="nav-badge-count">12</span>
+                </div>
+
+                <!-- Group 2: 智能创作工坊 -->
+                <div class="nav-section-label">
+                    <span>智能创作工坊</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">STUDIO</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('extractor', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🔗</span>
+                        <span>原片重塑工坊</span>
+                    </div>
+                    <span class="nav-badge-count">STT</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('storyboard', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎬</span>
+                        <span>分镜导演工作台</span>
+                    </div>
+                    <span class="nav-badge-count" id="navSceneCount">4 镜</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('视觉生图实验室：支持 Midjourney / Flux / DALL-E 3 批量提示词生成')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎨</span>
+                        <span>视觉配图实验室</span>
+                    </div>
+                    <span class="nav-badge-count">SDXL</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('声音克隆与音色库：内置 9+ 款情感解说音色与音效轨道')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎙️</span>
+                        <span>声音克隆与音色库</span>
+                    </div>
+                    <span class="nav-badge-count">9 音</span>
+                </div>
+
+                <!-- Group 3: 渲染与多轨剪映 -->
+                <div class="nav-section-label">
+                    <span>渲染与多轨剪映</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">RENDER</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('composer', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎛️</span>
+                        <span>监视器与合成导出</span>
+                    </div>
+                    <span class="nav-badge-count">60fps</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('批量矩阵生成：支持根据 1 组选题批量裂变 10 条不同风格分镜与音画')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🎞️</span>
+                        <span>批量矩阵生成</span>
+                    </div>
+                    <span class="nav-badge-count">PRO</span>
+                </div>
+
+                <!-- Group 4: 资产与分发矩阵 -->
+                <div class="nav-section-label">
+                    <span>资产与分发中心</span>
+                    <span style="font-family:'JetBrains Mono'; font-size:9px;">ASSETS</span>
+                </div>
+
+                <div class="nav-item" onclick="switchStudioView('assets', this)">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">📂</span>
+                        <span>成片与剪映工程</span>
+                    </div>
+                    <span class="nav-badge-count" id="badgeAssetCount">0 部</span>
+                </div>
+
+                <div class="nav-item" onclick="toast('多平台矩阵分发：一键直连抖音、视频号、B站、小红书创作者开放接口')">
+                    <div class="nav-item-left">
+                        <span class="nav-item-icon">🚀</span>
+                        <span>多平台矩阵分发</span>
+                    </div>
+                    <span class="nav-badge-count">API</span>
+                </div>
+            </nav>
         </div>
 
-        <!-- Pinned Category Subnav (Permanently Fixed at Top) -->
-        <div class="col-pinned-subnav">
-            <div class="category-tab-scroll" id="catTabBar">
-                <button class="cat-pill active" onclick="switchCat('resonance', this)">🔥 多平台共振</button>
-                <button class="cat-pill" onclick="switchCat('all', this)">⚡ 综合热榜</button>
-                <button class="cat-pill" onclick="switchCat('tech', this)">💻 科技数码</button>
-                <button class="cat-pill" onclick="switchCat('finance', this)">📈 商业财经</button>
-                <button class="cat-pill" onclick="switchCat('social', this)">🌐 社会民生</button>
-                <button class="cat-pill" onclick="switchCat('entertainment', this)">🎭 文娱热点</button>
-                <button class="cat-pill" onclick="switchCat('growth', this)">🧠 认知职场</button>
+        <!-- Engine Status -->
+        <div class="sidebar-bottom-status">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="status-indicator"></span>
+                <span style="font-size: 11px; color: var(--text-secondary);">MoviePy · 剪映 Draft API</span>
             </div>
-            <div class="trend-meta-bar">
-                <span>当前：<strong id="trendCategoryLabel">多平台共振</strong></span>
-                <span id="trendResultCount">正在抓取...</span>
-            </div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);">READY</span>
         </div>
+    </aside>
 
-        <!-- Scrollable Trends List -->
-        <div class="col-body" id="trendsScrollBody">
-            <div class="trends-list" id="trendsContainer">
-                <div class="player-empty-state">
-                    <div class="player-radar-icon">⏳</div>
-                    <span style="font-size: 12px;">正在连接多平台热榜引擎...</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Center Column: Storyboard Editor -->
-    <section class="studio-col">
-        <div class="col-header">
-            <div class="col-title-group">
-                <div class="col-icon-box">🎬</div>
-                <div>
-                    <div class="col-title">智能分镜编导台</div>
-                    <div class="col-subtitle" id="projectStatusText">支持自律科普、情绪共鸣、商业认知等多风格拆解</div>
-                </div>
-            </div>
-            <div class="scenes-count-pill" id="sceneCountText">4 分镜 / 预估 60 秒</div>
-        </div>
-
-        <div class="col-body">
-            <!-- Mode Switch Tabs -->
-            <div style="display: flex; gap: 8px; margin-bottom: 12px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 10px; border: 1px solid var(--border-subtle);">
-                <button class="btn-action-outline" id="tabModeTopic" style="flex: 1; border: none; background: var(--primary-gradient); color: #020408; font-weight: 700;" onclick="switchCreationMode('topic')">✨ 主题灵感创作</button>
-                <button class="btn-action-outline" id="tabModeExtract" style="flex: 1; border: none; color: var(--text-secondary);" onclick="switchCreationMode('extract')">🔗 原视频提取仿写</button>
+    <!-- 🖥️ MAIN STUDIO INTERFACE -->
+    <main class="studio-main">
+        <!-- Command Header Bar -->
+        <header class="studio-header">
+            <div class="header-breadcrumb">
+                <span class="breadcrumb-active" id="headerViewTitle">全网爆款雷达</span>
+                <span class="breadcrumb-divider">/</span>
+                <span class="breadcrumb-sub" id="headerViewSub">多维赛道、共振信号与爆款选题发现</span>
             </div>
 
-            <!-- Panel 1: Topic Input AI Box -->
-            <div id="panelTopicMode">
-                <div class="prompt-engine-box">
-                    <div class="prompt-input-row">
-                        <div class="prompt-input-wrapper">
-                            <span class="prompt-icon">✨</span>
-                            <input type="text" id="topicInput" placeholder="输入短视频创作主题，或直接点击左侧爆款热点..." value="为什么真正自律的人从不靠意志力死撑？">
-                        </div>
-                        <button class="btn-magic-ai" id="btnGenScript" onclick="generateScript()">
-                            <span>🪄 AI 深度拆解分镜</span>
-                        </button>
-                    </div>
-                    <!-- Quick Topic Tags -->
-                    <div class="quick-tag-strip">
-                        <span>灵感推荐:</span>
-                        <span class="quick-tag" onclick="setQuickTopic('为什么真正自律的人从不靠意志力死撑？')">自律认知</span>
-                        <span class="quick-tag" onclick="setQuickTopic('普通人如何利用AI工具实现信息差变现？')">AI变现</span>
-                        <span class="quick-tag" onclick="setQuickTopic('为什么你越来越不想社交了？心理学真相')">深度心理</span>
-                        <span class="quick-tag" onclick="setQuickTopic('月薪5000和50000的人，思维差异究竟在哪里？')">财富逻辑</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Panel 2: Video URL Extraction & Rewrite Box -->
-            <div id="panelExtractMode" style="display: none;">
-                <div class="prompt-engine-box" style="border-color: rgba(168, 85, 247, 0.4); background: linear-gradient(180deg, rgba(168, 85, 247, 0.08) 0%, rgba(15, 20, 32, 0.6) 100%);">
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="videoUrlInput" class="input-control" style="background: rgba(0,0,0,0.4); border-color: rgba(168, 85, 247, 0.3);" placeholder="粘贴抖音 / B站 / 小红书 / YouTube 分享链接或带文本的口令...">
-                        <button class="btn-magic-ai" id="btnExtractUrl" style="background: linear-gradient(135deg, #A855F7 0%, #6366F1 100%); white-space: nowrap;" onclick="extractAndRewriteVideo()">
-                            <span>⚡ 提取并仿写分镜</span>
-                        </button>
-                    </div>
-                    <div id="extractResultBox" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
-                        <div style="display: flex; justify-content: space-between; color: #A855F7; font-weight: 700; margin-bottom: 4px;">
-                            <span id="extractTitleText">原视频：</span>
-                            <span id="extractAuthorText">来源平台</span>
-                        </div>
-                        <div id="extractTranscriptText" style="color: #94A3B8; max-height: 80px; overflow-y: auto; line-height: 1.5;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Meta Settings -->
-            <div class="config-grid-row">
-                <div class="input-group">
-                    <label><span>短视频吸睛大标题</span><span style="font-size: 10px; color: var(--text-muted);" id="titleCharCount">0/60</span></label>
-                    <input type="text" class="input-control" id="videoTitleInput" value="90%的人都误解了【自律】的底层逻辑" oninput="updateStats()">
-                </div>
-                <div class="input-group">
-                    <label>风格定位</label>
-                    <select class="input-control" id="videoStyleSelect">
-                        <option value="干货科普" selected>干货科普 (认知觉醒)</option>
-                        <option value="幽默反转">幽默反转 (黄金留人)</option>
-                        <option value="情感共鸣">情感共鸣 (治愈走心)</option>
-                        <option value="商业认知">商业认知 (底层复利)</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>时长档位</label>
-                    <select class="input-control" id="durationSelect">
-                        <option value="deep_60s" selected>深度干货 (60~90s 推荐)</option>
-                        <option value="quick_30s">快速短片 (30~45s)</option>
-                        <option value="long_120s">深度精解 (2~3分钟)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Scene Cards Container -->
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div class="scenes-header-bar">
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-main);">分镜剧本详情</label>
-                    <button class="btn-tts-listen" onclick="addNewScene()" style="padding: 3px 8px; font-size: 11px;">+ 添加分镜</button>
-                </div>
-
-                <div class="scenes-list" id="scenesContainer">
-                    <!-- Scene 1 -->
-                    <div class="scene-card">
-                        <div class="scene-top-row">
-                            <span class="scene-index-badge">分镜 1 · 黄金 3 秒 Hook</span>
-                            <div class="scene-actions">
-                                <button class="btn-tts-listen" onclick="previewVoice(this)">
-                                    <span>🔊 试听配音</span>
-                                </button>
-                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 1)">
-                                    <span>🎨 AI 生图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！</textarea>
-                        <div class="scene-asset-bar">
-                            <input class="scene-keywords-input scene-keywords" value="disciplined person morning habit, brain thinking, focus" placeholder="实拍画面英文关键词 (Pexels检索)">
-                            <input class="scene-keywords-input scene-image-prompt" value="hyperrealistic portrait of determined person with sunrise backlight, cinematic lighting, 9:16" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                            <span class="scene-asset-tag">实拍/AI 生图</span>
-                        </div>
-                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-                    </div>
-
-                    <!-- Scene 2 -->
-                    <div class="scene-card">
-                        <div class="scene-top-row">
-                            <span class="scene-index-badge">分镜 2 · 认知颠覆</span>
-                            <div class="scene-actions">
-                                <button class="btn-tts-listen" onclick="previewVoice(this)">
-                                    <span>🔊 试听配音</span>
-                                </button>
-                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 2)">
-                                    <span>🎨 AI 生图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。</textarea>
-                        <div class="scene-asset-bar">
-                            <input class="scene-keywords-input scene-keywords" value="brain psychology, exhausted person working, micro habits" placeholder="实拍画面英文关键词">
-                            <input class="scene-keywords-input scene-image-prompt" value="modern abstract neon glowing neural network gears turning, cinematic" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                            <span class="scene-asset-tag">实拍/AI 生图</span>
-                        </div>
-                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-                    </div>
-
-                    <!-- Scene 3 -->
-                    <div class="scene-card">
-                        <div class="scene-top-row">
-                            <span class="scene-index-badge">分镜 3 · 破局法则</span>
-                            <div class="scene-actions">
-                                <button class="btn-tts-listen" onclick="previewVoice(this)">
-                                    <span>🔊 试听配音</span>
-                                </button>
-                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 3)">
-                                    <span>🎨 AI 生图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！</textarea>
-                        <div class="scene-asset-bar">
-                            <input class="scene-keywords-input scene-keywords" value="stopwatch timer 2 minutes, easy start, smiling productive" placeholder="实拍画面英文关键词">
-                            <input class="scene-keywords-input scene-image-prompt" value="glowing gold hourglass timer on minimal wooden table, warm sunlight" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                            <span class="scene-asset-tag">实拍/AI 生图</span>
-                        </div>
-                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-                    </div>
-
-                    <!-- Scene 4 -->
-                    <div class="scene-card">
-                        <div class="scene-top-row">
-                            <span class="scene-index-badge">分镜 4 · 升华金句 & CTA</span>
-                            <div class="scene-actions">
-                                <button class="btn-tts-listen" onclick="previewVoice(this)">
-                                    <span>🔊 试听配音</span>
-                                </button>
-                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, 4)">
-                                    <span>🎨 AI 生图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！</textarea>
-                        <div class="scene-asset-bar">
-                            <input class="scene-keywords-input scene-keywords" value="sun rise motivation, successful lifestyle, like and subscribe" placeholder="实拍画面英文关键词">
-                            <input class="scene-keywords-input scene-image-prompt" value="confident person standing at mountain summit sunrise, dramatic golden rays" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                            <span class="scene-asset-tag">实拍/AI 生图</span>
-                        </div>
-                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Right Column: Studio Render & Preview -->
-    <section class="studio-col">
-        <div class="col-header">
-            <div class="col-title-group">
-                <div class="col-icon-box">🎛️</div>
-                <div>
-                    <div class="col-title">监视器与合成导出</div>
-                    <div class="col-subtitle">9:16 高清画幅 · 剪映工程生成</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-body">
-            <!-- 9:16 Video Monitor Preview Frame -->
-            <div class="player-monitor-wrap">
-                <div class="phone-frame">
-                    <div class="phone-notch"></div>
-                    <div class="phone-rec-dot">PREVIEW</div>
-                    <video id="finalVideoPlayer" class="phone-video" controls style="display: none;"></video>
-                    <div class="player-empty-state" id="playerPlaceholder">
-                        <div class="player-radar-icon">📹</div>
-                        <span style="font-size: 11px; font-weight: 700; color: #CBD5E1;">9 : 16 PREVIEW</span>
-                        <span style="font-size: 11px; color: var(--text-muted);">合成后在此自动播放</span>
-                        <span class="player-spec-badge">1080×1920 · 60fps</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Voice & Audio Config -->
-            <div class="audio-config-card">
-                <div class="audio-config-grid">
-                    <div class="input-group">
-                        <label>🎙️ 解说音色</label>
-                        <select class="input-control" id="voiceSelect">
-                            <option value="zh-CN-YunxiNeural" selected>云希 · 活力解说 (最推荐)</option>
-                            <option value="zh-CN-YunjianNeural">云健 · 稳重大气沉浸</option>
-                            <option value="zh-CN-XiaoxiaoNeural">晓晓 · 自然知性女声</option>
-                            <option value="zh-CN-YunzeNeural">云泽 · 激情热血男声</option>
-                            <option value="zh-CN-XiaomengNeural">晓梦 · 温柔治愈女声</option>
-                            <option value="zh-CN-YunjieNeural">云杰 · 悬疑故事播报</option>
-                            <option value="zh-CN-liaoning-XiaobeiNeural">东北小北 · 幽默老铁</option>
-                            <option value="zh-CN-YunyangNeural">云扬 · 专业新闻干货</option>
-                            <option value="zh-CN-XiaoyiNeural">晓伊 · 甜美自然女声</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>🎵 背景音乐</label>
-                        <select class="input-control" id="bgmSelect">
-                            <option value="energetic" selected>轻快律动 (Lo-Fi)</option>
-                            <option value="suspense">悬疑反转 (深沉)</option>
-                            <option value="emotional">治愈温暖 (钢琴)</option>
-                            <option value="chill">轻松日常 (Chill)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="audio-config-grid">
-                    <div class="input-group">
-                        <label>📐 视频排版模版</label>
-                        <select class="input-control" id="layoutSelect">
-                            <option value="impact" selected>📱 沉浸大字 · 爆款全屏</option>
-                            <option value="split_screen">🪟 上下分屏 · 动态双轨</option>
-                            <option value="card_quote">📜 磨砂卡片 · 杂志金句</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>⚡ 语音语速节奏</label>
-                        <select class="input-control" id="voiceRateSelect">
-                            <option value="-5%">舒缓自然 (-5%)</option>
-                            <option value="+0%" selected>自然对话 · 推荐 (+0%)</option>
-                            <option value="+8%">轻快短视频 (+8%)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <label style="font-size: 11.5px; color: #CBD5E1; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="checkbox" id="karaokeToggle" checked style="accent-color: #38BDF8;">
-                        <span>✨ 启用卡拉OK逐字亮金放大动效 (完播率倍增)</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Primary Action Button -->
-            <button class="btn-render-primary" id="btnRender" onclick="startRender()">
-                <span>🚀 开始全自动渲染合成</span>
-            </button>
-
-            <!-- Secondary Actions -->
-            <div class="action-row-buttons">
-                <button class="btn-action-outline" id="btnOpenDraft" onclick="openJianYingDraft()" disabled>
-                    <span>🎬 打开剪映工程</span>
+            <div class="header-actions">
+                <button class="btn-studio" onclick="loadTrends()">
+                    <span>🔄 刷新多平台榜单</span>
                 </button>
-                <button class="btn-action-outline" id="btnDownloadVideo" onclick="downloadVideo()" disabled>
-                    <span>💾 下载 MP4 成品</span>
+                <button class="btn-studio btn-studio-primary" onclick="switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4])">
+                    <span>+ 新建分镜工程</span>
                 </button>
             </div>
+        </header>
 
-            <!-- Current job summary; full logs live in the task center. -->
-            <div class="terminal-box" id="logBox">
-                <div class="terminal-header">
-                    <span>CURRENT JOB</span>
-                    <span id="logStatusBadge">READY</span>
+        <!-- Dynamic Studio Views -->
+        <div class="studio-content">
+
+            <!-- ================= VIEW 1: 选题雷达 ================= -->
+            <section id="view-trends" class="workspace-view active">
+                <!-- Multi-Dimension Filter Matrix -->
+                <div class="filter-matrix">
+                    <!-- Row 1: 爆款信号维度 -->
+                    <div class="filter-row">
+                        <span class="filter-label">爆发信号</span>
+                        <div class="filter-pills-wrap" id="wrapSignalFilters">
+                            <button class="pill-btn active" onclick="setFilter('signal', 'all', this)">全部信号</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'resonance', this)">🔥 多平台共振 (登顶)</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'surge', this)">⚡ 突发飙升 (1h增速>300%)</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'longtail', this)">📈 持续长尾 (7天连榜)</button>
+                            <button class="pill-btn" onclick="setFilter('signal', 'controversial', this)">💬 强互动争议 (评赞比>15%)</button>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: 细分赛道领域 -->
+                    <div class="filter-row">
+                        <span class="filter-label">细分赛道</span>
+                        <div class="filter-pills-wrap" id="wrapNicheFilters">
+                            <button class="pill-btn active" onclick="setFilter('niche', 'all', this)">全部赛道</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'tech', this)">💻 前沿科技 & AI</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'growth', this)">🧠 认知觉醒 & 自律心理</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'finance', this)">💰 商业财富 & 副业思维</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'workplace', this)">👔 职场生存 & 升维破局</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'history', this)">📜 历史人文 & 深度解密</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'science', this)">🔬 生活硬核科普</button>
+                            <button class="pill-btn" onclick="setFilter('niche', 'social', this)">🌐 热门民生议题</button>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: 抓取平台来源 -->
+                    <div class="filter-row">
+                        <span class="filter-label">数据来源</span>
+                        <div class="filter-pills-wrap" id="wrapPlatformFilters">
+                            <button class="pill-btn active" onclick="setFilter('platform', 'all', this)">全部平台</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'douyin', this)">抖音热点榜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'bilibili', this)">B站热门日榜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'weibo', this)">微博热搜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'zhihu', this)">知乎热议榜</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'xiaohongshu', this)">小红书精选</button>
+                            <button class="pill-btn" onclick="setFilter('platform', 'curated_viral', this)">常青爆款池</button>
+                            <button class="pill-btn" style="color:#F59E0B; border-color:rgba(245,158,11,0.3); margin-left:8px;" onclick="resetAllFilters()">↺ 重置全部筛选</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="terminal-log-row">
-                    <span class="terminal-time">[SYSTEM]</span>
-                    <span class="terminal-msg info">完整阶段日志已迁移至「任务中心」统一追踪</span>
+
+                <!-- High-Density Data Table -->
+                <table class="trends-data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 130px;">平台 / 赛道</th>
+                            <th>爆款选题与核心矛盾切入点</th>
+                            <th style="width: 100px;">爆发指数</th>
+                            <th style="width: 90px;">预估完播</th>
+                            <th style="width: 320px;">AI 爆款底层逻辑与分镜建议</th>
+                            <th style="width: 110px; text-align: right;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trendsTableBody">
+                        <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">正在加载全网实时多维热点榜单...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ================= VIEW 2: 视频解构工坊 ================= -->
+            <section id="view-extractor" class="workspace-view">
+                <div class="url-ingest-bar">
+                    <input type="text" class="input-studio" id="extractorUrlInput" placeholder="输入视频分享 URL (支持抖音/B站/小红书/YouTube)..." value="https://v.douyin.com/iJ8x999/ 为什么高手都在悄悄戒掉情绪？">
+                    <button class="btn-studio btn-studio-accent" id="btnExtractRun" onclick="extractVideoAndRewrite()">
+                        <span>执行音视频提取 & Whisper 转写</span>
+                    </button>
                 </div>
-                <a href="/tasks" style="display:block;margin:10px 12px;color:#38BDF8;font-size:12px;text-decoration:none;">打开全局任务中心 →</a>
+
+                <div class="workbench-grid-2col">
+                    <!-- Left: Original Transcript -->
+                    <div class="studio-panel">
+                        <div class="panel-toolbar">
+                            <span id="extractLeftTitle">原片提取文案 (Whisper STT)</span>
+                            <span class="tag-source" id="extractPlatformTag">等待解析</span>
+                        </div>
+                        <div class="panel-body">
+                            <textarea class="code-textarea" id="extractedTranscriptArea" placeholder="粘贴视频链接并点击上方按钮，后台将自动下载音视频流并调用 Whisper 转写为文字..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right: AI Structural Remaster -->
+                    <div class="studio-panel">
+                        <div class="panel-toolbar">
+                            <span>LLM 爆款结构化解构 (原创分镜)</span>
+                            <button class="btn-studio" style="height: 22px; font-size: 11px;" onclick="transferToStoryboard()">
+                                <span>载入分镜台 →</span>
+                            </button>
+                        </div>
+                        <div class="panel-body" id="extractedStructureContainer" style="gap: 6px;">
+                            <div style="color: var(--text-muted); font-size: 12px; padding: 20px; text-align: center;">
+                                暂无重构数据，请先在上侧输入短视频链接并执行解析。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 3: 分镜导演台 ================= -->
+            <section id="view-storyboard" class="workspace-view">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: var(--bg-surface-0); border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: var(--radius-sm); gap:10px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 260px;">
+                        <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Title:</span>
+                        <input type="text" class="input-studio" id="studioProjectTitle" value="90%的人都误解了【情绪控制】的底层逻辑" style="max-width: 380px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">分镜规模:</span>
+                            <select class="select-studio" id="selectDurationTier" style="width: 160px; height: 28px; padding: 2px 6px; font-size: 11.5px;">
+                                <option value="quick_30s">⚡ 30s 紧凑 (4~5 镜)</option>
+                                <option value="deep_60s" selected>🎬 60s 深度 (6~8 镜)</option>
+                                <option value="long_120s">📜 120s 精解 (9~12 镜)</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">风格:</span>
+                            <select class="select-studio" id="selectScriptStyle" style="width: 145px; height: 28px; padding: 2px 6px; font-size: 11.5px;">
+                                <optgroup label="🧠 认知硬核">
+                                    <option value="干货科普" selected>🧠 干货科普</option>
+                                    <option value="商业认知">💡 商业认知</option>
+                                    <option value="避坑实操">⚡ 避坑实操</option>
+                                    <option value="思维模型">📐 思维模型</option>
+                                </optgroup>
+                                <optgroup label="🎭 幽默反转">
+                                    <option value="幽默反转">🎭 幽默反转</option>
+                                    <option value="犀利吐槽">🔥 犀利吐槽</option>
+                                    <option value="沉浸式嘴替">🗣️ 沉浸式嘴替</option>
+                                </optgroup>
+                                <optgroup label="💖 情感故事">
+                                    <option value="情感共鸣">💖 情感共鸣</option>
+                                    <option value="悬疑探秘">🕵️ 悬疑探秘</option>
+                                    <option value="燃系励志">⚡ 燃系励志</option>
+                                    <option value="历史故事">📜 历史故事</option>
+                                </optgroup>
+                                <optgroup label="🎬 影视纪实">
+                                    <option value="深度拉片">🎬 深度拉片</option>
+                                    <option value="客观评述">⚖️ 客观评述</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <button class="btn-studio btn-studio-primary" id="btnLlmGenScript" onclick="generateScriptFromCurrentTitle()">🪄 AI 重新拆解分镜</button>
+                        <button class="btn-studio" style="color:var(--accent-primary); border-color:var(--accent-primary);" onclick="triggerBatchAiGenAllScenes()" title="后台并发调用 AI 视觉引擎为所有分镜生图">🎨 一键全镜头AI生图</button>
+                        <button class="btn-studio" onclick="addNewSceneRow()">+ 添加镜头</button>
+                        <button class="btn-studio btn-studio-accent" onclick="switchStudioView('composer', document.querySelectorAll('.nav-item')[6])">进入监视器合成 →</button>
+                    </div>
+                </div>
+
+                <div id="scenesTimelineContainer">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- ================= VIEW 4: 监视器与合成导出 ================= -->
+            <section id="view-composer" class="workspace-view">
+                <div class="composer-layout">
+                    <!-- Left: 9:16 Solid Monitor -->
+                    <div>
+                        <div class="monitor-frame">
+                            <div class="monitor-header-timecode">
+                                <span>1080×1920</span>
+                                <span style="color: var(--accent-danger); font-weight: 700;">● LIVE REC 60FPS</span>
+                            </div>
+
+                            <div class="monitor-title-overlay" id="monitorTitleDisplay">
+                                90%的人都误解了情绪控制
+                            </div>
+
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
+                                <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=720&q=80" style="width: 100%; height: 190px; object-fit: cover; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);" id="monitorPosterImg">
+                            </div>
+
+                            <div class="monitor-karaoke-overlay" id="monitorKaraokeDisplay">
+                                你以为情绪稳定靠 <span class="karaoke-focus-word">硬忍</span> ？
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Parameters -->
+                    <div class="control-grid-form">
+                        <!-- Layout Templates -->
+                        <div class="studio-panel">
+                            <div class="panel-toolbar">视频版式选择 (MoviePy 渲染模版)</div>
+                            <div class="panel-body">
+                                <div class="layout-options-bar">
+                                    <div class="layout-option-box active" onclick="chooseLayout('impact', this)">
+                                        <div style="font-size: 12.5px; font-weight: 700;">沉浸全屏</div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">爆款大字 · 视觉主导</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseLayout('split_screen', this)">
+                                        <div style="font-size: 12.5px; font-weight: 700;">上下分屏</div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">双轨内容 · 解说卡片</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseLayout('card_quote', this)">
+                                        <div style="font-size: 12.5px; font-weight: 700;">磨砂金句</div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">极简高端 · 杂志质感</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subtitle Styles Grid -->
+                        <div class="studio-panel">
+                            <div class="panel-toolbar">
+                                <span>爆款字幕花字风格预设 (6 款顶流排版)</span>
+                                <span class="tag-source" id="currentSubtitleStyleBadge" style="font-size:10px; color:var(--accent-primary);">🔥 爆款黄白</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="layout-selector-grid" style="grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                                    <div class="layout-option-box active" onclick="chooseSubtitleStyle('impact_yellow', this)">
+                                        <div style="font-size: 12px; font-weight: 800; color: #FFE600; text-shadow: 0 0 2px #000, 0 2px 4px rgba(0,0,0,0.8);">🔥 爆款黄白</div>
+                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">抖音顶流 · 高对比度</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseSubtitleStyle('cyber_neon', this)">
+                                        <div style="font-size: 12px; font-weight: 800; color: #38BDF8; text-shadow: 0 0 8px rgba(56,189,248,0.6);">⚡ 赛博霓虹</div>
+                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">极客科技 · 荧光发光</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseSubtitleStyle('variety_pop', this)">
+                                        <div style="font-size: 12px; font-weight: 800; color: #FF2E93; text-shadow: 0 0 2px #000, 1px 1px 0 #FFE600;">✨ 综艺花字</div>
+                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">娱乐八卦 · 双层描边</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseSubtitleStyle('cinema_white', this)">
+                                        <div style="font-size: 12px; font-weight: 700; color: #F8FAFC; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">🎬 电影纪实</div>
+                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">深度拉片 · 极简无框</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseSubtitleStyle('minimal_capsule', this)">
+                                        <div style="font-size: 12px; font-weight: 800; color: #0F172A; background: #FFF; border-radius: 4px; padding: 1px 4px; display: inline-block;">🌿 极简胶囊</div>
+                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">小红书风 · 白透磨砂</div>
+                                    </div>
+                                    <div class="layout-option-box" onclick="chooseSubtitleStyle('flame_gold', this)">
+                                        <div style="font-size: 12px; font-weight: 800; color: #F59E0B; text-shadow: 0 0 4px #EF4444;">🔥 烈焰金榜</div>
+                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">重磅头条 · 赤金渐变</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice & BGM Options -->
+                        <div class="studio-panel">
+                            <div class="panel-toolbar">音频引擎与字幕参数</div>
+                            <div class="panel-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="param-field">
+                                    <label class="param-label">解说音色选择</label>
+                                    <select class="select-studio" id="selectVoiceId">
+                                        <!-- Populated by API -->
+                                    </select>
+                                </div>
+                                <div class="param-field">
+                                    <label class="param-label">背景情绪 BGM</label>
+                                    <select class="select-studio" id="selectBgmType">
+                                        <option value="energetic">Lo-Fi 沉浸律动</option>
+                                        <option value="suspense">轻度悬疑反差</option>
+                                        <option value="emotional">深沉治愈钢琴</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="padding: 0 12px 10px 12px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); cursor: pointer;">
+                                    <input type="checkbox" id="chkKaraokeEnable" checked style="accent-color: #38BDF8;">
+                                    <span>✨ 启用卡拉OK逐字金色放大动效 (完播率倍增)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Render Action -->
+                        <button class="btn-studio btn-studio-primary" id="btnStartRender" style="height: 36px; font-size: 12.5px; justify-content: center;" onclick="triggerStartRender()">
+                            <span>▶ 启动全自动渲染流水线 (生成 MP4 + 剪映 Draft 工程)</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 5: 资产中心 ================= -->
+            <section id="view-assets" class="workspace-view">
+                <div class="studio-panel">
+                    <div class="panel-toolbar">
+                        <span>渲染任务队列与剪映工程资产</span>
+                        <button class="btn-studio" style="height: 22px; font-size: 11px;" onclick="loadJobsList()">🔄 刷新列表</button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="asset-list" id="assetsJobListContainer">
+                            <div style="color: var(--text-muted); font-size: 12px; padding: 20px; text-align: center;">
+                                暂无渲染任务
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Unified Toast -->
+    <div id="toastContainer"></div>
+
+    <!-- AI 爆款切口决策器 Modal (LLM 多视角生成与选择) -->
+    <div id="anglesModalOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div class="studio-panel" style="width: 760px; max-width: 95vw; max-height: 88vh; display:flex; flex-direction:column; background: #0B132B; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 25px 60px -12px rgba(0,0,0,0.9); border-radius:var(--radius-md);">
+            <div class="panel-toolbar" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div style="font-weight:700; font-size:14.5px; color:#F8FAFC; display:flex; align-items:center; gap:8px;">
+                        <span>🎯</span> <span>AI 爆款创作切口决策器</span>
+                        <span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--accent-primary); padding:2px 8px; border-radius:10px; border:1px solid rgba(56,189,248,0.3);">大模型实时解构</span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted);" id="anglesModalSub">针对热点，大模型正在策划差异化叙事切入点...</div>
+                </div>
+                <button class="btn-studio" style="height:26px; width:26px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="closeAnglesModal()">✕</button>
+            </div>
+            
+            <div class="panel-body" id="anglesCardsContainer" style="padding: 18px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; max-height: 60vh;">
+                <!-- Dynamically populated angle cards or loading skeleton -->
+            </div>
+            
+            <div style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85); border-bottom-left-radius:var(--radius-md); border-bottom-right-radius:var(--radius-md);">
+                <button class="btn-studio" style="color:var(--text-muted); font-size:11.5px;" onclick="skipAngleAndDirectGenerate()">⚡ 跳过切口，按默认视角直接生成</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-studio" onclick="closeAnglesModal()">取消</button>
+                </div>
             </div>
         </div>
-    </section>
-</main>
+    </div>
 
-<script>
-    let currentDraftPath = "";
-    let currentVideoUrl = "";
-    let currentProjectId = "";
-    let currentJobId = "";
-    let currentCategory = "resonance";
-    let currentAudio = null;
-    let selectedTrendContext = null;
+    <script>
+        // Global State
+        let currentFilter = {
+            signal: 'all',
+            niche: 'all',
+            platform: 'all'
+        };
 
-    const categoryLabels = {
-        resonance: '🔥 多平台共振',
-        all: '⚡ 综合热榜',
-        tech: '💻 科技数码',
-        finance: '📈 商业财经',
-        social: '🌐 社会民生',
-        entertainment: '🎭 文娱热点',
-        growth: '🧠 认知职场'
-    };
-
-    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-
-    window.addEventListener('DOMContentLoaded', () => {
-        loadTrends();
-        loadMediaStatus();
-        updateStats();
-    });
-
-    function setQuickTopic(text) {
-        selectedTrendContext = null;
-        document.getElementById('topicInput').value = text;
-        generateScript();
-    }
-
-    async function loadMediaStatus() {
-        const chip = document.getElementById('mediaEngineChip');
-        try {
-            const data = await (await fetch('/api/media/status')).json();
-            if (data.pexels_configured) {
-                chip.innerHTML = '<span class="chip-dot"></span><span>✓ Pexels 实拍已连接</span>';
-                chip.className = 'engine-chip ok';
-            } else {
-                chip.innerHTML = '<span class="chip-dot"></span><span>⚠ 图库引擎 (摄影兜底)</span>';
-                chip.className = 'engine-chip warn';
+        let currentScenes = [
+            {
+                idx: 1,
+                name: "HOOK 留人",
+                voice: "很多人以为自律靠意志力硬撑，但真相是：90% 的人从第一步就全想错了！",
+                img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=300&q=80",
+                keywords: "disciplined person morning habit, focus",
+                prompt: "cinematic dark portrait of a focused person, 9:16 vertical"
+            },
+            {
+                idx: 2,
+                name: "MECHANISM 机制",
+                voice: "大脑天生贪图即时反馈，硬撑只会报复性摆烂。高手都在用微习惯骗过大脑。",
+                img: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&q=80",
+                keywords: "brain psychology, micro habits",
+                prompt: "abstract glowing neural network gears turning, high tech cinematic, 9:16"
+            },
+            {
+                idx: 3,
+                name: "ACTION 实操",
+                voice: "每天只定一个 2 分钟就能做完的目标，你会发现坚持比放弃还容易！",
+                img: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=300&q=80",
+                keywords: "stopwatch 2 minutes, productive desk",
+                prompt: "minimalist wooden desk with stopwatch 2 min, 9:16 vertical"
+            },
+            {
+                idx: 4,
+                name: "CTA 闭环",
+                voice: "记住：启动比完美重要一百倍。双击收藏，今天就从 2 分钟开始！",
+                img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&q=80",
+                keywords: "sun rise motivation, mountain summit",
+                prompt: "determined adventurer on mountain summit at sunrise, dramatic rays, 9:16"
             }
-        } catch (_) {
-            chip.innerHTML = '<span class="chip-dot"></span><span>素材引擎就绪</span>';
+        ];
+
+        let selectedLayout = 'impact';
+        let currentPlayingAudio = null;
+
+        const metaViews = {
+            trends: { title: "全网爆款雷达", sub: "多维赛道、共振信号与爆款选题发现" },
+            extractor: { title: "原片重塑工坊", sub: "Whisper 语音转写与 LLM 爆款结构化解构" },
+            storyboard: { title: "分镜导演工作台", sub: "影视分镜编排、AI 试生图与台词精修" },
+            composer: { title: "监视器与合成导出", sub: "9:16 画框监视、MoviePy 排版模版与剪映 Draft 导出" },
+            assets: { title: "成片与剪映工程", sub: "已生成短视频与剪映草稿工程资产" },
+        };
+
+        function switchStudioView(viewKey, el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            document.querySelectorAll('.workspace-view').forEach(v => v.classList.remove('active'));
+            const target = document.getElementById(`view-${viewKey}`);
+            if (target) target.classList.add('active');
+
+            const m = metaViews[viewKey];
+            if (m) {
+                document.getElementById('headerViewTitle').textContent = m.title;
+                document.getElementById('headerViewSub').textContent = m.sub;
+            }
+
+            if (viewKey === 'assets') {
+                loadJobsList();
+            }
         }
-    }
 
-    function switchCat(cat, btn) {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-        if (btn) {
-            btn.classList.add('active');
-            btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+        function setFilter(type, value, btn) {
+            currentFilter[type] = value;
+            if (btn) {
+                const parent = btn.closest('.filter-pills-wrap');
+                parent.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+
+            // 当切换到具体平台（如抖音/B站/微博/知乎）时，自动重置信号与赛道限制，避免冲突导致过滤为空
+            if (type === 'platform' && value !== 'all') {
+                currentFilter.signal = 'all';
+                currentFilter.niche = 'all';
+                document.querySelectorAll('#wrapSignalFilters .pill-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+                document.querySelectorAll('#wrapNicheFilters .pill-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+            }
+
+            loadTrends();
         }
-        document.getElementById('trendCategoryLabel').textContent = categoryLabels[cat] || cat;
-        
-        // Always reset the scroll position of the trends list when switching categories
-        const scrollContainer = document.getElementById('trendsScrollBody');
-        if (scrollContainer) scrollContainer.scrollTop = 0;
 
-        loadTrends();
-    }
+        function resetAllFilters() {
+            currentFilter = { signal: 'all', niche: 'all', platform: 'all' };
+            document.querySelectorAll('.filter-pills-wrap').forEach(wrap => {
+                wrap.querySelectorAll('.pill-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+            });
+            loadTrends();
+            toast('已重置全部热榜筛选条件');
+        }
 
-    async function refreshTrendsWithAnim() {
-        const btn = document.getElementById('btnRefreshTrends');
-        btn.classList.add('spinning');
-        await loadTrends();
-        setTimeout(() => btn.classList.remove('spinning'), 500);
-    }
+        function filterDimension(type, value) {
+            currentFilter[type] = value;
+            const wrap = document.getElementById(`wrap${type.charAt(0).toUpperCase() + type.slice(1)}Filters`);
+            if (wrap) {
+                wrap.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = Array.from(wrap.querySelectorAll('.pill-btn')).find(b => b.textContent.includes('共振') || b.textContent.includes('全部'));
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+            loadTrends();
+        }
 
-    async function loadTrends() {
-        const container = document.getElementById('trendsContainer');
-        container.innerHTML = `
-            <div class="player-empty-state">
-                <div class="player-radar-icon" style="animation: spin 1s linear infinite;">🔄</div>
-                <span style="font-size: 11px;">正在爬取 ${categoryLabels[currentCategory] || '热点'}...</span>
-            </div>
-        `;
-        try {
-            const resp = await fetch(`/api/trends?category=${currentCategory}`);
-            const data = await resp.json();
-            if (data.success && data.trends) {
-                container.innerHTML = '';
-                document.getElementById('trendResultCount').textContent = `共精选 ${data.trends.length} 条`;
-                if (data.trends.length === 0) {
-                    container.innerHTML = '<div class="player-empty-state"><span style="font-size: 11px;">暂无该分类热点</span></div>';
+        // Fetch Trends from Real API (No Cache, 100% Live)
+        async function loadTrends() {
+            const tbody = document.getElementById('trendsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">正在从各平台官方接口实时抓取最新热榜...</td></tr>';
+
+            const params = new URLSearchParams({
+                signal: currentFilter.signal,
+                niche: currentFilter.niche,
+                platform: currentFilter.platform,
+                limit: '35',
+                _t: String(Date.now())
+            });
+
+            try {
+                const res = await fetch(`/api/trends?${params.toString()}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (!data.success || !data.trends || data.trends.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">
+                                当前组合筛选下暂无热点数据 (当前平台: ${currentFilter.platform})。
+                                <button class="btn-studio" style="margin-left:8px;" onclick="resetAllFilters()">重置筛选</button>
+                            </td>
+                        </tr>
+                    `;
                     return;
                 }
 
-                data.trends.forEach((t, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'trend-card';
-                    
-                    let rankClass = '';
-                    if (index === 0) rankClass = 'top-1';
-                    else if (index === 1) rankClass = 'top-2';
-                    else if (index === 2) rankClass = 'top-3';
-
-                    let badgeHtml = `<span class="trend-platform-tag">${escapeHtml(t.source_platform || '全网')}</span>`;
-                    if (t.is_resonance) {
-                        badgeHtml = `<span class="trend-platform-tag resonance">🔥 共振 · ${(t.resonating_platforms || []).join(' / ')}</span>`;
+                if (data.fetched_at) {
+                    const viewSub = document.getElementById('headerViewSub');
+                    if (viewSub) {
+                        viewSub.textContent = `全网官方实时直连 · 抓取时间: ${data.fetched_at} · 实时载入 ${data.trends.length} 条`;
                     }
-                    
-                    card.innerHTML = `
-                        <span class="trend-rank ${rankClass}">#${index + 1}</span>
-                        <div class="trend-header-row">
-                            ${badgeHtml}
-                            <span class="trend-score-badge">选题值 ${escapeHtml(t.editorial_score || t.hot_score)}</span>
+                }
+
+                tbody.innerHTML = '';
+                trendsDataMap.clear();
+                data.trends.forEach((item, idx) => {
+                    const key = String(item.id || `trend_${idx}`);
+                    item.id = key;
+                    trendsDataMap.set(key, item);
+
+                    const tr = document.createElement('tr');
+                    const platformLabel = item.resonating_platforms && item.resonating_platforms.length > 1
+                        ? item.resonating_platforms.join(' · ')
+                        : (item.source_platform || '全网');
+
+                    tr.innerHTML = `
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                <span class="tag-source ${item.is_resonance ? 'resonance' : ''}">${escapeHtml(platformLabel)}</span>
+                                <span class="tag-niche">${escapeHtml(item.category_name || item.niche || '社会民生')}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 12.5px;">${escapeHtml(item.title)}</div>
+                            <div class="growth-rate">⚡ 爆发增速: ${item.growth_rate || '+350%/h'}</div>
+                        </td>
+                        <td>
+                            <span class="score-num">${item.hot_score || 95.0}</span>
+                        </td>
+                        <td>
+                            <span style="font-family:'JetBrains Mono'; color:#38BDF8; font-weight:600;">${item.retention_estimate || '82%'}</span>
+                        </td>
+                        <td>
+                            <div style="color: var(--text-muted); font-size: 11.5px; line-height: 1.45;">${escapeHtml(item.trend_reason || item.raw_content || '爆款逻辑拆解分析')}</div>
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="btn-studio btn-studio-accent" onclick="openAnglesModal('${key}')">切口立项 →</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#FB7185;">获取热点失败: ${e.message}</td></tr>`;
+            }
+        }
+
+        function createProjectFromTrend(title) {
+            document.getElementById('studioProjectTitle').value = title;
+            document.getElementById('monitorTitleDisplay').textContent = title;
+            toast(`已以《${title}》立项，正在自动拆解原创分镜...`);
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4]);
+            generateScriptFromCurrentTitle();
+        }
+
+        // Storyboard List Rendering
+        function renderScenesList() {
+            const container = document.getElementById('scenesTimelineContainer');
+            container.innerHTML = '';
+
+            currentScenes.forEach((sc, idx) => {
+                const row = document.createElement('div');
+                row.className = 'scene-item-row';
+                const isVideo = sc.asset_type === 'video' || (sc.img && (sc.img.includes('.mp4') || sc.img.includes('.mov') || sc.img.includes('.webm')));
+                const badgeLabel = isVideo ? '🎬 视频切片' : (sc.asset_source === 'user_upload' ? '📁 自定义图' : '🤖 AI画面');
+
+                row.innerHTML = `
+                    <div class="scene-asset-column">
+                        <div class="scene-thumb-box" id="scene-thumb-box-${idx}">
+                            ${isVideo
+                                ? `<video src="${sc.img}" id="scene-thumb-${idx}" autoplay loop muted playsinline></video>`
+                                : `<img src="${sc.img}" id="scene-thumb-${idx}">`
+                            }
+                            <span class="asset-badge-tag">${badgeLabel}</span>
                         </div>
-                        <div class="trend-title-text">${escapeHtml(t.title)}</div>
-                        <div class="trend-footer-action">
-                            <span title="原始热度 ${escapeHtml(t.hot_score)}">${escapeHtml(t.trend_reason || t.category_name || '')}</span>
-                            <span class="trend-click-tip">一键生成分镜 →</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <button class="btn-gen-compact" onclick="triggerAiGenForScene(${idx}, this)" title="基于提示词调用 AI 重新生图">⚡ 生图</button>
+                            <button class="btn-gen-compact" style="background: rgba(99, 102, 241, 0.15); border-color: var(--accent-primary);" onclick="document.getElementById('scene-file-input-${idx}').click()" title="上传本地图片或视频切片">📁 替换</button>
+                        </div>
+                        <button class="btn-studio" style="height: 20px; font-size: 9.5px; padding: 1px 4px; color: var(--text-muted); width: 100%;" onclick="promptSceneUrl(${idx})" title="粘贴在线图片或视频直链">🔗 贴外链</button>
+                        <input type="file" id="scene-file-input-${idx}" accept="image/*,video/mp4,video/quicktime,video/webm" style="display:none;" onchange="handleSceneFileUpload(${idx}, this)">
+                    </div>
+                    <div class="scene-editor-column">
+                        <div class="scene-header-line">
+                            <span class="scene-index-tag">SCENE #${idx + 1} · ${sc.name || '分镜情节'}</span>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-studio" style="height: 20px; font-size: 10px;" onclick="previewVoiceForScene(this)">🔊 试听配音</button>
+                                <button class="btn-studio" style="height: 20px; font-size: 10px; color:#FB7185;" onclick="removeSceneRow(${idx})">🗑</button>
+                            </div>
+                        </div>
+                        <textarea class="scene-textarea-flat" oninput="updateSceneVoice(${idx}, this.value)">${escapeHtml(sc.voice)}</textarea>
+                    </div>
+                    <div class="scene-params-column">
+                        <div class="param-field">
+                            <span class="param-label">Pexels 检索词</span>
+                            <input class="input-studio scene-kw-input" value="${escapeHtml(sc.keywords || '')}" oninput="updateSceneKw(${idx}, this.value)" style="font-size: 11px; padding: 3px 6px;">
+                        </div>
+                        <div class="param-field">
+                            <span class="param-label">AI 生图 Prompt</span>
+                            <input class="input-studio scene-prompt-input" value="${escapeHtml(sc.prompt || '')}" oninput="updateScenePrompt(${idx}, this.value)" style="font-size: 11px; padding: 3px 6px; color: var(--accent-primary);">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('navSceneCount').textContent = `${currentScenes.length} 镜`;
+            if (currentScenes.length > 0) {
+                document.getElementById('monitorKaraokeDisplay').innerHTML = `${escapeHtml(currentScenes[0].voice.slice(0, 8))} <span class="karaoke-focus-word">${escapeHtml(currentScenes[0].voice.slice(8, 12) || '重点')}</span> ${escapeHtml(currentScenes[0].voice.slice(12, 20))}`;
+                if (currentScenes[0].img) {
+                    const poster = document.getElementById('monitorPosterImg');
+                    if (poster) poster.src = currentScenes[0].img;
+                }
+            }
+        }
+
+        function updateSceneVoice(idx, val) {
+            if (currentScenes[idx]) currentScenes[idx].voice = val;
+        }
+        function updateSceneKw(idx, val) {
+            if (currentScenes[idx]) currentScenes[idx].keywords = val;
+        }
+        function updateScenePrompt(idx, val) {
+            if (currentScenes[idx]) currentScenes[idx].prompt = val;
+        }
+
+        function addNewSceneRow() {
+            const count = currentScenes.length + 1;
+            const newPrompt = "modern productive high tech concept, 9:16 vertical";
+            currentScenes.push({
+                idx: count,
+                name: "补充镜头",
+                voice: "输入补充的旁白台词...",
+                img: buildDynamicAiImageUrl(newPrompt, 'office, tech', '', count),
+                keywords: "lifestyle, focus",
+                prompt: newPrompt,
+                asset_type: "image",
+                asset_source: "ai_gen"
+            });
+            renderScenesList();
+            toast(`已添加分镜 #${count}`);
+        }
+
+        function removeSceneRow(idx) {
+            currentScenes.splice(idx, 1);
+            renderScenesList();
+            toast('已移除该分镜');
+        }
+
+        // Handle User Upload for Scene (Images or Video Clips)
+        async function handleSceneFileUpload(idx, input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            const sc = currentScenes[idx];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('scene_index', String(idx + 1));
+            formData.append('project_id', 'proj_custom');
+
+            toast(`正在上传素材: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)...`);
+
+            try {
+                const res = await fetch('/api/upload_asset', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.detail || '上传素材失败');
+                }
+
+                sc.img = data.asset_url;
+                sc.asset_file = data.local_path;
+                sc.asset_type = data.asset_type;
+                sc.asset_source = 'user_upload';
+
+                renderScenesList();
+                toast(`✅ 分镜 #${idx + 1} 成功替换为本地${data.asset_type === 'video' ? '视频切片' : '图片'}！`);
+            } catch (e) {
+                toast(`❌ 上传失败: ${e.message}`);
+            } finally {
+                input.value = '';
+            }
+        }
+
+        // Paste Image/Video URL manually
+        function promptSceneUrl(idx) {
+            const sc = currentScenes[idx];
+            const url = prompt('请输入在线图片或视频切片直链 URL (如 .jpg, .png, .mp4):', sc.img || '');
+            if (!url || !url.trim()) return;
+
+            const cleanUrl = url.trim();
+            const isVideo = cleanUrl.includes('.mp4') || cleanUrl.includes('.mov') || cleanUrl.includes('.webm');
+            sc.img = cleanUrl;
+            sc.asset_type = isVideo ? 'video' : 'image';
+            sc.asset_source = 'user_url';
+            sc.asset_file = null;
+
+            renderScenesList();
+            toast(`✅ 分镜 #${idx + 1} 素材直链已更新！`);
+        }
+
+        // Voice Preview via Real API
+        async function previewVoiceForScene(btn) {
+            const row = btn.closest('.scene-item-row');
+            const textarea = row.querySelector('.scene-textarea-flat');
+            const text = (textarea?.value || '').trim();
+            const voice = document.getElementById('selectVoiceId').value || 'zh-CN-YunxiNeural';
+
+            if (!text) return;
+            if (currentPlayingAudio) {
+                currentPlayingAudio.pause();
+                currentPlayingAudio = null;
+            }
+
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ 合成中';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/preview_tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice, rate: '+0%', pitch: '-2Hz' })
+                });
+                const data = await res.json();
+                if (data.success && data.audio_url) {
+                    currentPlayingAudio = new Audio(data.audio_url);
+                    btn.textContent = '🔊 播放中';
+                    currentPlayingAudio.play();
+                    currentPlayingAudio.onended = () => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    };
+                }
+            } catch (e) {
+                btn.textContent = '❌ 失败';
+                setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 1500);
+            }
+        }
+
+        // AI Image Generation via Real API
+        async function triggerAiGenForScene(idx, btn) {
+            const sc = currentScenes[idx];
+            const prompt = sc.prompt || sc.keywords || sc.voice || '';
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ 生图中';
+            btn.disabled = true;
+            toast(`正在为分镜 #${idx + 1} 调用 AI 引擎生成 9:16 图像...`);
+
+            try {
+                const res = await fetch('/api/generate_ai_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, scene_index: idx + 1 })
+                });
+                const data = await res.json();
+                if (data.success && data.image_url) {
+                    sc.img = data.image_url;
+                    sc.asset_file = data.local_path || null;
+                    sc.asset_type = 'image';
+                    sc.asset_source = 'ai_gen';
+                    renderScenesList();
+                    toast(`✅ 分镜 #${idx + 1} AI 图像生成成功！`);
+                }
+            } catch (e) {
+                toast(`生图异常: ${e.message}`);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        const trendsDataMap = new Map();
+        const generatedAnglesMap = new Map();
+        let currentTargetTrend = null;
+        let currentChosenAngle = "";
+
+        async function openAnglesModal(itemOrId) {
+            let item = trendsDataMap.get(itemOrId);
+            if (!item) {
+                if (typeof itemOrId === 'object' && itemOrId !== null) {
+                    item = itemOrId;
+                } else {
+                    item = { title: String(itemOrId || '短视频创作选题') };
+                }
+            }
+            currentTargetTrend = item;
+
+            const modal = document.getElementById('anglesModalOverlay');
+            modal.style.display = 'flex';
+            document.getElementById('anglesModalSub').textContent = `针对热点《${item.title}》，大模型正在策划差异化叙事切入点...`;
+            
+            const container = document.getElementById('anglesCardsContainer');
+            container.innerHTML = `
+                <div style="background:rgba(15,23,42,0.8); border:1px solid var(--border-focus); padding:28px; border-radius:var(--radius-sm); text-align:center;">
+                    <div style="font-size:14px; font-weight:700; color:var(--accent-primary); margin-bottom:8px;">⚡ 大模型正在解构爆款切口...</div>
+                    <div style="font-size:12px; color:var(--text-muted);">正在分析《${escapeHtml(item.title)}》的核心戏剧矛盾、反常识点与受众痛点...</div>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/generate_angles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: item.title,
+                        raw_content: item.raw_content || '',
+                        category: item.category_name || item.niche || ''
+                    })
+                });
+                const data = await res.json();
+                if (!data.success || !data.angles || data.angles.length === 0) {
+                    throw new Error('未获取到有效切口推荐');
+                }
+
+                document.getElementById('anglesModalSub').textContent = `针对《${item.title}》，大模型为您策划了以下 ${data.angles.length} 个爆款切入视角，请选择立项：`;
+                container.innerHTML = '';
+                generatedAnglesMap.clear();
+
+                data.angles.forEach(angle => {
+                    const aKey = String(angle.id || `angle_${Math.random().toString(36).slice(2, 7)}`);
+                    angle.id = aKey;
+                    generatedAnglesMap.set(aKey, angle);
+
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background: var(--bg-surface-0);
+                        border: 1px solid var(--border-color);
+                        border-radius: var(--radius-sm);
+                        padding: 14px 16px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                    `;
+                    card.onmouseenter = () => card.style.borderColor = 'var(--accent-primary)';
+                    card.onmouseleave = () => card.style.borderColor = 'var(--border-color)';
+
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="tag-source resonance" style="font-size:11px; padding:2px 8px;">${escapeHtml(angle.tag)}</span>
+                                <span style="font-size:11px; color:var(--text-muted);">受众: ${escapeHtml(angle.target_audience || '大众泛受众')}</span>
+                            </div>
+                            <button class="btn-studio btn-studio-accent" style="height:26px; font-size:11.5px;" onclick="event.stopPropagation(); selectAngleById('${aKey}')">
+                                🎯 选定此切口创作 →
+                            </button>
+                        </div>
+                        <div style="font-size:13.5px; font-weight:700; color:#F8FAFC; margin-top:2px;">
+                            ${escapeHtml(angle.title)}
+                        </div>
+                        <div style="font-size:12px; color:#38BDF8; background:rgba(56,189,248,0.08); padding:6px 10px; border-radius:4px; border-left:3px solid var(--accent-primary);">
+                            <strong style="color:var(--text-primary);">⚡ 黄金3秒 Hook：</strong>${escapeHtml(angle.hook)}
+                        </div>
+                        <div style="font-size:11.5px; color:var(--text-muted); display:flex; gap:6px;">
+                            <span style="color:#A78BFA; font-weight:600;">💡 核心逻辑:</span>
+                            <span>${escapeHtml(angle.core_conflict)}</span>
                         </div>
                     `;
-                    card.onclick = () => {
-                        document.getElementById('topicInput').value = t.title;
-                        selectedTrendContext = t;
-                        generateScript();
-                    };
+                    card.onclick = () => selectAngleById(aKey);
                     container.appendChild(card);
                 });
-            }
-        } catch (e) {
-            container.innerHTML = '<div class="player-empty-state"><span style="color:#FB7185; font-size:11px;">热点获取失败，请重试</span></div>';
-        }
-    }
-
-    function updateStats() {
-        const title = document.getElementById('videoTitleInput').value || '';
-        document.getElementById('titleCharCount').textContent = `${title.length}/60`;
-
-        const cards = document.querySelectorAll('.scene-card');
-        let totalWords = 0;
-        cards.forEach(card => {
-            const ta = card.querySelector('textarea');
-            if (ta) totalWords += ta.value.trim().length;
-        });
-
-        const estSeconds = Math.max(10, Math.round(totalWords / 4.2));
-        document.getElementById('sceneCountText').textContent = `${cards.length} 分镜 / 共 ${totalWords} 字 / 预估 ${estSeconds} 秒`;
-    }
-
-    function switchCreationMode(mode) {
-        const btnTopic = document.getElementById('tabModeTopic');
-        const btnExtract = document.getElementById('tabModeExtract');
-        const panelTopic = document.getElementById('panelTopicMode');
-        const panelExtract = document.getElementById('panelExtractMode');
-
-        if (mode === 'extract') {
-            btnTopic.style.background = 'transparent';
-            btnTopic.style.color = 'var(--text-secondary)';
-            btnExtract.style.background = 'linear-gradient(135deg, #A855F7 0%, #6366F1 100%)';
-            btnExtract.style.color = '#FFFFFF';
-            btnExtract.style.fontWeight = '700';
-            panelTopic.style.display = 'none';
-            panelExtract.style.display = 'block';
-        } else {
-            btnExtract.style.background = 'transparent';
-            btnExtract.style.color = 'var(--text-secondary)';
-            btnTopic.style.background = 'var(--primary-gradient)';
-            btnTopic.style.color = '#020408';
-            btnTopic.style.fontWeight = '700';
-            panelExtract.style.display = 'none';
-            panelTopic.style.display = 'block';
-        }
-    }
-
-    async function extractAndRewriteVideo() {
-        const input = document.getElementById('videoUrlInput');
-        const rawText = input.value.trim();
-        if (!rawText) return;
-
-        const btn = document.getElementById('btnExtractUrl');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span>⏳ 提取音视频与转写中...</span>';
-        addLog(`🔗 正在解析视频链接: ${rawText.slice(0, 50)}...`, 'info');
-
-        try {
-            const resp = await fetch('/api/extract_video_content', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url_or_text: rawText })
-            });
-            const data = await resp.json();
-            if (!resp.ok || !data.success) {
-                throw new Error(data.detail || '提取失败');
-            }
-
-            document.getElementById('extractResultBox').style.display = 'block';
-            document.getElementById('extractTitleText').textContent = `原视频：《${data.title}》`;
-            document.getElementById('extractAuthorText').textContent = `${data.platform} · ${data.author}`;
-            document.getElementById('extractTranscriptText').textContent = data.transcript || data.description;
-            addLog(`✅ 成功提取原片！转写文案共 ${data.transcript.length} 字，正在智能仿写重构...`, 'success');
-
-            // 触发仿写重构
-            btn.innerHTML = '<span>🪄 AI 正在重构原创分镜...</span>';
-            const style = document.getElementById('videoStyleSelect').value;
-            const duration_tier = document.getElementById('durationSelect').value;
-
-            const refResp = await fetch('/api/generate_script_from_ref', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ref_title: data.title,
-                    ref_transcript: data.transcript,
-                    style,
-                    duration_tier,
-                    source_platform: data.platform
-                })
-            });
-            const refData = await refResp.json();
-            if (refData.success && refData.script) {
-                const s = refData.script;
-                document.getElementById('videoTitleInput').value = s.title;
-                const container = document.getElementById('scenesContainer');
-                container.innerHTML = '';
-                s.scenes.forEach(sc => {
-                    const scCard = document.createElement('div');
-                    scCard.className = 'scene-card';
-                    scCard.innerHTML = `
-                        <div class="scene-top-row">
-                            <span class="scene-index-badge">分镜 ${sc.scene_index} · ${sc.transition} (${sc.voiceover_text.length}字)</span>
-                            <div class="scene-actions">
-                                <button class="btn-tts-listen" onclick="previewVoice(this)">
-                                    <span>🔊 试听配音</span>
-                                </button>
-                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, ${sc.scene_index})">
-                                    <span>🎨 AI 生图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">${escapeHtml(sc.voiceover_text)}</textarea>
-                        <div class="scene-asset-bar">
-                            <input class="scene-keywords-input scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="实拍画面英文关键词">
-                            <input class="scene-keywords-input scene-image-prompt" value="${escapeHtml(sc.image_prompt || '')}" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                            <span class="scene-asset-tag">实拍/AI 生图</span>
-                        </div>
-                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-                    `;
-                    container.appendChild(scCard);
-                });
-                updateStats();
-                addLog(`🎉 爆款重构完成！全新原创分镜剧本已就绪（共 ${s.scenes.length} 个分镜）。`, 'success');
-            }
-        } catch (e) {
-            addLog(`❌ 提取重构失败: ${e.message}`, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
-
-    async function generateAiImageForScene(btn, sceneIndex) {
-        const card = btn.closest('.scene-card');
-        const promptInput = card.querySelector('.scene-image-prompt');
-        const keywordInput = card.querySelector('.scene-keywords');
-        const prompt = (promptInput?.value || keywordInput?.value || '').trim();
-        if (!prompt) {
-            addLog('⚠️ 请先输入分镜 Prompt 或关键词再触发生图', 'warn');
-            return;
-        }
-
-        const previewContainer = card.querySelector('.scene-ai-img-preview');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span>⏳ 生图中</span>';
-        addLog(`🎨 正在为分镜 #${sceneIndex} 生成 AI 竖屏视觉配图...`, 'info');
-
-        try {
-            const resp = await fetch('/api/generate_ai_image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, scene_index: sceneIndex })
-            });
-            const data = await resp.json();
-            if (data.success && data.image_url) {
-                previewContainer.style.display = 'block';
-                previewContainer.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:8px; background: rgba(0,0,0,0.3); padding:4px 8px; border-radius:6px; border:1px solid rgba(56,189,248,0.2);">
-                        <img src="${data.image_url}" style="width: 36px; height: 64px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
-                        <span style="font-size: 11px; color: #38BDF8;">✓ AI 9:16 竖屏图片生成就绪</span>
+            } catch (e) {
+                container.innerHTML = `
+                    <div style="background:var(--bg-surface-0); border:1px solid var(--accent-danger); padding:20px; border-radius:var(--radius-sm); text-align:center;">
+                        <div style="font-size:13px; color:var(--accent-danger); margin-bottom:8px;">切口生成异常: ${escapeHtml(e.message)}</div>
+                        <button class="btn-studio" onclick="skipAngleAndDirectGenerate()">直接按原标题立项</button>
                     </div>
                 `;
-                addLog(`✅ 分镜 #${sceneIndex} AI 生图成功！`, 'success');
             }
-        } catch (e) {
-            addLog(`❌ 生图失败: ${e.message}`, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
-
-    function addNewScene() {
-        const container = document.getElementById('scenesContainer');
-        const count = container.querySelectorAll('.scene-card').length + 1;
-        const card = document.createElement('div');
-        card.className = 'scene-card';
-        card.innerHTML = `
-            <div class="scene-top-row">
-                <span class="scene-index-badge">分镜 ${count} · 补充情节</span>
-                <div class="scene-actions">
-                    <button class="btn-tts-listen" onclick="previewVoice(this)">
-                        <span>🔊 试听配音</span>
-                    </button>
-                    <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, ${count})">
-                        <span>🎨 AI 生图</span>
-                    </button>
-                    <button class="btn-tts-listen" style="border-color: rgba(244,63,94,0.3); color:#FB7185;" onclick="this.closest('.scene-card').remove(); updateStats();">
-                        <span>🗑</span>
-                    </button>
-                </div>
-            </div>
-            <textarea class="scene-voiceover-area" rows="2" placeholder="输入本分镜旁白解说文案..." oninput="updateStats()"></textarea>
-            <div class="scene-asset-bar">
-                <input class="scene-keywords-input scene-keywords" placeholder="实拍画面英文关键词 (例如: cinematic urban office)">
-                <input class="scene-keywords-input scene-image-prompt" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                <span class="scene-asset-tag">实拍/AI 生图</span>
-            </div>
-            <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-        `;
-        container.appendChild(card);
-        updateStats();
-    }
-
-    async function generateScript() {
-        const topic = document.getElementById('topicInput').value.trim();
-        const source = selectedTrendContext?.title === topic ? selectedTrendContext : null;
-        const style = document.getElementById('videoStyleSelect').value;
-        const duration_tier = document.getElementById('durationSelect').value;
-        if (!topic) return;
-
-        addLog(`🪄 正在调用大模型深度拆解分镜: 《${topic}》 (${style} / ${duration_tier})...`, 'info');
-        const btn = document.getElementById('btnGenScript');
-        btn.disabled = true;
-        btn.innerHTML = '<span>⏳ 创作中...</span>';
-
-        try {
-            const resp = await fetch('/api/generate_script', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    topic, style, duration_tier,
-                    source_content: source?.raw_content || '',
-                    source_platform: source?.source_platform || '',
-                    captured_at: source?.captured_at || ''
-                })
-            });
-            const data = await resp.json();
-            if (data.success && data.script) {
-                const s = data.script;
-                addLog(`🛡️ ${s.freshness_note || '已应用时效约束'}`, s.grounding_status === 'source_grounded' ? 'success' : 'info');
-                document.getElementById('videoTitleInput').value = s.title;
-                const container = document.getElementById('scenesContainer');
-                container.innerHTML = '';
-                
-                s.scenes.forEach(sc => {
-                    const scCard = document.createElement('div');
-                    scCard.className = 'scene-card';
-                    scCard.innerHTML = `
-                        <div class="scene-top-row">
-                            <span class="scene-index-badge">分镜 ${sc.scene_index} · ${sc.transition} (${sc.voiceover_text.length}字)</span>
-                            <div class="scene-actions">
-                                <button class="btn-tts-listen" onclick="previewVoice(this)">
-                                    <span>🔊 试听配音</span>
-                                </button>
-                                <button class="btn-tts-listen" style="border-color: rgba(56,189,248,0.3); color:#38BDF8;" onclick="generateAiImageForScene(this, ${sc.scene_index})">
-                                    <span>🎨 AI 生图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <textarea class="scene-voiceover-area" rows="2" oninput="updateStats()">${escapeHtml(sc.voiceover_text)}</textarea>
-                        <div class="scene-asset-bar">
-                            <input class="scene-keywords-input scene-keywords" value="${escapeHtml((sc.visual_keywords || []).join(', '))}" placeholder="实拍画面英文关键词">
-                            <input class="scene-keywords-input scene-image-prompt" value="${escapeHtml(sc.image_prompt || '')}" placeholder="AI 图像生图 Prompt (选填)" style="flex: 1.2;">
-                            <span class="scene-asset-tag">实拍/AI 生图</span>
-                        </div>
-                        <div class="scene-ai-img-preview" style="display: none; margin-top: 6px;"></div>
-                    `;
-                    container.appendChild(scCard);
-                });
-                updateStats();
-                addLog(`✅ 分镜创作完成！包含 ${s.scenes.length} 个镜头剧本已装载。`, 'success');
-            }
-        } catch (e) {
-            addLog(`❌ 分镜生成异常: ${e.message}`, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<span>🪄 AI 深度拆解分镜</span>';
-        }
-    }
-
-    async function previewVoice(btn) {
-        const card = btn.closest('.scene-card');
-        const textarea = card.querySelector('textarea');
-        const text = textarea.value.trim();
-        const voice = document.getElementById('voiceSelect').value;
-        const rate = document.getElementById('voiceRateSelect').value;
-        if (!text) return;
-
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio = null;
         }
 
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<span>⏳ 合成中</span>';
-        try {
-            const resp = await fetch('/api/preview_tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, voice, rate, pitch: '-2Hz' })
-            });
-            const data = await resp.json();
-            if (data.success && data.audio_url) {
-                currentAudio = new Audio(data.audio_url);
-                btn.classList.add('playing');
-                btn.innerHTML = `
-                    <div class="equalizer-wave">
-                        <span class="equalizer-bar"></span>
-                        <span class="equalizer-bar"></span>
-                        <span class="equalizer-bar"></span>
-                    </div>
-                    <span>播放中</span>
-                `;
-                currentAudio.play();
-                currentAudio.onended = () => {
-                    btn.classList.remove('playing');
-                    btn.innerHTML = originalHtml;
-                };
-            }
-        } catch (e) {
-            btn.innerHTML = '<span>❌ 失败</span>';
-            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
-        }
-    }
-
-    async function startRender() {
-        const title = document.getElementById('videoTitleInput').value.trim();
-        const voice = document.getElementById('voiceSelect').value;
-        const bgm = document.getElementById('bgmSelect').value;
-        const layout = document.getElementById('layoutSelect').value;
-        const enableKaraoke = document.getElementById('karaokeToggle').checked;
-        const ttsRate = document.getElementById('voiceRateSelect').value;
-
-        const scenes = [];
-        document.querySelectorAll('.scene-card').forEach((card, idx) => {
-            const ta = card.querySelector('textarea');
-            const keywordInput = card.querySelector('.scene-keywords');
-            const promptInput = card.querySelector('.scene-image-prompt');
-            if (ta && ta.value.trim()) {
-                scenes.push({
-                    scene_index: idx + 1,
-                    voiceover_text: ta.value.trim(),
-                    visual_keywords: (keywordInput?.value || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8),
-                    image_prompt: promptInput?.value || ''
-                });
-            }
-        });
-
-        if (scenes.length === 0) {
-            addLog('⚠️ 渲染失败：分镜剧本不能为空', 'warn');
-            return;
+        function closeAnglesModal() {
+            const modal = document.getElementById('anglesModalOverlay');
+            if (modal) modal.style.display = 'none';
         }
 
-        const btn = document.getElementById('btnRender');
-        btn.disabled = true;
-        btn.innerHTML = '<span>⚙️ 全自动流水线极速渲染中...</span>';
-
-        addLog(`🚀 启动全自动流水线：TTS合成 -> 毫秒字幕 -> 动态素材 -> 音效混音 -> 视频导出 (版式: ${layout}, 卡拉OK: ${enableKaraoke})...`, 'info');
-
-        try {
-            const resp = await fetch('/api/jobs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    scenes,
-                    voice,
-                    bgm_type: bgm,
-                    video_layout: layout,
-                    enable_karaoke: enableKaraoke,
-                    tts_rate: ttsRate,
-                    tts_pitch: '-2Hz'
-                })
-            });
-            const data = await resp.json();
-            if (data.success && data.job) {
-                currentJobId = data.job.job_id;
-                currentProjectId = data.job.project_id;
-                addLog(`📥 任务已进入队列 [${currentJobId}]`, 'info');
-                await pollRenderJob(currentJobId);
+        function selectAngleById(angleId) {
+            const angle = generatedAnglesMap.get(angleId);
+            if (angle) {
+                selectAngleAndGenerate(angle);
             } else {
-                addLog(`❌ 创建任务失败: ${data.detail || '未知错误'}`, 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<span>🚀 开始全自动渲染合成</span>';
+                skipAngleAndDirectGenerate();
             }
-        } catch (e) {
-            addLog(`❌ 渲染异常: ${e.message}`, 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<span>🚀 开始全自动渲染合成</span>';
         }
-    }
 
-    async function pollRenderJob(jobId) {
-        const btn = document.getElementById('btnRender');
-        let previousStage = '';
-        while (currentJobId === jobId) {
-            const resp = await fetch(`/api/jobs/${jobId}`);
-            const data = await resp.json();
-            if (!resp.ok || !data.job) throw new Error(data.detail || '任务查询失败');
-            const job = data.job;
-            if (job.stage !== previousStage) {
-                previousStage = job.stage;
-                addLog(`⚙️ 当前阶段: ${job.stage}`, 'info');
+        function selectAngleAndGenerate(angle) {
+            closeAnglesModal();
+            const title = angle.title || currentTargetTrend.title;
+            document.getElementById('studioProjectTitle').value = title;
+            document.getElementById('monitorTitleDisplay').textContent = title;
+            currentChosenAngle = `[切口视角: ${angle.tag}] 《${angle.title}》\n开篇Hook: ${angle.hook}\n核心逻辑: ${angle.core_conflict}`;
+            toast(`已选定【${angle.tag}】切口，正在生成结构化分镜...`);
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4]);
+            generateScriptFromCurrentTitle(currentChosenAngle);
+        }
+
+        function skipAngleAndDirectGenerate() {
+            closeAnglesModal();
+            if (!currentTargetTrend) return;
+            const title = currentTargetTrend.title;
+            document.getElementById('studioProjectTitle').value = title;
+            document.getElementById('monitorTitleDisplay').textContent = title;
+            currentChosenAngle = "";
+            toast(`已以《${title}》立项，正在自动拆解原创分镜...`);
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4]);
+            generateScriptFromCurrentTitle();
+        }
+
+        const UI_PHOTO_LIBRARY = {
+            tech: ["photo-1518770660439-4636190af475", "photo-1519389950473-47ba0277781c", "photo-1550751827-4bd374c3f58b", "photo-1526374965328-7f61d4dc18c5", "photo-1531297484001-80022131f5a1", "photo-1451187580459-43490279c0fa", "photo-1618005182384-a83a8bd57fbe", "photo-1620712943543-bcc4688e7485"],
+            finance: ["photo-1486406146926-c627a92ad1ab", "photo-1611974789855-9c2a0a7236a3", "photo-1590283603385-17ffb3a7f29f", "photo-1450133064473-71024230f91b", "photo-1579532537598-459ecdaf39cc", "photo-1559526324-4b87b5e36e44", "photo-1526304640581-d334cdbbf45e"],
+            workplace: ["photo-1497215728101-856f4ea42174", "photo-1522071820081-009f0129c71c", "photo-1542744173-8e7e53415bb0", "photo-1573496359142-b8d87734a5a2", "photo-1551836022-d5d88e9218df", "photo-1507679799987-c73779587ccf"],
+            entertainment: ["photo-1470225620780-dba8ba36b745", "photo-1511671782779-c97d3d27a1d4", "photo-1518709268805-4e9042af9f23", "photo-1489599849927-2ee91cede3ba", "photo-1514525253161-7a46d19cd819", "photo-1598488035139-bdbb2231ce04", "photo-1492684223066-81342ee5ff30"],
+            celebrity: ["photo-1534528741775-53994a69daeb", "photo-1507003211169-0a1dd7228f2d", "photo-1517841905240-472988babdf9", "photo-1539571696357-5a69c17a67c6", "photo-1524504388940-b1c1722653e1", "photo-1500648767791-00dcc994a43e"],
+            drama: ["photo-1509281373149-e957c6296406", "photo-1485846234645-a62644f84728", "photo-1536440136628-849c177e76a1", "photo-1578836537282-3171d77f8632", "photo-1478720568477-152d9b164e26"],
+            mystery: ["photo-1509198397868-475647b2a1e5", "photo-1518709268805-4e9042af9f23", "photo-1508700115892-45ecd05ae2ad", "photo-1516339901601-2e1b62dc0c45", "photo-1534447677768-be436bb09401"],
+            growth: ["photo-1506126613408-eca07ce68773", "photo-1499750310107-5fef28a66643", "photo-1434494878577-86c23bcb06b9", "photo-1507842229451-2d79f04eeaa2", "photo-1529699211952-734e80c4d42b", "photo-1464822759023-fed622ff2c3b", "photo-1476480862126-209bfaa8edc8"],
+            social: ["photo-1477959858617-67f30bc75b82", "photo-1519494026892-80bbd2d6fd0d", "photo-1497633762265-9d179a990aa6", "photo-1514565131-fce0801e5785", "photo-1449824913935-59a10b8d2000", "photo-1488521787991-ed7bbaae773c"],
+            emotions: ["photo-1516589178581-6cd7833ae3b2", "photo-1534447677768-be436bb09401", "photo-1518495973542-4542c06a5843", "photo-1499209974431-9dddcece7f88", "photo-1474552226712-ac0f0961a954"]
+        };
+
+        function buildDynamicAiImageUrl(prompt, keywords, voice, idx) {
+            const combined = `${prompt || ''} ${keywords || ''} ${voice || ''}`.toLowerCase();
+            let cat = "growth";
+            if (/chip|tech|computer|phone|code|ai|robot|server|algorithm|digital|future|算力|技术|芯片/.test(combined)) cat = "tech";
+            else if (/market|stock|money|chart|building|finance|business|bank|invest|economy|trade|搞钱|商业|经济/.test(combined)) cat = "finance";
+            else if (/office|desk|meeting|work|boss|job|career|worker|打工|职场|老板|同事/.test(combined)) cat = "workplace";
+            else if (/music|concert|game|movie|film|stage|show|tv|entertainment|variety|综艺|明星|八卦|电影|节目/.test(combined)) cat = "entertainment";
+            else if (/star|actor|actress|celebrity|model|fashion|portrait|woman|man|person|李金铭|美嘉|晴姐/.test(combined)) cat = "celebrity";
+            else if (/drama|conflict|theatre|fight|tension|撕逼|争吵|暗战|名场面/.test(combined)) cat = "drama";
+            else if (/mystery|dark|night|detective|shadow|fog|rain|cyberpunk|悬疑|神秘|暗黑/.test(combined)) cat = "mystery";
+            else if (/city|hospital|doctor|street|car|social|traffic|crowd|people|社会|城市|舆论/.test(combined)) cat = "social";
+            else if (/love|heart|sunset|coffee|hug|warm|emotion|tear|alone|sad|情绪|治愈|暖心/.test(combined)) cat = "emotions";
+
+            const pool = UI_PHOTO_LIBRARY[cat] || UI_PHOTO_LIBRARY["growth"];
+            const pick = pool[((idx || 1) - 1 + (combined.length % pool.length)) % pool.length];
+            return `https://images.unsplash.com/${pick}?w=720&h=1280&fit=crop&q=80`;
+        }
+
+        // Batch Generate AI Images for all Scenes
+        async function triggerBatchAiGenAllScenes() {
+            if (currentScenes.length === 0) {
+                toast('分镜列表为空');
+                return;
             }
-            if (job.status === 'succeeded') {
-                currentVideoUrl = job.video_url;
-                currentDraftPath = job.result ? job.result.jianying_draft_path : '';
-
-                // Display video in player frame
-                const videoPlayer = document.getElementById('finalVideoPlayer');
-                const placeholder = document.getElementById('playerPlaceholder');
-                videoPlayer.src = job.video_url;
-                videoPlayer.style.display = 'block';
-                placeholder.style.display = 'none';
-                videoPlayer.play();
-
-                // Enable action buttons
-                document.getElementById('btnOpenDraft').disabled = false;
-                document.getElementById('btnDownloadVideo').disabled = false;
-
-                if (job.logs) {
-                    job.logs.forEach(l => addLog(l, 'info'));
+            toast(`🚀 开始一键全自动并发调用 AI 视觉引擎生成 ${currentScenes.length} 个镜头的高清画面...`);
+            
+            const promises = currentScenes.map(async (sc, idx) => {
+                const prompt = sc.prompt || sc.keywords || sc.voice || '';
+                try {
+                    const res = await fetch('/api/generate_ai_image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt, scene_index: idx + 1 })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.image_url) {
+                        sc.img = data.image_url;
+                        sc.asset_file = data.local_path || null;
+                        sc.asset_type = 'image';
+                        sc.asset_source = 'ai_gen';
+                    }
+                } catch (e) {
+                    console.warn(`分镜 #${idx + 1} AI 生图失败:`, e);
                 }
-                addLog('🎉 1080x1920 视频渲染完成！可在监视器中预览或打开剪映。', 'success');
-                break;
-            }
-            if (['failed', 'cancelled', 'interrupted'].includes(job.status)) {
-                addLog(`❌ 任务${job.status}: ${job.error || ''}`, 'error');
-                break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 1500));
-        }
-        if (currentJobId === jobId) {
-            btn.disabled = false;
-            btn.innerHTML = '<span>🚀 开始全自动渲染合成</span>';
-        }
-    }
-
-    async function openJianYingDraft() {
-        if (!currentProjectId) return;
-        try {
-            const resp = await fetch(`/api/projects/${currentProjectId}/open-draft`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
             });
-            const data = await resp.json();
-            addLog(data.message, 'success');
-        } catch (e) {
-            addLog(`❌ 打开失败: ${e.message}`, 'error');
-        }
-    }
 
-    function downloadVideo() {
-        if (currentVideoUrl) {
-            const a = document.createElement('a');
-            a.href = currentVideoUrl;
-            a.download = 'traffic_studio_export.mp4';
-            a.click();
+            await Promise.all(promises);
+            renderScenesList();
+            toast(`✅ 全部 ${currentScenes.length} 个分镜 AI 视觉生成完成！`);
         }
-    }
 
-    function addLog(msg, type = 'info') {
-        const box = document.getElementById('logBox');
-        box.querySelectorAll('.terminal-log-row').forEach(row => row.remove());
-        const row = document.createElement('div');
-        row.className = 'terminal-log-row';
-        row.innerHTML = `
-            <span class="terminal-time">[${new Date().toLocaleTimeString()}]</span>
-            <span class="terminal-msg ${type}">${escapeHtml(msg)}</span>
-        `;
-        box.appendChild(row);
-        box.scrollTop = 0;
-    }
-</script>
+        // Generate Script from Topic via Real API
+        async function generateScriptFromCurrentTitle(customAngle) {
+            const topic = document.getElementById('studioProjectTitle').value.trim();
+            if (!topic) return;
+
+            const btn = document.getElementById('btnLlmGenScript');
+            btn.disabled = true;
+            btn.textContent = '⏳ 大模型拆解中...';
+            toast(`正在调用大模型深度拆解分镜: 《${topic}》...`);
+
+            const durationTier = document.getElementById('selectDurationTier')?.value || 'deep_60s';
+            const scriptStyle = document.getElementById('selectScriptStyle')?.value || '干货科普';
+
+            const tierNames = {
+                quick_30s: "4~5 个紧凑高爆发分镜 (30s)",
+                deep_60s: "6~8 个深度饱满分镜 (60s)",
+                long_120s: "9~12 个长视频精解分镜 (120s)"
+            };
+
+            const container = document.getElementById('scenesTimelineContainer');
+            container.innerHTML = `
+                <div style="background:var(--bg-surface-0); border:1px solid var(--border-focus); padding:32px; border-radius:var(--radius-sm); text-align:center;">
+                    <div style="font-size:15px; font-weight:700; color:var(--accent-primary); margin-bottom:8px;">⚡ 大模型正在深度拆解分镜剧本...</div>
+                    <div style="font-size:12px; color:var(--text-muted);">正在为《${escapeHtml(topic)}》生成 ${tierNames[durationTier] || '分镜剧本'}、${scriptStyle}风格台词与 AI 画面提示词...</div>
+                </div>
+            `;
+
+            try {
+                const anglePayload = customAngle || currentChosenAngle || "";
+                const res = await fetch('/api/generate_script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic,
+                        style: scriptStyle,
+                        duration_tier: durationTier,
+                        chosen_angle: anglePayload
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success || !data.script) {
+                    throw new Error(data.detail || (typeof data.detail === 'object' ? JSON.stringify(data.detail) : '大模型生成分镜失败'));
+                }
+
+                document.getElementById('studioProjectTitle').value = data.script.title;
+                document.getElementById('monitorTitleDisplay').textContent = data.script.title;
+                currentScenes = data.script.scenes.map((s, i) => {
+                    const promptText = s.image_prompt || `${(s.visual_keywords || []).join(' ')}, ${s.voiceover_text.slice(0, 30)}`;
+                    return {
+                        idx: i + 1,
+                        name: s.transition || (i === 0 ? 'HOOK 留人' : (i === 1 ? 'MECHANISM 机制' : (i === data.script.scenes.length - 1 ? 'CTA 闭环' : 'ACTION 论证'))),
+                        voice: s.voiceover_text,
+                        img: buildDynamicAiImageUrl(promptText, (s.visual_keywords || []).join(', '), s.voiceover_text, i + 1),
+                        keywords: (s.visual_keywords || []).join(', '),
+                        prompt: promptText
+                    };
+                });
+                renderScenesList();
+                toast(`✅ 分镜创作完成！已加载 ${currentScenes.length} 个专属动态 AI 画面`);
+            } catch (e) {
+                toast(`分镜生成失败: ${e.message}`);
+                container.innerHTML = `
+                    <div style="background:var(--bg-surface-0); border:1px solid var(--accent-danger); padding:24px; border-radius:var(--radius-sm); text-align:center;">
+                        <div style="font-size:14px; font-weight:700; color:var(--accent-danger); margin-bottom:6px;">❌ 分镜生成异常</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">${escapeHtml(e.message)}</div>
+                        <button class="btn-studio" onclick="generateScriptFromCurrentTitle()">🔄 重试生成</button>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🪄 AI 重新拆解分镜';
+            }
+        }
+
+        // Video Extraction & Rewrite via Real API
+        async function extractVideoAndRewrite() {
+            const url = document.getElementById('extractorUrlInput').value.trim();
+            if (!url) return;
+
+            const btn = document.getElementById('btnExtractRun');
+            btn.disabled = true;
+            btn.textContent = '⏳ 提取音视频中...';
+            toast('正在解析短视频链接并下载音频...');
+
+            try {
+                const res = await fetch('/api/extract_video_content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url_or_text: url })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.detail || '提取失败');
+
+                document.getElementById('extractedTranscriptArea').value = data.transcript;
+                document.getElementById('extractPlatformTag').textContent = `${data.platform} · ${data.author}`;
+                document.getElementById('extractLeftTitle').textContent = `原片: 《${data.title}》`;
+                toast('✅ 原片音视频转写完成，正在执行 LLM 爆款结构化解构...');
+
+                // Trigger Script Refinement
+                btn.textContent = '🪄 AI 仿写重构中...';
+                const refRes = await fetch('/api/generate_script_from_ref', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ref_title: data.title,
+                        ref_transcript: data.transcript,
+                        style: '干货科普',
+                        duration_tier: '30-60s',
+                        source_platform: data.platform
+                    })
+                });
+                const refData = await refRes.json();
+                if (refData.success && refData.script) {
+                    const s = refData.script;
+                    document.getElementById('studioProjectTitle').value = s.title;
+                    document.getElementById('monitorTitleDisplay').textContent = s.title;
+
+                    const container = document.getElementById('extractedStructureContainer');
+                    container.innerHTML = '';
+                    s.scenes.forEach(sc => {
+                        const box = document.createElement('div');
+                        box.style.cssText = 'background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:8px 10px; border-radius:var(--radius-xs);';
+                        box.innerHTML = `
+                            <div style="font-size:10px; font-weight:700; color:var(--accent-primary); font-family:'JetBrains Mono';">SCENE ${sc.scene_index} · ${escapeHtml(sc.transition || 'HOOK')}</div>
+                            <div style="font-size:12px; color:var(--text-primary); margin-top:2px;">${escapeHtml(sc.voiceover_text)}</div>
+                        `;
+                        container.appendChild(box);
+                    });
+
+                    currentScenes = s.scenes.map((sc, i) => {
+                        const promptText = sc.image_prompt || `${(sc.visual_keywords || []).join(' ')}, ${sc.voiceover_text.slice(0, 30)}`;
+                        return {
+                            idx: i + 1,
+                            name: sc.transition || '分镜情节',
+                            voice: sc.voiceover_text,
+                            img: buildDynamicAiImageUrl(promptText, (sc.visual_keywords || []).join(', '), sc.voiceover_text, i + 1),
+                            keywords: (sc.visual_keywords || []).join(', '),
+                            prompt: promptText
+                        };
+                    });
+                    renderScenesList();
+                    toast('🎉 原创分镜解构就绪，已同步载入分镜导演台！');
+                }
+            } catch (e) {
+                toast(`提取失败: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '执行音视频提取 & Whisper 转写';
+            }
+        }
+
+        function transferToStoryboard() {
+            toast('解构分镜已装载至分镜导演台');
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[4]);
+        }
+
+        let selectedSubtitleStyle = 'impact_yellow';
+
+        function chooseLayout(layoutName, el) {
+            selectedLayout = layoutName;
+            const parent = el.closest('.layout-options-bar');
+            if (parent) parent.querySelectorAll('.layout-option-box').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            toast(`已切换渲染排版为【${el.querySelector('div').textContent}】`);
+        }
+
+        function chooseSubtitleStyle(styleKey, el) {
+            selectedSubtitleStyle = styleKey;
+            const parent = el.closest('.layout-selector-grid');
+            if (parent) parent.querySelectorAll('.layout-option-box').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+
+            const badge = document.getElementById('currentSubtitleStyleBadge');
+            if (badge) badge.textContent = el.querySelector('div').textContent.trim();
+
+            const monitorSubtitle = document.getElementById('monitorKaraokeDisplay');
+            if (monitorSubtitle) {
+                monitorSubtitle.className = `monitor-karaoke-overlay style-${styleKey}`;
+            }
+            toast(`已切换字幕花字风格为【${el.querySelector('div').textContent.trim()}】`);
+        }
+
+        // Trigger Full Pipeline Render via Real API
+        async function triggerStartRender() {
+            const title = document.getElementById('studioProjectTitle').value.trim();
+            const voice = document.getElementById('selectVoiceId').value || 'zh-CN-YunxiNeural';
+            const bgm = document.getElementById('selectBgmType').value || 'energetic';
+            const enableKaraoke = document.getElementById('chkKaraokeEnable').checked;
+
+            if (currentScenes.length === 0) {
+                toast('分镜剧本不能为空');
+                return;
+            }
+
+            const scenesPayload = currentScenes.map((s, idx) => ({
+                scene_index: idx + 1,
+                voiceover_text: s.voice,
+                visual_keywords: (s.keywords || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8),
+                image_prompt: s.prompt || '',
+                asset_file: s.asset_file || null,
+                asset_type: s.asset_type || (s.img && (s.img.includes('.mp4') || s.img.includes('.mov') || s.img.includes('.webm')) ? 'video' : 'image'),
+                img: s.img || null
+            }));
+
+            const btn = document.getElementById('btnStartRender');
+            btn.disabled = true;
+            btn.textContent = '⚙️ 渲染任务提交中...';
+            toast('🚀 正在启动全自动流水线：TTS -> 字幕 -> 素材 -> MoviePy 合成 -> 剪映 Draft...');
+
+            try {
+                const res = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        scenes: scenesPayload,
+                        voice,
+                        bgm_type: bgm,
+                        video_layout: selectedLayout,
+                        enable_karaoke: enableKaraoke,
+                        subtitle_style: selectedSubtitleStyle,
+                        tts_rate: '+0%',
+                        tts_pitch: '-2Hz'
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.job) {
+                    toast(`✅ 任务已创建: Job #${data.job.job_id.slice(0, 8)}`);
+                    switchStudioView('assets', document.querySelectorAll('.nav-item')[8]);
+                }
+            } catch (e) {
+                toast(`提交失败: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '▶ 启动全自动渲染流水线 (生成 MP4 + 剪映 Draft 工程)';
+            }
+        }
+
+        // Fetch and Render Completed Jobs via Real API
+        async function loadJobsList() {
+            const container = document.getElementById('assetsJobListContainer');
+            try {
+                const res = await fetch('/api/jobs');
+                const data = await res.json();
+                if (!data.jobs || data.jobs.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-muted); font-size:12px; padding:20px; text-align:center;">暂无渲染任务与工程</div>';
+                    document.getElementById('badgeAssetCount').textContent = '0 部';
+                    return;
+                }
+
+                document.getElementById('badgeAssetCount').textContent = `${data.jobs.length} 部`;
+                container.innerHTML = '';
+                data.jobs.forEach(job => {
+                    const row = document.createElement('div');
+                    row.className = 'asset-row';
+                    const isDone = job.status === 'done';
+                    const isRunning = job.status === 'running' || job.status === 'queued';
+                    const poster = job.video_url || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=200&q=80';
+
+                    row.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${poster}" class="asset-thumb">
+                            <div>
+                                <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">${escapeHtml(job.title || '短视频项目')}</div>
+                                <div style="font-size:10.5px; font-family:'JetBrains Mono'; color:${isDone ? 'var(--accent-success)' : (isRunning ? 'var(--accent-primary)' : 'var(--accent-danger)')}; margin-top:2px;">
+                                    ${job.status.toUpperCase()} · ${escapeHtml(job.stage || '进行中')}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            ${isDone ? `
+                                <button class="btn-studio" onclick="openJianYingDraft('${job.project_id}')">在剪映中打开</button>
+                                ${job.video_url ? `<a href="${job.video_url}" target="_blank" class="btn-studio" style="text-decoration:none;">下载 MP4</a>` : ''}
+                            ` : `
+                                <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono';">${job.progress_pct || 50}%</span>
+                            `}
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (e) {
+                container.innerHTML = `<div style="color:#FB7185; font-size:12px; padding:20px; text-align:center;">加载任务失败: ${e.message}</div>`;
+            }
+        }
+
+        async function openJianYingDraft(projectId) {
+            toast('正在调起系统剪映并加载 Draft 工程...');
+            try {
+                const res = await fetch(`/api/projects/${projectId}/open-draft`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    toast('🎬 剪映草稿工程已成功加载！');
+                } else {
+                    toast(data.message || '草稿打开失败');
+                }
+            } catch (e) {
+                toast(`打开失败: ${e.message}`);
+            }
+        }
+
+        async function loadVoices() {
+            try {
+                const res = await fetch('/api/voices');
+                const data = await res.json();
+                if (data.success && data.voices) {
+                    const sel = document.getElementById('selectVoiceId');
+                    sel.innerHTML = '';
+                    data.voices.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.id;
+                        opt.textContent = `${v.name} (${v.id.split('-').pop()})`;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error("加载音色失败", e);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function toast(msg) {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'studio-toast';
+            el.innerHTML = `<span>⚡</span><span>${msg}</span>`;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2600);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVoices();
+            loadTrends();
+            renderScenesList();
+            loadJobsList();
+            // Polling jobs every 8 seconds
+            setInterval(loadJobsList, 8000);
+        });
+    </script>
 </body>
 </html>

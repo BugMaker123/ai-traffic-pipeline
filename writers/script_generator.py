@@ -22,6 +22,21 @@ DURATION_PRESETS = {
     "long_120s": "长视频精解型 (2~3分钟，9~12个深度分镜，约600~800字)"
 }
 
+STYLE_PRESETS = {
+    "干货科普": "严谨硬核科普，数据与运行机制拆解，逻辑严密清晰",
+    "商业认知": "商业模式、信息差、财富积累逻辑与产业资本透视",
+    "幽默反转": "网梗金句频出，意料之外的戏剧性反转，轻松幽默搞怪",
+    "情感共鸣": "深度治愈、戳中社会群体软肋的高密度情绪共情",
+    "犀利吐槽": "嘴替视角，一针见血、辛辣讽刺乱象与荒谬现象",
+    "悬疑探秘": "电影级悬疑感，层层抽丝剥茧、充满悬念与未解之谜",
+    "燃系励志": "高能量热血、打破内耗、激情澎湃的坚定行动号召",
+    "避坑实操": "保姆级避坑指南，步骤清晰落地，强调防套路实操",
+    "历史故事": "史诗感叙事，厚重历史事件拉片与现实深度映射",
+    "思维模型": "高阶认知模型拆解，第一性原理与决策框架升级",
+    "深度拉片": "慢节奏电影级叙事，注重画面细节、意象留白与视听隐喻",
+    "客观评述": "中立客观、多视角平衡的事实核查与深度舆论复盘"
+}
+
 class ScriptGenerator:
     """大模型高信息密度分镜剧本生成器"""
     
@@ -44,19 +59,25 @@ class ScriptGenerator:
         source_content: str = "",
         source_platform: str = "",
         captured_at: str = "",
+        chosen_angle: str = "",
     ) -> VideoProjectScript:
         """
-        根据输入主题与时长档位，生成深度饱满的结构化分镜剧本
+        根据输入主题与时长档位，生成深度饱满的结构化分镜剧本（可指定选定切口）
         """
         proj_id = project_id or f"proj_{uuid.uuid4().hex[:8]}"
         duration_desc = DURATION_PRESETS.get(duration_tier, DURATION_PRESETS["deep_60s"])
         
+        effective_source = source_content
+        if chosen_angle:
+            effective_source = f"[用户已选定切口视角]\n{chosen_angle}\n\n[背景材料]\n{source_content}"
+
         # 1. 尝试调用大模型 API
         if self.api_key:
             try:
                 script_dict = self._call_llm(
                     topic_or_content, style, duration_desc, proj_id,
-                    source_content, source_platform, captured_at,
+                    effective_source, source_platform, captured_at,
+                    chosen_angle=chosen_angle,
                 )
                 if script_dict and "scenes" in script_dict and len(script_dict["scenes"]) > 0:
                     unsupported = self._unsupported_temporal_claims(script_dict, f"{topic_or_content} {source_content}")
@@ -69,6 +90,7 @@ class ScriptGenerator:
                         script_dict = self._call_llm(
                             topic_or_content, style, duration_desc, proj_id,
                             correction, source_platform, captured_at,
+                            chosen_angle=chosen_angle,
                         )
                         if not script_dict or self._unsupported_temporal_claims(
                             script_dict, f"{topic_or_content} {source_content}"
@@ -138,23 +160,28 @@ class ScriptGenerator:
         return list(dict.fromkeys(claims))
 
     def _call_llm(
-        self, topic: str, style: str, duration_desc: str, proj_id: str,
-        source_content: str = "", source_platform: str = "", captured_at: str = "",
+        self,
+        topic: str,
+        style: str,
+        duration_desc: str,
+        proj_id: str,
+        source_content: str = "",
+        source_platform: str = "",
+        captured_at: str = "",
+        chosen_angle: str = "",
     ) -> Optional[Dict[str, Any]]:
         """调用 DeepSeek / OpenAI 接口生成高信息量剧本"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        
+
         user_prompt = SCRIPT_USER_TEMPLATE.format(
             topic_or_content=topic,
+            chosen_angle=chosen_angle or "（未指定特定切口，请按选定风格最炸裂的网感视角自由展开）",
             style=style,
             duration_spec=duration_desc,
-            current_date=date.today().isoformat(),
-            source_platform=source_platform or "未提供",
-            captured_at=captured_at or "未提供",
-            source_content=source_content or "（无事实材料）",
+            source_content=source_content or "（无额外背景材料）",
         )
         
         payload = {
@@ -256,3 +283,116 @@ class ScriptGenerator:
             grounding_status="topic_only",
             freshness_note="LLM 不可用且无事实核验材料，兜底稿不包含具体时效性断言",
         )
+
+    def generate_angles(
+        self,
+        topic: str,
+        raw_content: str = "",
+        category: str = "",
+    ) -> list[dict[str, Any]]:
+        """
+        根据原始热搜/选题，调用大模型生成 3~4 个差异化的短视频爆款切口（Angle）供用户选择
+        """
+        clean_topic = topic.strip()
+        if self.api_key:
+            try:
+                system_prompt = (
+                    "你是一位顶级短视频内容总监与爆款操盘手。你的任务是将用户提供的原始热点话题或新闻，"
+                    "解构成 3~4 个差异化明显、极具完播率和讨论度的短视频【核心切入口（Angle / Hook 视角）】。\n"
+                    "请以 JSON 格式输出，根节点为 'angles' 数组，每个切口包含以下字段：\n"
+                    "- id: 切口唯一标识（如 'angle_1', 'angle_2'）\n"
+                    "- tag: 切口类型标签（如：'🔥 颠覆反常识' / '💡 深度底层逻辑' / '🎭 情绪共鸣吐槽' / '⚡ 实操避坑指南' / '⚖️ 深度利弊权衡'）\n"
+                    "- title: 经过切口重塑后的爆款短视频标题（必须极具点击欲与吸引力）\n"
+                    "- hook: 黄金前 3 秒抓人开篇台词示例（20~35字，必须极有悬念感）\n"
+                    "- core_conflict: 该切口的核心戏剧冲突或思考维度（15~30字）\n"
+                    "- target_audience: 适合触达的受众群体（如：青年职场人、大众泛用户、数码科技迷）\n"
+                )
+                user_prompt = (
+                    f"原始热点话题：《{clean_topic}》\n"
+                    f"背景信息/来源详情：{raw_content or '（无额外背景）'}\n"
+                    f"所属赛道：{category or '全网热点'}\n"
+                    "请输出 3~4 个高质感、高完播率的切口 JSON："
+                )
+                
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": 0.88,
+                    "response_format": {"type": "json_object"} if "deepseek" in self.model.lower() or "gpt" in self.model.lower() else None
+                }
+                url = f"{self.base_url.rstrip('/')}/chat/completions"
+                resp = requests.post(url, headers=headers, json=payload, timeout=35)
+                if resp.status_code == 200:
+                    raw_text = resp.json()["choices"][0]["message"]["content"].strip()
+                    json_match = re.search(r'\[.*\]|\{.*\}', raw_text, re.DOTALL)
+                    if json_match:
+                        parsed = json.loads(json_match.group(0))
+                        angles = []
+                        if isinstance(parsed, list):
+                            angles = parsed
+                        elif isinstance(parsed, dict):
+                            angles = parsed.get("angles") or parsed.get("items") or parsed.get("list") or parsed.get("data") or []
+                            if not angles:
+                                for v in parsed.values():
+                                    if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict):
+                                        angles = v
+                                        break
+                        if angles and len(angles) > 0:
+                            for idx, a in enumerate(angles):
+                                a["id"] = f"angle_{idx + 1}"
+                                if not a.get("title"):
+                                    a["title"] = f"关于【{clean_topic}】的深度思考"
+                                if not a.get("hook"):
+                                    a["hook"] = f"很多人看【{clean_topic}】只看了表面，但真正关键的细节藏在这里。"
+                                if not a.get("tag"):
+                                    a["tag"] = "💡 深度切口"
+                            return angles
+            except Exception as e:
+                logger.warning("LLM 生成切口失败，降级至规则切口生成: %s", e)
+
+        # 规则保底切口生成
+        return self._generate_fallback_angles(clean_topic, category)
+
+    def _generate_fallback_angles(self, topic: str, category: str = "") -> list[dict[str, Any]]:
+        """保底生成 4 个不同维度的爆款创作切口"""
+        return [
+            {
+                "id": "angle_1",
+                "tag": "🔥 颠覆反常识",
+                "title": f"为什么所有人都看好【{topic}】，我却劝你三思？",
+                "hook": f"90%的人看到【{topic}】都在跟风凑热闹，但如果把底层逻辑拆开看，真正的陷阱才刚刚浮出水面。",
+                "core_conflict": "打破大众直觉惯性，揭示被忽略的成本与潜在盲区",
+                "target_audience": "追求独立思考、渴望避坑的理性观众"
+            },
+            {
+                "id": "angle_2",
+                "tag": "💡 深度底层逻辑",
+                "title": f"读懂【{topic}】背后这笔账，你就看透了游戏规则",
+                "hook": f"表面上看这只是一条热搜，但往深挖一层，本质上是一场关于利益、资源与注意力的重新分配。",
+                "core_conflict": "从商业资本/系统机制维度透视事件驱动力",
+                "target_audience": "关注商业模式、行业趋势与成长认知的群体"
+            },
+            {
+                "id": "angle_3",
+                "tag": "🎭 强烈情绪共鸣",
+                "title": f"关于【{topic}】，说出了多少普通人不敢提的真实心声？",
+                "hook": f"今天刷到【{topic}】，底下有一条评论瞬间戳中了无数人：我们真正焦虑的从来不是事件本身，而是身处其中的无力感。",
+                "core_conflict": "精准捕捉社会群体心理投射，拉满情绪共鸣与转评欲",
+                "target_audience": "大众泛用户、渴望情感宣泄与同频认同的受众"
+            },
+            {
+                "id": "angle_4",
+                "tag": "⚡ 普通人破局行动",
+                "title": f"【{topic}】发生后，普通人如何抓住第一波红利？",
+                "hook": f"每次出现【{topic}】这样的风口，有人在围观，有人已经在悄悄执行这3步破局法了。",
+                "core_conflict": "将宏大热点落脚到普通个体的微观实操行动",
+                "target_audience": "注重效率落地、搞钱实战与个人增值的创作者"
+            }
+        ]

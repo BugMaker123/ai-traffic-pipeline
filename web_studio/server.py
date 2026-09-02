@@ -5,12 +5,13 @@ import asyncio
 import os
 import re
 import sys
+import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, File, Form, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -21,13 +22,13 @@ if str(BASE_DIR) not in sys.path:
 
 import logging
 from audio.tts_engine import TTSEngine
-from config.settings import DEFAULT_TTS_PITCH, DEFAULT_TTS_VOICE, DRAFTS_OUTPUT_DIR, MAX_SCENES, OUTPUT_DIR, PEXELS_API_KEY, VOICE_PRESETS
+from config.settings import ASSETS_OUTPUT_DIR, DEFAULT_TTS_PITCH, DEFAULT_TTS_VOICE, DRAFTS_OUTPUT_DIR, MAX_SCENES, OUTPUT_DIR, PEXELS_API_KEY, VOICE_PRESETS
 from core.state import SceneItem, VideoProjectScript
 from core.logging_config import configure_logging
 from core.output_cleanup import cleanup_expired_outputs
 from crawlers.hot_topics import CATEGORY_NAMES, HotTopicCrawler
 from web_studio.job_manager import job_manager
-from writers.script_generator import DURATION_PRESETS, ScriptGenerator
+from writers.script_generator import DURATION_PRESETS, STYLE_PRESETS, ScriptGenerator
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 PROJECT_ID_RE = re.compile(r"^(?:proj|test)_[a-zA-Z0-9_-]{1,48}$")
 VoiceId = Literal[tuple(VOICE_PRESETS.values())]
+ScriptStyle = Literal[tuple(STYLE_PRESETS.keys())]
 BgmType = Literal["energetic", "suspense", "emotional", "chill"]
 
 
@@ -54,11 +56,29 @@ class StrictModel(BaseModel):
 
 class ScriptRequest(StrictModel):
     topic: str = Field(min_length=1, max_length=500)
-    style: Literal["干货科普", "幽默反转", "情感共鸣", "商业认知"] = "干货科普"
-    duration_tier: Literal[tuple(DURATION_PRESETS.keys())] = "deep_60s"
+    style: ScriptStyle = "干货科普"
+    duration_tier: str = "deep_60s"
     source_content: str = Field(default="", max_length=4000)
     source_platform: str = Field(default="", max_length=80)
     captured_at: str = Field(default="", max_length=40)
+    chosen_angle: str = Field(default="", max_length=500)
+
+    @field_validator("duration_tier", mode="before")
+    @classmethod
+    def normalize_duration(cls, v: str) -> str:
+        if v in DURATION_PRESETS:
+            return v
+        if "30" in str(v) and "60" not in str(v):
+            return "quick_30s"
+        if "120" in str(v) or "long" in str(v):
+            return "long_120s"
+        return "deep_60s"
+
+
+class AnglesRequest(StrictModel):
+    topic: str = Field(min_length=1, max_length=500)
+    raw_content: str = Field(default="", max_length=1000)
+    category: str = Field(default="", max_length=50)
 
 
 class VideoExtractRequest(StrictModel):
@@ -68,9 +88,20 @@ class VideoExtractRequest(StrictModel):
 class RefScriptRequest(StrictModel):
     ref_title: str = Field(min_length=1, max_length=200)
     ref_transcript: str = Field(min_length=1, max_length=8000)
-    style: Literal["干货科普", "幽默反转", "情感共鸣", "商业认知"] = "干货科普"
-    duration_tier: Literal[tuple(DURATION_PRESETS.keys())] = "deep_60s"
+    style: ScriptStyle = "干货科普"
+    duration_tier: str = "deep_60s"
     source_platform: str = Field(default="短视频提取", max_length=80)
+
+    @field_validator("duration_tier", mode="before")
+    @classmethod
+    def normalize_duration(cls, v: str) -> str:
+        if v in DURATION_PRESETS:
+            return v
+        if "30" in str(v) and "60" not in str(v):
+            return "quick_30s"
+        if "120" in str(v) or "long" in str(v):
+            return "long_120s"
+        return "deep_60s"
 
 
 class AIImageRequest(StrictModel):
@@ -93,6 +124,9 @@ class RenderSceneRequest(StrictModel):
     caption_highlight: list[str] = Field(default_factory=list, max_length=12)
     image_prompt: str | None = Field(default="", max_length=500)
     transition: Literal["fade", "zoom_in", "slide_left"] = "zoom_in"
+    asset_file: str | None = Field(default=None, max_length=500)
+    asset_type: Literal["image", "video"] = "image"
+    img: str | None = Field(default=None, max_length=2000)
 
 
 class RenderRequest(StrictModel):
@@ -103,6 +137,7 @@ class RenderRequest(StrictModel):
     bgm_type: BgmType = "energetic"
     video_layout: Literal["impact", "split_screen", "card_quote"] = "impact"
     enable_karaoke: bool = True
+    subtitle_style: Literal["impact_yellow", "cyber_neon", "variety_pop", "cinema_white", "minimal_capsule", "flame_gold"] = "impact_yellow"
     tts_rate: str = Field(default="+0%", pattern=r"^[+-](?:100|[0-9]{1,2})%$")
     tts_pitch: str = Field(default=DEFAULT_TTS_PITCH, pattern=r"^[+-][0-9]{1,2}Hz$")
 
@@ -131,11 +166,30 @@ async def serve_tasks() -> str:
 
 
 @app.get("/api/trends")
-async def get_trends(category: str = Query(default="all")):
-    if category not in CATEGORY_NAMES:
-        raise HTTPException(status_code=422, detail="未知热点分类")
-    trends = await asyncio.to_thread(HotTopicCrawler.get_categorized_trends, category=category, limit=15)
-    return {"success": True, "category": category, "trends": [item.model_dump() for item in trends]}
+async def get_trends(
+    response: Response,
+    category: str = Query(default="all"),
+    signal: str = Query(default="all"),
+    niche: str = Query(default="all"),
+    platform: str = Query(default="all"),
+    limit: int = Query(default=35),
+):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    trends = await asyncio.to_thread(
+        HotTopicCrawler.get_categorized_trends,
+        category=category,
+        signal=signal,
+        niche=niche,
+        platform=platform,
+        limit=limit,
+    )
+    return {
+        "success": True,
+        "fetched_at": time.strftime("%H:%M:%S"),
+        "count": len(trends),
+        "trends": [item.model_dump() for item in trends]
+    }
 
 
 @app.get("/api/voices")
@@ -201,12 +255,32 @@ async def generate_ai_image(req: AIImageRequest):
     raise HTTPException(status_code=500, detail="AI生图未成功生成文件")
 
 
+@app.post("/api/generate_angles")
+async def api_generate_angles(req: AnglesRequest):
+    """根据原始热点/选题，调用大模型生成差异化爆款切口供用户挑选"""
+    generator = ScriptGenerator()
+    angles = await asyncio.to_thread(
+        generator.generate_angles,
+        topic=req.topic,
+        raw_content=req.raw_content,
+        category=req.category,
+    )
+    return {"success": True, "topic": req.topic, "angles": angles}
+
+
 @app.post("/api/generate_script")
 async def generate_script(req: ScriptRequest):
     generator = ScriptGenerator()
     script = await asyncio.to_thread(
-        generator.generate_script, req.topic, req.style, req.duration_tier, None,
-        req.source_content, req.source_platform, req.captured_at,
+        generator.generate_script,
+        req.topic,
+        req.style,
+        req.duration_tier,
+        None,
+        req.source_content,
+        req.source_platform,
+        req.captured_at,
+        req.chosen_angle,
     )
     return {"success": True, "script": script.model_dump()}
 
@@ -217,6 +291,42 @@ async def preview_tts(req: TTSPreviewRequest):
     filename = f"preview_{uuid.uuid4().hex[:12]}.mp3"
     result = await engine.generate_speech_with_timestamps(req.text, filename)
     return {"success": True, "audio_url": f"/output/audio/{filename}", "duration": result["duration"]}
+
+
+@app.post("/api/upload_asset")
+async def upload_asset(
+    file: UploadFile = File(...),
+    scene_index: int = Form(default=1),
+    project_id: str = Form(default="proj_custom"),
+):
+    ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".webm"}
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"不支持的文件格式: {ext}。支持格式: JPG, PNG, WEBP, MP4, MOV, WEBM",
+        )
+
+    safe_project_id = re.sub(r"[^a-zA-Z0-9_-]", "", project_id) or "proj_custom"
+    file_id = uuid.uuid4().hex[:8]
+    filename = f"{safe_project_id}_custom_scene_{scene_index}_{file_id}{ext}"
+    out_path = ASSETS_OUTPUT_DIR / filename
+
+    content = await file.read()
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="上传的文件为空")
+
+    out_path.write_bytes(content)
+    is_video = ext in {".mp4", ".mov", ".webm"}
+
+    return {
+        "success": True,
+        "asset_url": f"/output/video_assets/{filename}",
+        "local_path": str(out_path),
+        "asset_type": "video" if is_video else "image",
+        "filename": filename,
+        "size_bytes": len(content),
+    }
 
 
 @app.get("/api/media/status")

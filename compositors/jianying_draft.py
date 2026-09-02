@@ -27,6 +27,7 @@ class JianYingDraftGenerator:
         scenes: List[Dict[str, Any]],
         subtitles: List[Dict[str, Any]],
         bgm_path: Optional[str] = None,
+        subtitle_style: str = "impact_yellow",
     ) -> str:
         """
         根据分镜与音频资产生成剪映 Draft 目录与 JSON 工程配置
@@ -202,6 +203,16 @@ class JianYingDraftGenerator:
             })
 
         # 4. 构建花字字幕片段 (Texts)
+        jy_style_map = {
+            "impact_yellow": {"fill": [1.0, 1.0, 1.0], "border": [0.0, 0.0, 0.0], "width": 5},
+            "cyber_neon": {"fill": [0.22, 0.74, 0.97], "border": [0.04, 0.06, 0.12], "width": 4},
+            "variety_pop": {"fill": [1.0, 0.96, 0.47], "border": [0.06, 0.04, 0.1], "width": 6},
+            "cinema_white": {"fill": [0.97, 0.98, 0.99], "border": [0.06, 0.09, 0.16], "width": 2},
+            "minimal_capsule": {"fill": [0.06, 0.09, 0.16], "border": [1.0, 1.0, 1.0], "width": 0},
+            "flame_gold": {"fill": [0.98, 0.75, 0.14], "border": [0.2, 0.03, 0.03], "width": 5},
+        }
+        chosen_style = jy_style_map.get(subtitle_style, jy_style_map["impact_yellow"])
+
         for sub in subtitles:
             text_str = sub.get("text", "")
             s_start_us = int(sub.get("start", 0.0) * 1_000_000)
@@ -215,12 +226,12 @@ class JianYingDraftGenerator:
                     "text": text_str,
                     "styles": [
                         {
-                            "fill": {"color": [1, 1, 1]},
-                            "border": {"color": [0, 0, 0], "width": 3},
+                            "fill": {"color": chosen_style["fill"]},
+                            "border": {"color": chosen_style["border"], "width": chosen_style["width"]},
                         }
                     ],
                 }),
-                "font_size": 16.0,
+                "font_size": 18.0,
                 "type": "subtitle",
             })
             subtitle_segments.append({

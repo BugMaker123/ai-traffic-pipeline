@@ -188,8 +188,9 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
     
     video_layout = state.get("video_layout", "impact")
     enable_karaoke = state.get("enable_karaoke", True)
-    
-    logs.append(f"🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (版式: {video_layout}, 卡拉OK: {enable_karaoke})...")
+    subtitle_style = state.get("subtitle_style", "impact_yellow")
+
+    logs.append(f"🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (版式: {video_layout}, 卡拉OK: {enable_karaoke}, 字幕花字: {subtitle_style})...")
     renderer = MoviePyRenderer()
     final_video = renderer.render_project(
         project_id=project_id,
@@ -199,6 +200,7 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
         bgm_path=bgm_path,
         layout_template=video_layout,
         enable_karaoke=enable_karaoke,
+        subtitle_style=subtitle_style,
     )
     logs.append(f"🎉 短视频成品渲染成功: {final_video}")
     
@@ -207,7 +209,8 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
         title=title,
         scenes=scenes,
         subtitles=subtitles,
-        bgm_path=bgm_path
+        bgm_path=bgm_path,
+        subtitle_style=subtitle_style,
     )
     logs.append(f"📂 剪映 Draft 工程同步生成: {draft_dir}")
     

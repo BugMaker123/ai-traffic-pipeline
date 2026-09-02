@@ -58,3 +58,31 @@ def test_tasks_page_and_global_job_list(monkeypatch):
     response = client.get("/api/jobs")
     assert response.status_code == 200
     assert response.json()["jobs"] == []
+
+
+def test_upload_asset_image_and_video():
+    # Test uploading image
+    fake_img = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 100
+    response = client.post(
+        "/api/upload_asset",
+        files={"file": ("test_scene.jpg", fake_img, "image/jpeg")},
+        data={"scene_index": "1", "project_id": "test_proj"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["asset_type"] == "image"
+    assert "/output/video_assets/" in data["asset_url"]
+
+    # Test uploading video clip
+    fake_video = b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 100
+    response_vid = client.post(
+        "/api/upload_asset",
+        files={"file": ("clip_scene.mp4", fake_video, "video/mp4")},
+        data={"scene_index": "2", "project_id": "test_proj"},
+    )
+    assert response_vid.status_code == 200
+    vid_data = response_vid.json()
+    assert vid_data["success"] is True
+    assert vid_data["asset_type"] == "video"
+

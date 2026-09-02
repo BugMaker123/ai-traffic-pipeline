@@ -67,7 +67,7 @@ def start_web_studio(host: str = "127.0.0.1", port: int = 8000):
         title="[STUDIO] 创作工作台服务运行中",
         border_style="cyan"
     ))
-    uvicorn.run("web_studio.server:app", host=host, port=port, reload=False)
+    uvicorn.run("web_studio.server:app", host=host, port=port, reload=True, reload_dirs=[str(BASE_DIR)])
 
 def main():
     configure_logging()
