@@ -27,6 +27,7 @@ from core.state import SceneItem, VideoProjectScript
 from core.logging_config import configure_logging
 from core.output_cleanup import cleanup_expired_outputs
 from crawlers.hot_topics import CATEGORY_NAMES, HotTopicCrawler
+from audio.voice_manager import voice_manager
 from web_studio.job_manager import job_manager
 from writers.script_generator import DURATION_PRESETS, STYLE_PRESETS, ScriptGenerator
 
@@ -45,7 +46,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 PROJECT_ID_RE = re.compile(r"^(?:proj|test)_[a-zA-Z0-9_-]{1,48}$")
-VoiceId = Literal[tuple(VOICE_PRESETS.values())]
+VoiceId = str
 ScriptStyle = Literal[tuple(STYLE_PRESETS.keys())]
 BgmType = Literal["energetic", "suspense", "emotional", "chill"]
 
@@ -215,10 +216,63 @@ async def get_trends(
 
 @app.get("/api/voices")
 async def get_voices():
-    return {"success": True, "voices": [{"id": value, "name": key} for key, value in VOICE_PRESETS.items()]}
+    voices = [
+        {
+            "id": p.voice_id,
+            "name": p.name,
+            "gender": p.gender,
+            "provider": p.provider,
+            "description": p.description,
+            "is_custom": p.is_custom,
+            "reference_audio": p.reference_audio,
+        }
+        for p in voice_manager.list_voices()
+    ]
+    return {"success": True, "voices": voices}
+
+
+@app.post("/api/voices/clone", status_code=status.HTTP_201_CREATED)
+async def clone_custom_voice(
+    name: str = Form(min_length=1, max_length=60),
+    file: UploadFile = File(...),
+    gender: Literal["male", "female"] = Form(default="male"),
+    prompt_text: str = Form(default=""),
+    fallback_voice: str = Form(default=DEFAULT_TTS_VOICE),
+    description: str = Form(default=""),
+):
+    temp_dir = OUTPUT_DIR / "temp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    temp_path = temp_dir / f"upload_{uuid.uuid4().hex[:8]}_{file.filename}"
+    content = await file.read()
+    temp_path.write_bytes(content)
+    try:
+        profile = voice_manager.register_clone_voice(
+            name=name,
+            audio_source_path=temp_path,
+            prompt_text=prompt_text,
+            gender=gender,
+            fallback_voice=fallback_voice,
+            description=description,
+        )
+        return {"success": True, "voice": profile.model_dump()}
+    finally:
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+
+
+@app.delete("/api/voices/{voice_id}")
+async def delete_custom_voice(voice_id: str):
+    success = voice_manager.delete_clone_voice(voice_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="自定义音色不存在或预设音色不可删除")
+    return {"success": True, "message": "音色已成功删除"}
 
 
 @app.post("/api/extract_video_content")
+@app.post("/api/extract_video")
 async def extract_video_content(req: VideoExtractRequest):
     """解析短视频链接并自动提取/转写文本"""
     from crawlers.video_extractor import VideoExtractor

@@ -9,6 +9,7 @@ import edge_tts
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from config.settings import AUDIO_OUTPUT_DIR, DEFAULT_TTS_PITCH, DEFAULT_TTS_RATE, DEFAULT_TTS_VOICE, DEFAULT_TTS_VOLUME, TTS_CONCURRENCY
+from audio.voice_manager import voice_manager
 
 TTS_RETRY_ATTEMPTS = max(1, int(os.getenv("TTS_RETRY_ATTEMPTS", "3")))
 TTS_RETRY_DELAY_SECONDS = max(0.1, float(os.getenv("TTS_RETRY_DELAY_SECONDS", "2")))
@@ -120,6 +121,19 @@ class TTSEngine:
         target_rate = rate or self.rate
         
         audio_path = AUDIO_OUTPUT_DIR / output_filename
+
+        profile = voice_manager.get_voice(target_voice)
+        if profile and profile.provider == "cosyvoice":
+            adapter = voice_manager.get_adapter(target_voice)
+            return await adapter.synthesize(
+                text=text,
+                output_path=audio_path,
+                voice=target_voice,
+                rate=target_rate,
+                pitch=self.pitch,
+                volume=self.volume,
+            )
+
         word_timestamps: List[Dict[str, Any]] = []
         audio_chunks = bytearray()
         last_error: Optional[BaseException] = None

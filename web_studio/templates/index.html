@@ -956,12 +956,12 @@
                     <span class="nav-badge-count">SDXL</span>
                 </div>
 
-                <div class="nav-item" onclick="toast('声音克隆与音色库：内置 9+ 款情感解说音色与音效轨道')">
+                <div class="nav-item" onclick="openVoiceCloneModal()">
                     <div class="nav-item-left">
                         <span class="nav-item-icon">🎙️</span>
                         <span>声音克隆与音色库</span>
                     </div>
-                    <span class="nav-badge-count">9 音</span>
+                    <span class="nav-badge-count" id="badgeVoiceCount">音色库</span>
                 </div>
 
                 <!-- Group 3: 渲染与多轨剪映 -->
@@ -1469,6 +1469,83 @@
                         🚀 确认创建并启动后台批量流水线
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: 声音克隆与音色库管理 ================= -->
+    <div id="voiceCloneModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div class="studio-panel" style="width: 720px; max-width: 95vw; max-height: 88vh; display:flex; flex-direction:column; background: #0B132B; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 25px 60px -12px rgba(0,0,0,0.9); border-radius:var(--radius-md); overflow:hidden;">
+            <div class="panel-toolbar" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85);">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div style="font-weight:700; font-size:14.5px; color:#F8FAFC; display:flex; align-items:center; gap:8px;">
+                        <span>🎙️</span> <span>声音克隆与音色库中心</span>
+                        <span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--accent-primary); padding:2px 8px; border-radius:10px; border:1px solid rgba(56,189,248,0.3);">CosyVoice / Edge-TTS</span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted);">管理系统预设解说音色，或上传 3~10 秒参考音频快速零样本定制专属声线</div>
+                </div>
+                <button class="btn-studio" style="height:26px; width:26px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="closeVoiceCloneModal()">✕</button>
+            </div>
+            
+            <div class="panel-body" style="padding: 20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; max-height: 65vh;">
+                <!-- Section 1: Registered Voices -->
+                <div>
+                    <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px; display:flex; justify-content:space-between;">
+                        <span>可用音色列表</span>
+                        <span style="color:var(--text-muted); font-size:11px;">支持分镜精调与批量生成直接调用</span>
+                    </div>
+                    <div id="voiceCardsGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <!-- Dynamically populated voice cards -->
+                    </div>
+                </div>
+
+                <!-- Section 2: Upload Reference Audio for Voice Clone -->
+                <div style="background:rgba(15,23,42,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:16px;">
+                    <div style="font-size:12.5px; font-weight:700; color:var(--accent-primary); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                        <span>✨</span> <span>上传参考音频 · 零样本快速声音克隆</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+                        <div>
+                            <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">音色自定义名称 *</label>
+                            <input type="text" id="cloneVoiceNameInput" class="input-studio" style="width:100%; height:32px;" placeholder="例如：商业思维·老王 / 治愈系学姐">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">主播性别</label>
+                            <select id="cloneVoiceGenderSelect" class="input-studio" style="width:100%; height:32px;">
+                                <option value="male">男声 (Male)</option>
+                                <option value="female">女声 (Female)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+                        <div>
+                            <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">参考音频文件 (3~10秒 WAV/MP3) *</label>
+                            <input type="file" id="cloneVoiceFileInput" accept="audio/*" class="input-studio" style="width:100%; height:32px; padding:3px 6px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">离线平滑降级备用音色</label>
+                            <select id="cloneVoiceFallbackSelect" class="input-studio" style="width:100%; height:32px;">
+                                <option value="zh-CN-YunxiNeural">云希 (男声/活力爆款)</option>
+                                <option value="zh-CN-YunjianNeural">云健 (男声/沉稳磁性)</option>
+                                <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声/温暖知性)</option>
+                                <option value="zh-CN-YunyangNeural">云扬 (男声/专业新闻)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">参考音频所念文本 (可选，提升克隆拟真度)</label>
+                        <input type="text" id="cloneVoicePromptTextInput" class="input-studio" style="width:100%; height:30px;" placeholder="例如：大家好，今天我想和大家聊一聊认知与选择...">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn-studio btn-studio-accent" id="btnSubmitCloneVoice" onclick="submitCloneVoice()">
+                            🎙️ 开始快速克隆并录入音色库
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:flex-end; background:rgba(15,23,42,0.85);">
+                <button class="btn-studio" onclick="closeVoiceCloneModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -2402,23 +2479,257 @@
             }
         }
 
+        let allAvailableVoices = [];
+        let lastExtractedScenes = [];
+        let lastExtractedTitle = '';
+
         async function loadVoices() {
             try {
                 const res = await fetch('/api/voices');
                 const data = await res.json();
                 if (data.success && data.voices) {
+                    allAvailableVoices = data.voices;
                     const sel = document.getElementById('selectVoiceId');
-                    sel.innerHTML = '';
-                    data.voices.forEach(v => {
-                        const opt = document.createElement('option');
-                        opt.value = v.id;
-                        opt.textContent = `${v.name} (${v.id.split('-').pop()})`;
-                        sel.appendChild(opt);
-                    });
+                    const batchSel = document.getElementById('batchVoiceSelect');
+                    const badge = document.getElementById('badgeVoiceCount');
+                    if (badge) badge.textContent = `${data.voices.length} 款`;
+
+                    const buildOptions = (targetSelect) => {
+                        if (!targetSelect) return;
+                        const prev = targetSelect.value;
+                        targetSelect.innerHTML = '';
+                        data.voices.forEach(v => {
+                            const opt = document.createElement('option');
+                            opt.value = v.id;
+                            const prefix = v.is_custom ? '✨ [克隆] ' : '';
+                            opt.textContent = `${prefix}${v.name} (${v.gender === 'female' ? '女' : '男'})`;
+                            targetSelect.appendChild(opt);
+                        });
+                        if (prev && Array.from(targetSelect.options).some(o => o.value === prev)) {
+                            targetSelect.value = prev;
+                        }
+                    };
+
+                    buildOptions(sel);
+                    buildOptions(batchSel);
+                    renderVoiceCardsGrid(data.voices);
                 }
             } catch (e) {
                 console.error("加载音色失败", e);
             }
+        }
+
+        function renderVoiceCardsGrid(voices) {
+            const grid = document.getElementById('voiceCardsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            voices.forEach(v => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background:rgba(8,12,19,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; gap:6px;';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div style="font-weight:700; font-size:12.5px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>${v.gender === 'female' ? '👩' : '👨'}</span>
+                                <span>${escapeHtml(v.name)}</span>
+                            </div>
+                            <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">
+                                <span style="color:#38BDF8;">${v.id}</span> · ${v.gender === 'female' ? '女声' : '男声'}
+                            </div>
+                        </div>
+                        <span style="font-size:10px; padding:1px 6px; border-radius:4px; ${v.is_custom ? 'background:rgba(168,85,247,0.2); color:#C084FC;' : 'background:rgba(56,189,248,0.15); color:#38BDF8;'}">
+                            ${v.is_custom ? '✨ 声音克隆' : '内置预设'}
+                        </span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">${escapeHtml(v.description || '高拟真语音合成')}</div>
+                    ${v.is_custom ? `
+                        <div style="display:flex; justify-content:flex-end; border-top:1px solid rgba(255,255,255,0.06); padding-top:6px; margin-top:4px;">
+                            <button class="btn-studio" style="height:20px; font-size:10.5px; color:#FB7185; padding:0 6px;" onclick="deleteVoiceProfile('${v.id}')">🗑️ 删除克隆</button>
+                        </div>
+                    ` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openVoiceCloneModal() {
+            const modal = document.getElementById('voiceCloneModal');
+            if (modal) modal.style.display = 'flex';
+            loadVoices();
+        }
+
+        function closeVoiceCloneModal() {
+            const modal = document.getElementById('voiceCloneModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function submitCloneVoice() {
+            const nameInput = document.getElementById('cloneVoiceNameInput');
+            const fileInput = document.getElementById('cloneVoiceFileInput');
+            const genderSelect = document.getElementById('cloneVoiceGenderSelect');
+            const promptInput = document.getElementById('cloneVoicePromptTextInput');
+            const fallbackSelect = document.getElementById('cloneVoiceFallbackSelect');
+            const btn = document.getElementById('btnSubmitCloneVoice');
+
+            const name = (nameInput.value || '').trim();
+            const file = fileInput.files && fileInput.files[0];
+            if (!name) {
+                toast('请输入克隆音色名称！');
+                return;
+            }
+            if (!file) {
+                toast('请选择 3~10 秒参考音频文件！');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '正在上传并录入音色库...';
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('file', file);
+            formData.append('gender', genderSelect.value);
+            formData.append('prompt_text', (promptInput.value || '').trim());
+            formData.append('fallback_voice', fallbackSelect.value);
+            formData.append('description', `用户自定义声音克隆 · ${name}`);
+
+            try {
+                const res = await fetch('/api/voices/clone', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.voice) {
+                    toast(`🎉 成功录入克隆音色《${data.voice.name}》！`);
+                    nameInput.value = '';
+                    fileInput.value = '';
+                    promptInput.value = '';
+                    loadVoices();
+                } else {
+                    toast(`克隆录入失败: ${data.detail || '未知错误'}`);
+                }
+            } catch (e) {
+                toast(`请求失败: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🎙️ 开始快速克隆并录入音色库';
+            }
+        }
+
+        async function deleteVoiceProfile(voiceId) {
+            if (!confirm('确定要删除该自定义克隆音色吗？')) return;
+            try {
+                const res = await fetch(`/api/voices/${voiceId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    toast('已成功删除该音色');
+                    loadVoices();
+                } else {
+                    toast(data.detail || '删除失败');
+                }
+            } catch (e) {
+                toast(`删除请求失败: ${e.message}`);
+            }
+        }
+
+        // ================= VIDEO EXTRACTOR & REWRITE =================
+        async function extractVideoAndRewrite() {
+            const input = document.getElementById('extractorUrlInput');
+            const rawUrl = (input.value || '').trim();
+            if (!rawUrl) {
+                toast('请输入短视频分享链接或包含链接的文本！');
+                return;
+            }
+
+            const btn = document.getElementById('btnExtractRun');
+            btn.disabled = true;
+            btn.textContent = '⏳ 正在解析并提取原片文本...';
+            toast('正在解析短视频链接并获取原片文案...');
+
+            try {
+                const res = await fetch('/api/extract_video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url_or_text: rawUrl })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.detail || '解析短视频失败');
+                }
+
+                document.getElementById('extractedTranscriptArea').value = data.transcript;
+                document.getElementById('extractPlatformTag').textContent = data.platform || '短视频';
+                document.getElementById('extractLeftTitle').textContent = `原片文案: ${data.title}`;
+                lastExtractedTitle = data.title;
+
+                toast(`✅ 解析成功！正在调用大模型重塑爆款原创分镜...`);
+                btn.textContent = '⏳ 大模型正在解构分镜...';
+
+                // 自动调用大模型反推原创结构化分镜
+                const refRes = await fetch('/api/generate_script_from_ref', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ref_title: data.title,
+                        ref_transcript: data.transcript,
+                        style: '干货科普',
+                        duration_tier: 'deep_60s',
+                        source_platform: data.platform
+                    })
+                });
+                const refData = await refRes.json();
+                if (refData.success && refData.script && refData.script.scenes) {
+                    lastExtractedScenes = refData.script.scenes.map((s, i) => ({
+                        idx: i + 1,
+                        name: s.scene_type ? s.scene_type.toUpperCase() : `镜头 #${i + 1}`,
+                        voice: s.voiceover_text,
+                        img: buildDynamicAiImageUrl(s.image_prompt, (s.visual_keywords || []).join(' '), s.voiceover_text, i + 1),
+                        keywords: (s.visual_keywords || []).join(', '),
+                        prompt: s.image_prompt || 'cinematic portrait 9:16 vertical',
+                        asset_type: 'image',
+                        asset_source: 'ai_gen'
+                    }));
+
+                    const container = document.getElementById('extractedStructureContainer');
+                    container.innerHTML = `
+                        <div style="font-size:12px; font-weight:700; color:var(--accent-primary); margin-bottom:6px;">
+                            ✨ 大模型重塑分镜（共 ${lastExtractedScenes.length} 镜，点击上方「载入分镜台」开始精修与制作）：
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px; max-height:480px; overflow-y:auto;">
+                            ${lastExtractedScenes.map(sc => `
+                                <div style="background:rgba(8,12,19,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px; font-size:12px;">
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                        <b style="color:#38BDF8;">#${sc.idx} ${escapeHtml(sc.name)}</b>
+                                        <span style="color:var(--text-muted); font-size:11px;">${sc.voice.length} 字</span>
+                                    </div>
+                                    <div style="color:var(--text-primary); line-height:1.5;">${escapeHtml(sc.voice)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    toast(`🎉 成功解构出 ${lastExtractedScenes.length} 个原创分镜！`);
+                }
+            } catch (e) {
+                toast(`❌ 解构失败: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '执行音视频提取 & Whisper 转写';
+            }
+        }
+
+        function transferToStoryboard() {
+            if (!lastExtractedScenes || lastExtractedScenes.length === 0) {
+                toast('暂无已解构的分镜，请先解析短视频！');
+                return;
+            }
+            currentScenes = [...lastExtractedScenes];
+            if (lastExtractedTitle) {
+                document.getElementById('studioProjectTitle').value = lastExtractedTitle;
+                document.getElementById('monitorTitleDisplay').textContent = lastExtractedTitle;
+            }
+            renderScenesList();
+            switchStudioView('storyboard', document.querySelectorAll('.nav-item')[2]);
+            toast(`🎬 成功将 ${currentScenes.length} 个重构分镜载入分镜导演台！`);
         }
 
         function escapeHtml(str) {

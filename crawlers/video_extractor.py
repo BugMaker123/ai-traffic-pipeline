@@ -125,21 +125,19 @@ class VideoExtractor:
                     "raw_url": target_url,
                 }
         except Exception as e:
-            logger.warning("yt-dlp 解析失败: %s，尝试降级为纯文本/元数据提取", e)
-            # 降级处理：尝试通过 HTTP GET 抓取页面 title
+            logger.warning("yt-dlp 解析失败: %s，尝试降级为社媒通用元数据提取", e)
             try:
-                resp = requests.get(target_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-                title_match = re.search(r"<title>(.*?)</title>", resp.text, re.IGNORECASE)
-                fallback_title = title_match.group(1).strip() if title_match else target_url
+                from extractors.video_extractor import SocialVideoExtractor
+                extracted = SocialVideoExtractor.extract(raw_url_or_text)
                 return {
-                    "title": fallback_title,
-                    "description": fallback_title,
+                    "title": extracted["title"],
+                    "description": extracted["transcript"],
                     "duration": 0.0,
-                    "author": "网页来源",
+                    "author": "社媒博主",
                     "thumbnail": "",
-                    "platform": "webpage",
+                    "platform": extracted["platform"],
                     "audio_path": None,
                     "raw_url": target_url,
                 }
-            except Exception as http_err:
-                raise RuntimeError(f"解析视频链接失败: {e}; 备用请求失败: {http_err}") from e
+            except Exception as fallback_err:
+                raise RuntimeError(f"解析视频链接失败: {e}; 备用请求失败: {fallback_err}") from e
