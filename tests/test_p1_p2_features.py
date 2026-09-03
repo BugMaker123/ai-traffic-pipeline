@@ -130,8 +130,66 @@ def test_jianying_draft_multi_track(tmp_path):
     assert Path(draft_path).exists()
     json_path = Path(draft_path) / "draft_content.json"
     assert json_path.exists()
+    meta_path = Path(draft_path) / "draft_meta_info.json"
+    assert meta_path.exists()
     
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
         assert data["draft_name"] == "测试爆款视频"
         assert len(data["tracks"]) >= 2
+
+    with open(meta_path, "r", encoding="utf-8") as f:
+        meta_data = json.load(f)
+        assert meta_data["draft_name"] == "测试爆款视频"
+        assert meta_data["draft_id"] != ""
+        assert meta_data["draft_type"] == "video"
+
+
+def test_moviepy_bgm_ducking():
+    import numpy as np
+    from moviepy import AudioClip
+    renderer = MoviePyRenderer()
+
+    # 创建一个 4 秒的双声道恒定测试音轨
+    test_clip = AudioClip(lambda t: np.stack([np.ones_like(t), np.ones_like(t)], axis=-1), duration=4.0)
+    # 人声在 1.0s 到 2.5s
+    voice_intervals = [(1.0, 2.5)]
+    ducked_clip = renderer._apply_bgm_ducking(test_clip, voice_intervals, duck_vol=0.08, boost_vol=0.22)
+    
+    # 采样 0.2s (静音间歇) 和 1.8s (人声讲话中)
+    sound_array = ducked_clip.to_soundarray(fps=100)
+    quiet_sample = sound_array[20, 0]  # t = 0.2s
+    voice_sample = sound_array[180, 0]  # t = 1.8s
+    
+    assert abs(quiet_sample - 0.22) < 0.03
+    assert abs(voice_sample - 0.08) < 0.03
+
+
+def test_moviepy_cover_clip_landscape():
+    import numpy as np
+    from moviepy import ImageClip
+    renderer = MoviePyRenderer()
+
+    # 创建横屏 1920x1080 图像
+    img_np = np.zeros((1080, 1920, 3), dtype=np.uint8)
+    img_np[:, :] = [120, 160, 210]
+    clip = ImageClip(img_np).with_duration(2.0)
+
+    covered = renderer._cover_clip(clip, target_w=1080, target_h=1920)
+    assert covered.size == (1080, 1920)
+    assert covered.duration == 2.0
+
+
+def test_moviepy_scene_transitions():
+    from moviepy import ColorClip
+    renderer = MoviePyRenderer()
+
+    c0 = ColorClip(size=(1080, 1920), color=(20, 20, 20), duration=2.0)
+    c1 = ColorClip(size=(1080, 1920), color=(40, 40, 40), duration=2.0)
+
+    t0 = renderer._apply_scene_transition(c0, "fade", idx=0, duration=2.0)
+    assert t0.duration == 2.0
+
+    t1 = renderer._apply_scene_transition(c1, "slide_left", idx=1, duration=2.0)
+    assert t1.duration == 2.0
+

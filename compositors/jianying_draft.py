@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -274,5 +275,25 @@ class JianYingDraftGenerator:
         with open(content_path, "w", encoding="utf-8") as f:
             json.dump(draft_content, f, ensure_ascii=False, indent=2)
 
-        logger.info("剪映草稿工程已生成 path=%s (包含 %d 条独立轨道)", draft_dir, len(tracks))
+        # 6. 同步生成剪映工程索引元信息 draft_meta_info.json
+        now_us = int(time.time() * 1_000_000)
+        draft_meta = {
+            "draft_id": draft_id,
+            "draft_name": title[:20],
+            "draft_fold_path": str(draft_dir.resolve()),
+            "draft_timeline_materials_size_": 0,
+            "tm_draft_create": now_us,
+            "tm_draft_modified": now_us,
+            "tm_duration": current_time_us,
+            "draft_cover": "",
+            "draft_root_path": str(DRAFTS_OUTPUT_DIR.resolve()),
+            "draft_removable_storage_device": "",
+            "draft_is_need_calculate_materials_size": False,
+            "draft_type": "video",
+        }
+        meta_path = draft_dir / "draft_meta_info.json"
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(draft_meta, f, ensure_ascii=False, indent=2)
+
+        logger.info("剪映草稿工程已生成 path=%s (包含 %d 条独立轨道, 已写入 draft_meta_info.json)", draft_dir, len(tracks))
         return str(draft_dir)

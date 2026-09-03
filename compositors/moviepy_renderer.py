@@ -79,10 +79,56 @@ class MoviePyRenderer:
         return None
 
     def _cover_clip(self, clip, target_w: Optional[int] = None, target_h: Optional[int] = None):
-        """等比缩放并居中裁剪，避免横版素材被强制拉伸。"""
+        """
+        等比缩放并居中裁剪。对于横屏素材 (宽高比 > 1.15)，采用专业毛玻璃模糊背景垫底 + 前景等比居中。
+        """
         tw = target_w or self.width
         th = target_h or self.height
         source_w, source_h = clip.size
+        clip_dur = getattr(clip, "duration", None) or 3.0
+
+        # 如果是显著横屏素材且目标为竖屏画幅，使用毛玻璃模糊背景垫底
+        if source_w > source_h * 1.15 and th > tw:
+            try:
+                scale_bg = max(tw / source_w, th / source_h)
+                bg_target_size = (int(round(source_w * scale_bg)), int(round(source_h * scale_bg)))
+                bg_resized = clip.resized(bg_target_size) if hasattr(clip, "resized") else clip.resize(bg_target_size)
+                x_center, y_center = bg_target_size[0] / 2, bg_target_size[1] / 2
+                if hasattr(bg_resized, "cropped"):
+                    bg_cropped = bg_resized.cropped(x_center=x_center, y_center=y_center, width=tw, height=th)
+                else:
+                    bg_cropped = bg_resized.crop(x_center=x_center, y_center=y_center, width=tw, height=th)
+
+                # 下采样 + 放大实现快速高质感高斯模糊
+                small_w, small_h = max(16, tw // 16), max(16, th // 16)
+                bg_blur = bg_cropped.resized((small_w, small_h)) if hasattr(bg_cropped, "resized") else bg_cropped.resize((small_w, small_h))
+                bg_blur = bg_blur.resized((tw, th)) if hasattr(bg_blur, "resized") else bg_blur.resize((tw, th))
+
+                # 暗色蒙版压暗背景
+                dim_mask = ColorClip(size=(tw, th), color=(0, 0, 0))
+                dim_mask = dim_mask.with_duration(clip_dur) if hasattr(dim_mask, "with_duration") else dim_mask.set_duration(clip_dur)
+                if hasattr(dim_mask, "with_opacity"):
+                    dim_mask = dim_mask.with_opacity(0.45)
+                elif hasattr(dim_mask, "set_opacity"):
+                    dim_mask = dim_mask.set_opacity(0.45)
+
+                bg_layer = CompositeVideoClip([bg_blur, dim_mask], size=(tw, th))
+                bg_layer = bg_layer.with_duration(clip_dur) if hasattr(bg_layer, "with_duration") else bg_layer.set_duration(clip_dur)
+
+                # 前景层：等比缩放至宽度填满
+                fg_scale = tw / source_w
+                fg_size = (tw, int(round(source_h * fg_scale)))
+                fg_clip = clip.resized(fg_size) if hasattr(clip, "resized") else clip.resize(fg_size)
+                if hasattr(fg_clip, "with_position"):
+                    fg_clip = fg_clip.with_position(("center", "center"))
+                else:
+                    fg_clip = fg_clip.set_position(("center", "center"))
+
+                composite = CompositeVideoClip([bg_layer, fg_clip], size=(tw, th))
+                return composite.with_duration(clip_dur) if hasattr(composite, "with_duration") else composite.set_duration(clip_dur)
+            except Exception as e:
+                logger.warning("横屏毛玻璃背景渲染异常，降级为常规居中裁剪: %s", e)
+
         scale = max(tw / source_w, th / source_h)
         target_size = (int(round(source_w * scale)), int(round(source_h * scale)))
         resized = clip.resized(target_size) if hasattr(clip, "resized") else clip.resize(target_size)
@@ -352,6 +398,75 @@ class MoviePyRenderer:
         canvas = CompositeVideoClip([moving], size=(int(clip.size[0]), int(clip.size[1])))
         return canvas.with_duration(duration) if hasattr(canvas, "with_duration") else canvas.set_duration(duration)
 
+    def _apply_scene_transition(self, clip, transition: str, idx: int, duration: float):
+        """为分镜交界处挂载平滑转场动画（淡入、滑入等）"""
+        try:
+            import moviepy.video.fx as vfx
+            t_dur = min(0.35, max(0.15, duration * 0.15))
+            if idx == 0:
+                if hasattr(clip, "with_effects") and hasattr(vfx, "FadeIn"):
+                    return clip.with_effects([vfx.FadeIn(0.25)])
+                return clip
+
+            t_name = (transition or "").lower()
+            if "slide" in t_name and hasattr(vfx, "SlideIn") and hasattr(clip, "with_effects"):
+                side = "right" if "left" in t_name else "left"
+                slided = clip.with_effects([vfx.SlideIn(t_dur, side)])
+                canvas = CompositeVideoClip([slided], size=(self.width, self.height))
+                return canvas.with_duration(duration) if hasattr(canvas, "with_duration") else canvas.set_duration(duration)
+            elif ("fade" in t_name or "cross" in t_name or "zoom" in t_name) and hasattr(vfx, "FadeIn") and hasattr(clip, "with_effects"):
+                return clip.with_effects([vfx.FadeIn(t_dur)])
+        except Exception as e:
+            logger.debug("应用分镜转场失败: %s", e)
+        return clip
+
+    @staticmethod
+    def _apply_bgm_ducking(
+        bgm_clip,
+        voice_intervals: List[Tuple[float, float]],
+        duck_vol: float = 0.08,
+        boost_vol: float = 0.22,
+        ramp_time: float = 0.25,
+    ):
+        """对背景音乐应用基于人声区间的平滑动态闪避 (Sidechain Ducking)"""
+        if not voice_intervals:
+            return bgm_clip.with_volume_scaled(boost_vol) if hasattr(bgm_clip, "with_volume_scaled") else bgm_clip.volumex(boost_vol)
+
+        def factor_filter(get_frame, t):
+            fr = get_frame(t)
+            t_arr = np.asarray(t, dtype=float)
+            is_scalar = t_arr.ndim == 0
+            t_1d = np.atleast_1d(t_arr)
+            factors = np.full_like(t_1d, boost_vol, dtype=float)
+
+            for s, e in voice_intervals:
+                # 1. 处于人声主体发音区间内
+                inside = (t_1d >= s) & (t_1d <= e)
+                factors[inside] = np.minimum(factors[inside], duck_vol)
+
+                # 2. 前置平滑衰减区 [s - ramp_time, s)
+                ramp_in = (t_1d >= s - ramp_time) & (t_1d < s)
+                if np.any(ramp_in):
+                    ratio = (s - t_1d[ramp_in]) / ramp_time
+                    val = duck_vol + (boost_vol - duck_vol) * 0.5 * (1.0 + np.cos(np.pi * (1.0 - ratio)))
+                    factors[ramp_in] = np.minimum(factors[ramp_in], val)
+
+                # 3. 后置平滑恢复区 (e, e + ramp_time]
+                ramp_out = (t_1d > e) & (t_1d <= e + ramp_time)
+                if np.any(ramp_out):
+                    ratio = (t_1d[ramp_out] - e) / ramp_time
+                    val = duck_vol + (boost_vol - duck_vol) * 0.5 * (1.0 - np.cos(np.pi * ratio))
+                    factors[ramp_out] = np.minimum(factors[ramp_out], val)
+
+            applied = factors[0] if is_scalar else factors
+            if fr.ndim == 2:
+                return fr * applied[:, None]
+            return fr * applied
+
+        if hasattr(bgm_clip, "transform"):
+            return bgm_clip.transform(factor_filter, keep_duration=True)
+        return bgm_clip.with_volume_scaled(duck_vol) if hasattr(bgm_clip, "with_volume_scaled") else bgm_clip.volumex(duck_vol)
+
     def render_project(
         self,
         project_id: str,
@@ -365,7 +480,6 @@ class MoviePyRenderer:
         subtitle_style: str = "impact_yellow",
     ) -> str:
         """高性能流式短视频渲染合成 (支持 6 大字幕排版花字预设)"""
-        """高性能流式短视频渲染合成"""
         output_path = output_path or (FINAL_OUTPUT_DIR / f"{project_id}_final.mp4")
 
         sfx_mgr = SFXManager()
@@ -374,6 +488,7 @@ class MoviePyRenderer:
 
         scene_video_clips = []
         voiceover_clips = []
+        voice_intervals: List[Tuple[float, float]] = []
         sfx_clips = []
 
         current_time_offset = 0.0
@@ -392,6 +507,8 @@ class MoviePyRenderer:
                     a_clip = a_clip.with_duration(dur) if hasattr(a_clip, "with_duration") else a_clip.set_duration(dur)
                     a_clip = a_clip.with_start(scene_start) if hasattr(a_clip, "with_start") else a_clip.set_start(scene_start)
                     voiceover_clips.append(a_clip)
+                    actual_voice_dur = min(dur, getattr(a_clip, "duration", dur))
+                    voice_intervals.append((scene_start, scene_start + actual_voice_dur))
                 except Exception as e:
                     logger.warning("加载旁白失败 file=%s error=%s", audio_file, e)
 
@@ -514,9 +631,12 @@ class MoviePyRenderer:
             if scene_sub_clips:
                 scene_composite = CompositeVideoClip([v_clip] + scene_sub_clips, size=(self.width, self.height))
                 scene_composite = scene_composite.with_duration(dur) if hasattr(scene_composite, "with_duration") else scene_composite.set_duration(dur)
-                scene_video_clips.append(scene_composite)
             else:
-                scene_video_clips.append(v_clip)
+                scene_composite = v_clip
+
+            transition = scene.get("transition", "fade")
+            scene_composite = self._apply_scene_transition(scene_composite, transition, idx, dur)
+            scene_video_clips.append(scene_composite)
 
             current_time_offset += dur
 
@@ -551,7 +671,7 @@ class MoviePyRenderer:
                     loops = int(math.ceil(total_duration / bgm_clip.duration))
                     bgm_clip = concatenate_audioclips([bgm_clip] * loops)
                 bgm_clip = bgm_clip.subclipped(0, total_duration) if hasattr(bgm_clip, "subclipped") else bgm_clip.subclip(0, total_duration)
-                bgm_clip = bgm_clip.with_volume_scaled(0.14) if hasattr(bgm_clip, "with_volume_scaled") else bgm_clip.volumex(0.14)
+                bgm_clip = self._apply_bgm_ducking(bgm_clip, voice_intervals)
                 audio_tracks.append(bgm_clip)
             except Exception as e:
                 logger.warning("BGM 混音失败，跳过背景音乐: %s", e)
