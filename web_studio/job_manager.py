@@ -164,6 +164,7 @@ class JobManager:
                 video_layout=payload.get("video_layout", "impact"),
                 enable_karaoke=payload.get("enable_karaoke", True),
                 subtitle_style=payload.get("subtitle_style", "impact_yellow"),
+                enable_punch_in=payload.get("enable_punch_in", True),
                 project_id=payload["project_id"],
                 progress_callback=progress,
                 cancel_event=event,

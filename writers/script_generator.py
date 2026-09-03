@@ -13,6 +13,8 @@ import requests
 from config.settings import OPENAI_API_KEY, OPENAI_BASE_URL, LLM_MODEL
 from core.state import VideoProjectScript, SceneItem
 from writers.prompts import SCRIPT_SYSTEM_PROMPT, SCRIPT_USER_TEMPLATE
+from media.style_presets import style_manager
+from safety.compliance_guard import compliance_guard
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +48,7 @@ class ScriptGenerator:
         base_url: Optional[str] = None,
         model: Optional[str] = None
     ):
-        self.api_key = api_key or OPENAI_API_KEY
+        self.api_key = api_key if api_key is not None else OPENAI_API_KEY
         self.base_url = base_url or OPENAI_BASE_URL
         self.model = model or LLM_MODEL
 
@@ -60,9 +62,10 @@ class ScriptGenerator:
         source_platform: str = "",
         captured_at: str = "",
         chosen_angle: str = "",
+        art_style: str = "cinematic_dark",
     ) -> VideoProjectScript:
         """
-        根据输入主题与时长档位，生成深度饱满的结构化分镜剧本（可指定选定切口）
+        根据输入主题与时长档位，生成深度饱满的结构化分镜剧本（支持全局美术风格与合规风控）
         """
         proj_id = project_id or f"proj_{uuid.uuid4().hex[:8]}"
         duration_desc = DURATION_PRESETS.get(duration_tier, DURATION_PRESETS["deep_60s"])
@@ -78,6 +81,7 @@ class ScriptGenerator:
                     topic_or_content, style, duration_desc, proj_id,
                     effective_source, source_platform, captured_at,
                     chosen_angle=chosen_angle,
+                    art_style=art_style,
                 )
                 if script_dict and "scenes" in script_dict and len(script_dict["scenes"]) > 0:
                     unsupported = self._unsupported_temporal_claims(script_dict, f"{topic_or_content} {source_content}")
@@ -91,11 +95,22 @@ class ScriptGenerator:
                             topic_or_content, style, duration_desc, proj_id,
                             correction, source_platform, captured_at,
                             chosen_angle=chosen_angle,
+                            art_style=art_style,
                         )
                         if not script_dict or self._unsupported_temporal_claims(
                             script_dict, f"{topic_or_content} {source_content}"
                         ):
                             raise ValueError("生成稿包含来源未支持的时效性事实")
+
+                    # 合规风控实时扫描与平替
+                    full_text = f"{script_dict.get('title', '')} {' '.join(s.get('voiceover_text', '') for s in script_dict.get('scenes', []))}"
+                    c_res = compliance_guard.scan(full_text)
+                    if not c_res.is_compliant:
+                        logger.info("分镜脚本触发文案合规风控 (风险级: %s, 命中了 %d 处)，自动合规平替", c_res.risk_level, c_res.total_issues)
+                        script_dict["title"] = compliance_guard.auto_sanitize(script_dict.get("title", ""))
+                        for sc in script_dict.get("scenes", []):
+                            sc["voiceover_text"] = compliance_guard.auto_sanitize(sc.get("voiceover_text", ""))
+
                     script_dict["grounding_status"] = "source_grounded" if source_content else "topic_only"
                     script_dict["freshness_note"] = (
                         f"依据 {source_platform or '热点来源'} 于 {captured_at or '当前'} 提供的材料生成"
@@ -106,7 +121,7 @@ class ScriptGenerator:
                 logger.warning("LLM API 调用失败，切换至模板引擎: %s", e)
 
         # 2. 深度多幕剧本兜底生成
-        return self._generate_deep_fallback_script(topic_or_content, style, proj_id)
+        return self._generate_deep_fallback_script(topic_or_content, style, proj_id, art_style=art_style)
 
     def generate_script_from_reference(
         self,
@@ -169,6 +184,7 @@ class ScriptGenerator:
         source_platform: str = "",
         captured_at: str = "",
         chosen_angle: str = "",
+        art_style: str = "cinematic_dark",
     ) -> Optional[Dict[str, Any]]:
         """调用 DeepSeek / OpenAI 接口生成高信息量剧本"""
         headers = {
@@ -176,10 +192,13 @@ class ScriptGenerator:
             "Content-Type": "application/json"
         }
 
+        style_prof = style_manager.get_style(art_style)
         user_prompt = SCRIPT_USER_TEMPLATE.format(
             topic_or_content=topic,
             chosen_angle=chosen_angle or "（未指定特定切口，请按选定风格最炸裂的网感视角自由展开）",
             style=style,
+            art_style_name=style_prof.name,
+            art_style_desc=style_prof.description,
             duration_spec=duration_desc,
             source_content=source_content or "（无额外背景材料）",
         )
@@ -211,8 +230,8 @@ class ScriptGenerator:
             
         return None
 
-    def _generate_deep_fallback_script(self, topic: str, style: str, proj_id: str) -> VideoProjectScript:
-        """生成 6 幕高信息密度、逻辑严密的完整爆款剧本（保底生成）"""
+    def _generate_deep_fallback_script(self, topic: str, style: str, proj_id: str, art_style: str = "cinematic_dark") -> VideoProjectScript:
+        """生成 6 幕高信息密度、逻辑严密的完整爆款剧本（保底生成，支持全局美术风格与合规风控）"""
         clean_topic = topic.strip()
         variant = int(hashlib.sha256(f"{clean_topic}:{style}".encode("utf-8")).hexdigest()[:8], 16) % 3
         openings = [
@@ -279,9 +298,17 @@ class ScriptGenerator:
             }
         ]
         
+        # 注入统一全局艺术风格
+        for sc in scenes_data:
+            sc["image_prompt"] = style_manager.enhance_prompt(sc["image_prompt"], art_style)
+
+        final_title = compliance_guard.auto_sanitize(f"把【{clean_topic}】放回真实现场")
+        for sc in scenes_data:
+            sc["voiceover_text"] = compliance_guard.auto_sanitize(sc["voiceover_text"])
+
         return VideoProjectScript(
             project_id=proj_id,
-            title=f"把【{clean_topic}】放回真实现场",
+            title=final_title,
             topic_summary=f"从可观察事实、因果关系与适用边界三个层次重新审视{clean_topic}",
             tone_style=style,
             bgm_type="energetic",

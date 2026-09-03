@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import math
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -386,13 +387,39 @@ class MoviePyRenderer:
         """渲染高对比度短视频静态字幕 (1080x240)"""
         return self.create_karaoke_subtitle_image(text, active_word="", subtitle_style=subtitle_style)
 
-    def _add_camera_motion(self, clip, duration: float, scene_index: int):
-        """为静帧加入克制且交替的推拉运动，让镜头有呼吸而不眩晕。"""
+    @classmethod
+    def detect_hwaccel_codec(cls) -> str:
+        """检测当前系统可用的硬件加速视频编码器，优先使用 GPU 加速"""
+        try:
+            import imageio_ffmpeg
+            ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+            res = subprocess.run([ffmpeg_exe, "-encoders"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+            output = res.stdout or ""
+            if "h264_nvenc" in output:
+                logger.info("检测到 NVIDIA NVENC 硬件加速编码器，将启用 h264_nvenc")
+                return "h264_nvenc"
+            if "h264_qsv" in output:
+                logger.info("检测到 Intel QSV 硬件加速编码器，将启用 h264_qsv")
+                return "h264_qsv"
+            if "h264_amf" in output:
+                logger.info("检测到 AMD AMF 硬件加速编码器，将启用 h264_amf")
+                return "h264_amf"
+        except Exception as e:
+            logger.debug("检测硬件编码器失败，回退至 libx264: %s", e)
+        return "libx264"
+
+    def _add_camera_motion(self, clip, duration: float, scene_index: int, enable_punch_in: bool = True):
+        """为静帧加入克制且交替的推拉运动与开端卡点微弹跳 (Punch-in Bounce)"""
         zoom_in = scene_index % 3 != 1
         def scale_at(t: float) -> float:
             progress = min(1.0, max(0.0, t / max(duration, 0.1)))
             eased = progress * progress * (3.0 - 2.0 * progress)
-            return (1.0 + 0.055 * eased) if zoom_in else (1.055 - 0.055 * eased)
+            drift = (1.0 + 0.055 * eased) if zoom_in else (1.055 - 0.055 * eased)
+            if enable_punch_in and t < 0.35:
+                # 前 0.35s 内施加正弦微弹跳，增强卡点爽感
+                bounce = 0.045 * math.sin(math.pi * (t / 0.35))
+                return drift + bounce
+            return drift
         moving = clip.resized(scale_at) if hasattr(clip, "resized") else clip.resize(scale_at)
         moving = moving.with_position(("center", "center")) if hasattr(moving, "with_position") else moving.set_position(("center", "center"))
         canvas = CompositeVideoClip([moving], size=(int(clip.size[0]), int(clip.size[1])))
@@ -478,8 +505,10 @@ class MoviePyRenderer:
         layout_template: str = "impact",
         enable_karaoke: bool = True,
         subtitle_style: str = "impact_yellow",
+        enable_punch_in: bool = True,
+        codec: Optional[str] = None,
     ) -> str:
-        """高性能流式短视频渲染合成 (支持 6 大字幕排版花字预设)"""
+        """高性能流式短视频渲染合成 (支持 6 大字幕花字预设、卡点微弹跳与 GPU 加速)"""
         output_path = output_path or (FINAL_OUTPUT_DIR / f"{project_id}_final.mp4")
 
         sfx_mgr = SFXManager()
@@ -558,7 +587,7 @@ class MoviePyRenderer:
                         img_raw = ImageClip(asset_file)
                         v_sub = img_raw.with_duration(dur) if hasattr(img_raw, "with_duration") else img_raw.set_duration(dur)
                         v_clip = self._cover_clip(v_sub, target_w=render_w, target_h=render_h)
-                        v_clip = self._add_camera_motion(v_clip, dur, idx)
+                        v_clip = self._add_camera_motion(v_clip, dur, idx, enable_punch_in=enable_punch_in)
                 except Exception as e:
                     logger.warning("处理素材失败 file=%s error=%s", asset_file, e)
 
@@ -684,13 +713,18 @@ class MoviePyRenderer:
         sys.stdout.flush()
 
         try:
+            chosen_codec = codec or self.detect_hwaccel_codec()
+            write_kwargs = {
+                "fps": self.fps,
+                "codec": chosen_codec,
+                "audio_codec": "aac",
+                "threads": 4,
+            }
+            if chosen_codec == "libx264":
+                write_kwargs["preset"] = "ultrafast"
             final_video_composite.write_videofile(
                 str(output_path),
-                fps=self.fps,
-                codec="libx264",
-                audio_codec="aac",
-                threads=4,
-                preset="ultrafast",
+                **write_kwargs,
             )
         finally:
             try:

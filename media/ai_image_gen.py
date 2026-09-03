@@ -17,6 +17,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from config.settings import ASSETS_OUTPUT_DIR, OPENAI_API_KEY, OPENAI_BASE_URL, VIDEO_HEIGHT, VIDEO_WIDTH
 
+from media.style_presets import style_manager
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,13 +29,9 @@ class AIImageGenerator:
         self.api_key = api_key or OPENAI_API_KEY
         self.base_url = base_url or OPENAI_BASE_URL
 
-    def enhance_prompt(self, raw_prompt: str) -> str:
-        """强化提示词：注入电影质感、竖屏构图与真实光影"""
-        clean = raw_prompt.strip()
-        if not clean:
-            clean = "modern high tech digital concept art"
-        # 增加高质量修饰词
-        return f"{clean}, 9:16 vertical composition, cinematic lighting, ultra detailed, 8k resolution, photorealistic, masterwork, masterpiece"
+    def enhance_prompt(self, raw_prompt: str, style_id: Optional[str] = "cinematic_dark") -> str:
+        """强化提示词：注入全局艺术风格、竖屏构图与光影参数"""
+        return style_manager.enhance_prompt(raw_prompt, style_id)
 
     def generate_image(
         self,
@@ -41,6 +39,7 @@ class AIImageGenerator:
         project_id: str = "proj_demo",
         scene_index: int = 1,
         output_dir: Optional[Path] = None,
+        style_id: Optional[str] = "cinematic_dark",
     ) -> Optional[str]:
         """
         生成 1080x1920 竖屏分镜配图
@@ -49,7 +48,7 @@ class AIImageGenerator:
         out_dir.mkdir(parents=True, exist_ok=True)
         file_path = out_dir / f"{project_id}_ai_scene_{scene_index}_{uuid.uuid4().hex[:6]}.jpg"
 
-        enhanced_p = self.enhance_prompt(prompt)
+        enhanced_p = self.enhance_prompt(prompt, style_id=style_id)
 
         # 1. 尝试调用 OpenAI / DALL-E 3 / 兼容生图 API
         if self.api_key and "deepseek" not in str(self.base_url).lower():

@@ -29,6 +29,8 @@ from core.output_cleanup import cleanup_expired_outputs
 from crawlers.hot_topics import CATEGORY_NAMES, HotTopicCrawler
 from audio.voice_manager import voice_manager
 from publishers.manager import publish_manager
+from media.style_presets import style_manager
+from safety.compliance_guard import compliance_guard
 from web_studio.job_manager import job_manager
 from writers.script_generator import DURATION_PRESETS, STYLE_PRESETS, ScriptGenerator
 
@@ -64,6 +66,7 @@ class ScriptRequest(StrictModel):
     source_platform: str = Field(default="", max_length=80)
     captured_at: str = Field(default="", max_length=40)
     chosen_angle: str = Field(default="", max_length=500)
+    art_style: str = Field(default="cinematic_dark", max_length=50)
 
     @field_validator("duration_tier", mode="before")
     @classmethod
@@ -93,6 +96,7 @@ class RefScriptRequest(StrictModel):
     style: ScriptStyle = "干货科普"
     duration_tier: str = "deep_60s"
     source_platform: str = Field(default="短视频提取", max_length=80)
+    art_style: str = Field(default="cinematic_dark", max_length=50)
 
     @field_validator("duration_tier", mode="before")
     @classmethod
@@ -110,6 +114,15 @@ class AIImageRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=500)
     project_id: str | None = None
     scene_index: int = Field(default=1, ge=1, le=MAX_SCENES)
+    art_style: str = Field(default="cinematic_dark", max_length=50)
+
+
+class ComplianceScanRequest(StrictModel):
+    text: str = Field(min_length=1, max_length=10000)
+
+
+class ComplianceSanitizeRequest(StrictModel):
+    text: str = Field(min_length=1, max_length=10000)
 
 
 class TTSPreviewRequest(StrictModel):
@@ -141,6 +154,8 @@ class RenderRequest(StrictModel):
     video_layout: Literal["impact", "split_screen", "card_quote"] = "impact"
     enable_karaoke: bool = True
     subtitle_style: Literal["impact_yellow", "cyber_neon", "variety_pop", "cinema_white", "minimal_capsule", "flame_gold"] = "impact_yellow"
+    enable_punch_in: bool = True
+    art_style: str = Field(default="cinematic_dark", max_length=50)
     tts_rate: str = Field(default="+0%", pattern=r"^[+-](?:100|[0-9]{1,2})%$")
     tts_pitch: str = Field(default=DEFAULT_TTS_PITCH, pattern=r"^[+-][0-9]{1,2}Hz$")
 
@@ -335,7 +350,7 @@ async def generate_ai_image(req: AIImageRequest):
     from media.ai_image_gen import AIImageGenerator
     gen = AIImageGenerator()
     proj_id = req.project_id or f"proj_{uuid.uuid4().hex[:8]}"
-    img_path = await asyncio.to_thread(gen.generate_image, req.prompt, proj_id, req.scene_index)
+    img_path = await asyncio.to_thread(gen.generate_image, req.prompt, proj_id, req.scene_index, None, req.art_style)
     if img_path and Path(img_path).exists():
         rel_path = Path(img_path).name
         return {"success": True, "image_url": f"/output/video_assets/{rel_path}", "local_path": img_path}
@@ -368,6 +383,7 @@ async def generate_script(req: ScriptRequest):
         req.source_platform,
         req.captured_at,
         req.chosen_angle,
+        req.art_style,
     )
     return {"success": True, "script": script.model_dump()}
 
@@ -421,6 +437,26 @@ async def media_status():
     return {"success": True, "pexels_configured": bool(PEXELS_API_KEY), "fallback": "Unsplash curated photography & AI Image Generation"}
 
 
+@app.get("/api/art_styles")
+async def get_art_styles():
+    """获取支持的全局电影级视觉风格预设"""
+    return {"success": True, "styles": style_manager.list_styles()}
+
+
+@app.post("/api/compliance/scan")
+async def scan_compliance(req: ComplianceScanRequest):
+    """实时扫描文案中的广告法极限词与自媒体违禁词"""
+    res = compliance_guard.scan(req.text)
+    return {"success": True, **res.model_dump()}
+
+
+@app.post("/api/compliance/sanitize")
+async def sanitize_compliance(req: ComplianceSanitizeRequest):
+    """一键将违禁词自动平替为平台合规表述"""
+    clean = compliance_guard.auto_sanitize(req.text)
+    return {"success": True, "sanitized_text": clean}
+
+
 @app.post("/api/jobs", status_code=status.HTTP_202_ACCEPTED)
 async def create_render_job(req: RenderRequest):
     project_id = req.project_id or f"proj_{uuid.uuid4().hex[:8]}"
@@ -434,6 +470,8 @@ async def create_render_job(req: RenderRequest):
         "video_layout": req.video_layout,
         "enable_karaoke": req.enable_karaoke,
         "subtitle_style": req.subtitle_style,
+        "enable_punch_in": req.enable_punch_in,
+        "art_style": req.art_style,
         "tts_rate": req.tts_rate,
         "tts_pitch": req.tts_pitch,
     })

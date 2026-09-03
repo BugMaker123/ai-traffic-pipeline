@@ -189,8 +189,9 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
     video_layout = state.get("video_layout", "impact")
     enable_karaoke = state.get("enable_karaoke", True)
     subtitle_style = state.get("subtitle_style", "impact_yellow")
+    enable_punch_in = state.get("enable_punch_in", True)
 
-    logs.append(f"🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (版式: {video_layout}, 卡拉OK: {enable_karaoke}, 字幕花字: {subtitle_style})...")
+    logs.append(f"🚀 正在调用工业级渲染引擎合成 1080x1920 竖屏短视频 (版式: {video_layout}, 卡拉OK: {enable_karaoke}, 花字: {subtitle_style}, 卡点微弹跳: {enable_punch_in})...")
     renderer = MoviePyRenderer()
     final_video = renderer.render_project(
         project_id=project_id,
@@ -201,6 +202,7 @@ def node_video_compositing(state: PipelineState) -> Dict[str, Any]:
         layout_template=video_layout,
         enable_karaoke=enable_karaoke,
         subtitle_style=subtitle_style,
+        enable_punch_in=enable_punch_in,
     )
     logs.append(f"🎉 短视频成品渲染成功: {final_video}")
     
@@ -255,6 +257,7 @@ class VideoPipelineRunner:
         video_layout: str = "impact",
         enable_karaoke: bool = True,
         subtitle_style: str = "impact_yellow",
+        enable_punch_in: bool = True,
     ) -> PipelineState:
         proj_id = project_id or f"proj_{uuid.uuid4().hex[:8]}"
         initial_state: PipelineState = {
@@ -266,6 +269,7 @@ class VideoPipelineRunner:
             "video_layout": video_layout,
             "enable_karaoke": enable_karaoke,
             "subtitle_style": subtitle_style,
+            "enable_punch_in": enable_punch_in,
             "logs": [],
             "status": "init",
             "progress_callback": progress_callback,

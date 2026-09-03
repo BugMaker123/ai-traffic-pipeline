@@ -1211,10 +1211,33 @@
                                 </optgroup>
                             </select>
                         </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">视觉风格:</span>
+                            <select class="select-studio" id="selectArtStyle" style="width: 145px; height: 28px; padding: 2px 6px; font-size: 11.5px;">
+                                <option value="cinematic_dark" selected>🎬 暗黑电影胶片</option>
+                                <option value="cyberpunk_neon">🏙️ 赛博朋克霓虹</option>
+                                <option value="minimalist_tech">🍏 极简商业科技</option>
+                                <option value="vintage_retro">🎞️ 复古港风胶片</option>
+                                <option value="anime_shinkai">☁️ 唯美新海诚风</option>
+                                <option value="chinese_traditional">🎋 新中式国潮风</option>
+                            </select>
+                        </div>
                         <button class="btn-studio btn-studio-primary" id="btnLlmGenScript" onclick="generateScriptFromCurrentTitle()">🪄 AI 重新拆解分镜</button>
                         <button class="btn-studio" style="color:var(--accent-primary); border-color:var(--accent-primary);" onclick="triggerBatchAiGenAllScenes()" title="后台并发调用 AI 视觉引擎为所有分镜生图">🎨 一键全镜头AI生图</button>
+                        <button class="btn-studio" style="color:var(--accent-warning); border-color:var(--accent-warning);" onclick="runComplianceCheck()" title="扫描广告法极限词与平台高危敏感词">🛡️ 合规风控体检</button>
                         <button class="btn-studio" onclick="addNewSceneRow()">+ 添加镜头</button>
                         <button class="btn-studio btn-studio-accent" onclick="switchStudioView('composer', document.querySelectorAll('.nav-item')[6])">进入监视器合成 →</button>
+                    </div>
+                </div>
+
+                <div id="complianceBanner" style="display:none; margin-bottom:12px; padding:10px 14px; background:rgba(245,158,11,0.12); border:1px solid var(--accent-warning); border-radius:var(--radius-sm); font-size:12px; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700; color:var(--accent-warning);">⚠️ 合规风控提醒:</span>
+                        <span id="complianceBannerText" style="color:var(--text-primary);">发现违规用语</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-studio btn-studio-accent" style="height:24px; font-size:11px;" onclick="autoSanitizeCurrentScript()">一键合规平替</button>
+                        <button class="btn-studio" style="height:24px; font-size:11px;" onclick="closeComplianceBanner()">忽略</button>
                     </div>
                 </div>
 
@@ -1326,10 +1349,14 @@
                                     </select>
                                 </div>
                             </div>
-                            <div style="padding: 0 12px 10px 12px;">
+                            <div style="padding: 0 12px 10px 12px; display: flex; flex-direction: column; gap: 6px;">
                                 <label style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); cursor: pointer;">
                                     <input type="checkbox" id="chkKaraokeEnable" checked style="accent-color: #38BDF8;">
                                     <span>✨ 启用卡拉OK逐字金色放大动效 (完播率倍增)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); cursor: pointer;">
+                                    <input type="checkbox" id="chkPunchInEnable" checked style="accent-color: #38BDF8;">
+                                    <span>💥 启用分镜卡点微弹跳动效 (Punch-in Bounce 节奏爽感)</span>
                                 </label>
                             </div>
                         </div>
@@ -2069,10 +2096,11 @@
             toast(`正在为分镜 #${idx + 1} 调用 AI 引擎生成 9:16 图像...`);
 
             try {
+                const artStyle = document.getElementById('selectArtStyle')?.value || 'cinematic_dark';
                 const res = await fetch('/api/generate_ai_image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, scene_index: idx + 1 })
+                    body: JSON.stringify({ prompt, scene_index: idx + 1, art_style: artStyle })
                 });
                 const data = await res.json();
                 if (data.success && data.image_url) {
@@ -2270,11 +2298,12 @@
             
             const promises = currentScenes.map(async (sc, idx) => {
                 const prompt = sc.prompt || sc.keywords || sc.voice || '';
+                const artStyle = document.getElementById('selectArtStyle')?.value || 'cinematic_dark';
                 try {
                     const res = await fetch('/api/generate_ai_image', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt, scene_index: idx + 1 })
+                        body: JSON.stringify({ prompt, scene_index: idx + 1, art_style: artStyle })
                     });
                     const data = await res.json();
                     if (data.success && data.image_url) {
@@ -2305,6 +2334,7 @@
 
             const durationTier = document.getElementById('selectDurationTier')?.value || 'deep_60s';
             const scriptStyle = document.getElementById('selectScriptStyle')?.value || '干货科普';
+            const artStyle = document.getElementById('selectArtStyle')?.value || 'cinematic_dark';
 
             const tierNames = {
                 quick_30s: "4~5 个紧凑高爆发分镜 (30s)",
@@ -2316,7 +2346,7 @@
             container.innerHTML = `
                 <div style="background:var(--bg-surface-0); border:1px solid var(--border-focus); padding:32px; border-radius:var(--radius-sm); text-align:center;">
                     <div style="font-size:15px; font-weight:700; color:var(--accent-primary); margin-bottom:8px;">⚡ 大模型正在深度拆解分镜剧本...</div>
-                    <div style="font-size:12px; color:var(--text-muted);">正在为《${escapeHtml(topic)}》生成 ${tierNames[durationTier] || '分镜剧本'}、${scriptStyle}风格台词与 AI 画面提示词...</div>
+                    <div style="font-size:12px; color:var(--text-muted);">正在为《${escapeHtml(topic)}》生成 ${tierNames[durationTier] || '分镜剧本'}、${scriptStyle}风格、统一视觉艺术风格与 AI 画面提示词...</div>
                 </div>
             `;
 
@@ -2329,7 +2359,8 @@
                         topic,
                         style: scriptStyle,
                         duration_tier: durationTier,
-                        chosen_angle: anglePayload
+                        chosen_angle: anglePayload,
+                        art_style: artStyle
                     })
                 });
                 const data = await res.json();
@@ -2516,6 +2547,8 @@
                         video_layout: selectedLayout,
                         enable_karaoke: enableKaraoke,
                         subtitle_style: selectedSubtitleStyle,
+                        enable_punch_in: document.getElementById('chkPunchInEnable')?.checked ?? true,
+                        art_style: document.getElementById('selectArtStyle')?.value || 'cinematic_dark',
                         tts_rate: '+0%',
                         tts_pitch: '-2Hz'
                     })
@@ -2531,6 +2564,87 @@
                 btn.disabled = false;
                 btn.textContent = '▶ 启动全自动渲染流水线 (生成 MP4 + 剪映 Draft 工程)';
             }
+        }
+
+        // Compliance Firewall: Scan & Auto-Sanitize
+        async function runComplianceCheck() {
+            const title = (document.getElementById('studioProjectTitle')?.value || '').trim();
+            const sceneTexts = currentScenes.map(s => s.voice || '').join(' ');
+            const fullText = `${title} ${sceneTexts}`.trim();
+            if (!fullText) {
+                toast('文案内容为空');
+                return;
+            }
+
+            toast('🛡️ 正在执行文案合规风控全量体检...');
+            try {
+                const res = await fetch('/api/compliance/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: fullText })
+                });
+                const data = await res.json();
+                const banner = document.getElementById('complianceBanner');
+                const textEl = document.getElementById('complianceBannerText');
+
+                if (data.is_compliant) {
+                    toast('✅ 恭喜！文案已通过全部合规检测，无极限词与违禁用语。');
+                    if (banner) banner.style.display = 'none';
+                } else {
+                    const highWords = data.matches.map(m => m.word).slice(0, 5).join('、');
+                    if (textEl) {
+                        textEl.textContent = `命中 ${data.total_issues} 处合规风险词 (${highWords} 等)，建议一键平替。`;
+                    }
+                    if (banner) banner.style.display = 'flex';
+                    toast(`⚠️ 检测到 ${data.total_issues} 处合规风险，已在上方标出！`);
+                }
+            } catch (e) {
+                toast(`合规检测异常: ${e.message}`);
+            }
+        }
+
+        async function autoSanitizeCurrentScript() {
+            toast('🛡️ 正在进行全自动语义合规平替...');
+            const titleEl = document.getElementById('studioProjectTitle');
+            if (titleEl && titleEl.value) {
+                try {
+                    const res = await fetch('/api/compliance/sanitize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: titleEl.value })
+                    });
+                    const d = await res.json();
+                    if (d.sanitized_text) {
+                        titleEl.value = d.sanitized_text;
+                        document.getElementById('monitorTitleDisplay').textContent = d.sanitized_text;
+                    }
+                } catch (e) {}
+            }
+
+            for (const sc of currentScenes) {
+                if (sc.voice) {
+                    try {
+                        const res = await fetch('/api/compliance/sanitize', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: sc.voice })
+                        });
+                        const d = await res.json();
+                        if (d.sanitized_text) {
+                            sc.voice = d.sanitized_text;
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            renderScenesList();
+            closeComplianceBanner();
+            toast('✅ 已完成文案合规平替，所有高危用语已降级为安全表达！');
+        }
+
+        function closeComplianceBanner() {
+            const banner = document.getElementById('complianceBanner');
+            if (banner) banner.style.display = 'none';
         }
 
         // Fetch and Render Completed Jobs via Real API
