@@ -14,17 +14,21 @@ from web_studio.server import app
 
 
 @pytest.fixture(autouse=True)
-def mock_video_pipeline_runner(monkeypatch):
-    def fake_run(**kwargs):
-        if kwargs.get("progress_callback"):
-            kwargs["progress_callback"]("completed")
-        return {
-            "final_video_path": "output/final/mock.mp4",
-            "jianying_draft_path": "output/drafts/mock_draft",
-            "logs": ["Mock render completed"],
-            "script_data": {"title": kwargs.get("topic") or "测试标题"},
-        }
-    monkeypatch.setattr("web_studio.job_manager.VideoPipelineRunner.run", fake_run)
+def mock_job_manager_run(monkeypatch):
+    def fake_job_run(self, job_id):
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if not job:
+                return
+            job["status"] = "succeeded"
+            job["stage"] = "completed"
+            job["result"] = {
+                "final_video_path": "output/final/mock.mp4",
+                "jianying_draft_path": "output/drafts/mock_draft",
+                "logs": ["Mock render completed"],
+            }
+            self._persist(job)
+    monkeypatch.setattr("web_studio.job_manager.JobManager._run", fake_job_run)
 
 
 @pytest.fixture

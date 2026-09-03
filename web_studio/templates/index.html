@@ -1000,12 +1000,12 @@
                     <span class="nav-badge-count" id="badgeAssetCount">0 部</span>
                 </div>
 
-                <div class="nav-item" onclick="toast('多平台矩阵分发：一键直连抖音、视频号、B站、小红书创作者开放接口')">
+                <div class="nav-item" onclick="openPublishMatrixModal()">
                     <div class="nav-item-left">
                         <span class="nav-item-icon">🚀</span>
                         <span>多平台矩阵分发</span>
                     </div>
-                    <span class="nav-badge-count">API</span>
+                    <span class="nav-badge-count" id="badgePublishCount">矩阵发布</span>
                 </div>
             </nav>
         </div>
@@ -1334,10 +1334,17 @@
                             </div>
                         </div>
 
-                        <!-- Render Action -->
                         <button class="btn-studio btn-studio-primary" id="btnStartRender" style="height: 36px; font-size: 12.5px; justify-content: center;" onclick="triggerStartRender()">
                             <span>▶ 启动全自动渲染流水线 (生成 MP4 + 剪映 Draft 工程)</span>
                         </button>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button class="btn-studio" style="flex:1; height: 32px; font-size: 12px; justify-content: center; border-color: rgba(56,189,248,0.4);" onclick="openPublishMatrixModal()">
+                                <span>🚀 一键多平台矩阵分发</span>
+                            </button>
+                            <button class="btn-studio" style="flex:1; height: 32px; font-size: 12px; justify-content: center;" onclick="window.open('/tasks', '_blank')">
+                                <span>📋 任务监控看板 →</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1546,6 +1553,115 @@
 
             <div style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:flex-end; background:rgba(15,23,42,0.85);">
                 <button class="btn-studio" onclick="closeVoiceCloneModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: 多平台矩阵分发与抗查重中心 ================= -->
+    <div id="matrixPublishModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div class="studio-panel" style="width: 760px; max-width: 95vw; max-height: 90vh; display:flex; flex-direction:column; background: #0B132B; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 25px 60px -12px rgba(0,0,0,0.9); border-radius:var(--radius-md); overflow:hidden;">
+            <div class="panel-toolbar" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85);">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div style="font-weight:700; font-size:14.5px; color:#F8FAFC; display:flex; align-items:center; gap:8px;">
+                        <span>🚀</span> <span>自媒体多平台矩阵分发与抗查重中心</span>
+                        <span style="font-size:10px; background:rgba(168,85,247,0.15); color:#C084FC; padding:2px 8px; border-radius:10px; border:1px solid rgba(168,85,247,0.3);">4 平台直发 + 微混淆</span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted);">一键调度抖音、哔哩哔哩、小红书、微信视频号；自动执行中心裁切、微变速与元数据清洗抗重比对</div>
+                </div>
+                <button class="btn-studio" style="height:26px; width:26px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="closePublishMatrixModal()">✕</button>
+            </div>
+            
+            <div class="panel-body" style="padding: 20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; max-height: 68vh;">
+                <!-- 目标发布平台选择 -->
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">选择目标矩阵发布平台 *</label>
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;" id="matrixPlatformsGrid">
+                        <label style="background:rgba(15,23,42,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" class="pub-platform-cb" value="douyin" checked style="accent-color:#38BDF8;">
+                            <div>
+                                <div style="font-weight:700; font-size:12px; color:#F8FAFC;">🎵 抖音</div>
+                                <div style="font-size:10px; color:var(--text-muted);">短视频/爆款话题</div>
+                            </div>
+                        </label>
+                        <label style="background:rgba(15,23,42,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" class="pub-platform-cb" value="bilibili" checked style="accent-color:#38BDF8;">
+                            <div>
+                                <div style="font-weight:700; font-size:12px; color:#F8FAFC;">📺 哔哩哔哩</div>
+                                <div style="font-size:10px; color:var(--text-muted);">知识/科技分区</div>
+                            </div>
+                        </label>
+                        <label style="background:rgba(15,23,42,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" class="pub-platform-cb" value="xiaohongshu" checked style="accent-color:#38BDF8;">
+                            <div>
+                                <div style="font-weight:700; font-size:12px; color:#F8FAFC;">📕 小红书</div>
+                                <div style="font-size:10px; color:var(--text-muted);">视频笔记/精粹</div>
+                            </div>
+                        </label>
+                        <label style="background:rgba(15,23,42,0.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" class="pub-platform-cb" value="channels" checked style="accent-color:#38BDF8;">
+                            <div>
+                                <div style="font-weight:700; font-size:12px; color:#F8FAFC;">🟢 微信视频号</div>
+                                <div style="font-size:10px; color:var(--text-muted);">私域裂变生态</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 待发布成片与基本信息 -->
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px;">
+                    <div>
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">成片视频文件路径 (Relative to output or absolute) *</label>
+                        <input type="text" id="pubVideoPathInput" class="input-studio" style="width:100%; height:32px;" placeholder="例如: output/final/xxx.mp4">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">视频封面图路径 (可选)</label>
+                        <input type="text" id="pubCoverPathInput" class="input-studio" style="width:100%; height:32px;" placeholder="例如: output/assets/cover.jpg">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">分发标题 (抖音/B站/视频号主标题，小红书将自动截取前20字) *</label>
+                    <input type="text" id="pubTitleInput" class="input-studio" style="width:100%; height:32px;" placeholder="例如: 为什么认知越高的人，越少讲大道理？">
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">话题标签 Tags (空格或逗号隔开，系统自动补充 # 号) *</label>
+                    <input type="text" id="pubTagsInput" class="input-studio" style="width:100%; height:32px;" value="#深度思考 #认知思维 #商业逻辑 #个人成长 #干货分享">
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">正文文案 / 视频简介</label>
+                    <textarea id="pubDescriptionInput" class="input-studio" style="width:100%; height:60px; padding:6px 10px; resize:vertical;" placeholder="输入随视频分发的详细文案..."></textarea>
+                </div>
+
+                <!-- 智能抗查重微混淆选项 -->
+                <div style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.25); border-radius:var(--radius-sm); padding:12px 14px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; font-weight:700; color:var(--accent-primary);">
+                        <input type="checkbox" id="pubAntiDuplicateCb" checked style="accent-color:#38BDF8;">
+                        <span>✨ 启用智能抗查重微混淆管道 (推荐 · 矩阵运营必备)</span>
+                    </label>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:5px; line-height:1.5;">
+                        自动施加 1%~2% 中心微裁切、0.99x~1.01x 时间轴微变速、画面对比度微调，并重置清洗视频编码器元数据注入独立指纹，彻底打散原始 MD5 与帧哈希，有效避免平台被判定为搬运降权。
+                    </div>
+                </div>
+
+                <!-- 最近发布记录预览 -->
+                <div>
+                    <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px; display:flex; justify-content:space-between;">
+                        <span>📜 最近矩阵发布记录</span>
+                        <a href="javascript:void(0)" onclick="loadPublishHistory()" style="color:var(--accent-primary); font-size:11px; text-decoration:none;">刷新记录</a>
+                    </div>
+                    <div id="pubHistoryContainer" style="display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;">
+                        <div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px;">暂无发布记录</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85);">
+                <button class="btn-studio" onclick="closePublishMatrixModal()">取消</button>
+                <button class="btn-studio btn-studio-primary" id="btnSubmitPublishMatrix" onclick="submitMatrixPublish()" style="padding: 0 20px; height:34px;">
+                    🚀 立即一键发布至选定平台
+                </button>
             </div>
         </div>
     </div>
@@ -2847,6 +2963,149 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = '🚀 确认创建并启动后台批量流水线';
+            }
+        }
+
+        // ================= MATRIX PUBLISHING CONTROLLERS =================
+        function openPublishMatrixModal(videoPath = '', title = '') {
+            const modal = document.getElementById('matrixPublishModal');
+            const vInput = document.getElementById('pubVideoPathInput');
+            const tInput = document.getElementById('pubTitleInput');
+            const descInput = document.getElementById('pubDescriptionInput');
+
+            if (videoPath) {
+                vInput.value = videoPath;
+            } else if (!vInput.value) {
+                const projTitle = (document.getElementById('studioProjectTitle')?.value || '').trim();
+                vInput.value = 'output/final/latest_rendered.mp4';
+            }
+
+            if (title) {
+                tInput.value = title;
+            } else if (!tInput.value) {
+                const projTitle = (document.getElementById('studioProjectTitle')?.value || '').trim();
+                tInput.value = projTitle || '爆款认知与思维模型深度拆解';
+            }
+
+            if (!descInput.value && currentScenes && currentScenes.length > 0) {
+                descInput.value = currentScenes.map(s => s.voice).slice(0, 3).join(' ');
+            }
+
+            if (modal) modal.style.display = 'flex';
+            loadPublishHistory();
+        }
+
+        function closePublishMatrixModal() {
+            const modal = document.getElementById('matrixPublishModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function loadPublishHistory() {
+            const container = document.getElementById('pubHistoryContainer');
+            if (!container) return;
+            try {
+                const res = await fetch('/api/publish/history?limit=6');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.history) && data.history.length > 0) {
+                    const badge = document.getElementById('badgePublishCount');
+                    if (badge) badge.textContent = `${data.history.length} 次`;
+
+                    container.innerHTML = data.history.map(rec => {
+                        const platBadges = (rec.results || []).map(r => `
+                            <span style="font-size:10px; padding:1px 5px; border-radius:3px; ${r.status === 'success' ? 'background:rgba(34,197,94,0.15); color:#4ADE80;' : 'background:rgba(56,189,248,0.15); color:#38BDF8;'}">
+                                ${escapeHtml(r.platform_name)}: ${r.status === 'success' ? '已发布' : '草稿就绪'}
+                            </span>
+                        `).join(' ');
+
+                        const antiDupTag = rec.anti_duplicate_enabled ? `
+                            <span style="font-size:9.5px; background:rgba(168,85,247,0.15); color:#C084FC; padding:1px 5px; border-radius:3px;">微混淆已去重</span>
+                        ` : '';
+
+                        return `
+                            <div style="background:rgba(8,12,19,0.7); border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:8px 10px; font-size:11px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                    <b style="color:var(--text-primary); font-size:12px;">${escapeHtml(rec.title)}</b>
+                                    <span style="color:var(--text-muted); font-size:10px;">${rec.created_at ? rec.created_at.slice(11, 19) : ''}</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                        ${platBadges}
+                                        ${antiDupTag}
+                                    </div>
+                                    <span style="color:var(--text-muted); font-size:9.5px; font-family:'JetBrains Mono';">${rec.batch_id}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px;">暂无发布记录</div>';
+                }
+            } catch (e) {
+                console.error("加载发布历史异常", e);
+            }
+        }
+
+        async function submitMatrixPublish() {
+            const vInput = document.getElementById('pubVideoPathInput');
+            const tInput = document.getElementById('pubTitleInput');
+            const tagsInput = document.getElementById('pubTagsInput');
+            const descInput = document.getElementById('pubDescriptionInput');
+            const coverInput = document.getElementById('pubCoverPathInput');
+            const antiDupCb = document.getElementById('pubAntiDuplicateCb');
+            const btn = document.getElementById('btnSubmitPublishMatrix');
+
+            const checkedPlatforms = Array.from(document.querySelectorAll('.pub-platform-cb:checked')).map(cb => cb.value);
+            if (checkedPlatforms.length === 0) {
+                toast('请至少勾选一个目标分发平台！');
+                return;
+            }
+
+            const videoPath = (vInput.value || '').trim();
+            const title = (tInput.value || '').trim();
+            if (!videoPath) {
+                toast('请输入待发布的成片视频路径！');
+                return;
+            }
+            if (!title) {
+                toast('请输入视频分发标题！');
+                return;
+            }
+
+            const rawTags = (tagsInput.value || '').split(/[\s,，]+/).map(t => t.trim()).filter(Boolean);
+
+            btn.disabled = true;
+            btn.textContent = '⏳ 正在执行去重微混淆并分发至各平台...';
+            toast('🚀 正在调度多平台矩阵发布任务...');
+
+            const payload = {
+                video_path: videoPath,
+                platforms: checkedPlatforms,
+                title: title,
+                tags: rawTags,
+                description: (descInput.value || '').trim(),
+                enable_anti_duplicate: antiDupCb ? antiDupCb.checked : true,
+                cover_path: (coverInput.value || '').trim() || null
+            };
+
+            try {
+                const res = await fetch('/api/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok && data.success && data.publish_record) {
+                    const rec = data.publish_record;
+                    toast(`🎉 矩阵分发成功！已调度 ${rec.platforms_count} 个平台，指纹已清洗！`);
+                    loadPublishHistory();
+                } else {
+                    toast(`分发失败: ${data.detail || '未知错误'}`);
+                }
+            } catch (e) {
+                toast(`分发异常: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 立即一键发布至选定平台';
             }
         }
 

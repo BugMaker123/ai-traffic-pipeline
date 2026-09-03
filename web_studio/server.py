@@ -28,6 +28,7 @@ from core.logging_config import configure_logging
 from core.output_cleanup import cleanup_expired_outputs
 from crawlers.hot_topics import CATEGORY_NAMES, HotTopicCrawler
 from audio.voice_manager import voice_manager
+from publishers.manager import publish_manager
 from web_studio.job_manager import job_manager
 from writers.script_generator import DURATION_PRESETS, STYLE_PRESETS, ScriptGenerator
 
@@ -169,6 +170,17 @@ class BatchRenderRequest(StrictModel):
     subtitle_style: Literal["impact_yellow", "cyber_neon", "variety_pop", "cinema_white", "minimal_capsule", "flame_gold"] = "impact_yellow"
     tts_rate: str = Field(default="+0%", pattern=r"^[+-](?:100|[0-9]{1,2})%$")
     tts_pitch: str = Field(default=DEFAULT_TTS_PITCH, pattern=r"^[+-][0-9]{1,2}Hz$")
+
+
+class MatrixPublishRequest(StrictModel):
+    video_path: str = Field(min_length=1, max_length=500)
+    platforms: list[str] = Field(min_length=1, max_length=10)
+    title: str = Field(min_length=1, max_length=200)
+    tags: list[str] = Field(default_factory=list, max_length=20)
+    description: str = Field(default="", max_length=2000)
+    enable_anti_duplicate: bool = True
+    cover_path: str | None = Field(default=None, max_length=500)
+    schedule_time: str | None = Field(default=None, max_length=50)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -536,6 +548,55 @@ async def open_draft_folder(project_id: str):
         raise HTTPException(status_code=501, detail="当前平台不支持打开文件管理器")
     os.startfile(str(draft))
     return {"success": True, "message": "已打开剪映工程目录"}
+
+
+@app.get("/api/publish/platforms")
+async def list_publish_platforms():
+    return {"success": True, "platforms": publish_manager.list_supported_platforms()}
+
+
+@app.get("/api/publish/history")
+async def get_publish_history(limit: int = Query(default=50, ge=1, le=100)):
+    return {"success": True, "history": publish_manager.get_history(limit=limit)}
+
+
+@app.post("/api/publish", status_code=status.HTTP_200_OK)
+async def publish_video_matrix(req: MatrixPublishRequest):
+    raw_vpath = req.video_path.strip()
+    if raw_vpath.startswith("/output/"):
+        raw_vpath = raw_vpath[len("/output/"):]
+    v_path = (OUTPUT_DIR / raw_vpath).resolve()
+    if not v_path.is_file():
+        direct_p = Path(req.video_path).resolve()
+        if direct_p.is_file():
+            v_path = direct_p
+        else:
+            raise HTTPException(status_code=404, detail=f"待发布视频文件未找到: {req.video_path}")
+
+    c_path = None
+    if req.cover_path:
+        c_raw = req.cover_path.strip()
+        if c_raw.startswith("/output/"):
+            c_raw = c_raw[len("/output/"):]
+        cand = (OUTPUT_DIR / c_raw).resolve()
+        if cand.is_file():
+            c_path = cand
+
+    try:
+        res = await publish_manager.publish_to_platforms(
+            video_path=v_path,
+            platforms=req.platforms,
+            title=req.title,
+            tags=req.tags,
+            description=req.description,
+            enable_anti_duplicate=req.enable_anti_duplicate,
+            cover_path=c_path,
+            schedule_time=req.schedule_time,
+        )
+        return {"success": True, "publish_record": res}
+    except Exception as e:
+        logger.exception("矩阵发布调度异常")
+        raise HTTPException(status_code=500, detail=f"发布失败: {e}")
 
 
 @app.post("/api/render_video", status_code=status.HTTP_202_ACCEPTED, deprecated=True)
