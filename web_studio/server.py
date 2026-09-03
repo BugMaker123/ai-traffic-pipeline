@@ -9,7 +9,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import HTMLResponse
@@ -148,6 +148,26 @@ class RenderRequest(StrictModel):
         if value is not None and not PROJECT_ID_RE.fullmatch(value):
             raise ValueError("project_id 格式无效")
         return value
+
+
+class BatchTopicItem(StrictModel):
+    topic: str = Field(min_length=1, max_length=500)
+    style: ScriptStyle = "干货科普"
+    duration_tier: str = "deep_60s"
+    source_content: str = Field(default="", max_length=4000)
+    source_platform: str = Field(default="", max_length=80)
+
+
+class BatchRenderRequest(StrictModel):
+    topics: list[str] = Field(default_factory=list, max_length=50)
+    items: list[BatchTopicItem] = Field(default_factory=list, max_length=50)
+    voice: VoiceId = DEFAULT_TTS_VOICE
+    bgm_type: BgmType = "energetic"
+    video_layout: Literal["impact", "split_screen", "card_quote"] = "impact"
+    enable_karaoke: bool = True
+    subtitle_style: Literal["impact_yellow", "cyber_neon", "variety_pop", "cinema_white", "minimal_capsule", "flame_gold"] = "impact_yellow"
+    tts_rate: str = Field(default="+0%", pattern=r"^[+-](?:100|[0-9]{1,2})%$")
+    tts_pitch: str = Field(default=DEFAULT_TTS_PITCH, pattern=r"^[+-][0-9]{1,2}Hz$")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -347,10 +367,69 @@ async def create_render_job(req: RenderRequest):
         "bgm_type": req.bgm_type,
         "video_layout": req.video_layout,
         "enable_karaoke": req.enable_karaoke,
+        "subtitle_style": req.subtitle_style,
         "tts_rate": req.tts_rate,
         "tts_pitch": req.tts_pitch,
     })
     return {"success": True, "job": job}
+
+
+@app.post("/api/batch_jobs", status_code=status.HTTP_202_ACCEPTED)
+async def create_batch_jobs(req: BatchRenderRequest):
+    items: list[dict[str, Any]] = []
+    for t in req.topics:
+        t_clean = t.strip()
+        if t_clean:
+            items.append({"topic": t_clean})
+    for it in req.items:
+        t_clean = it.topic.strip()
+        if t_clean:
+            items.append({
+                "topic": t_clean,
+                "style": it.style,
+                "duration_tier": it.duration_tier,
+                "source_content": it.source_content,
+                "source_platform": it.source_platform,
+            })
+    if not items:
+        raise HTTPException(status_code=400, detail="请提供至少一个待生成的选题")
+
+    common_options = {
+        "voice": req.voice,
+        "bgm_type": req.bgm_type,
+        "video_layout": req.video_layout,
+        "enable_karaoke": req.enable_karaoke,
+        "subtitle_style": req.subtitle_style,
+        "tts_rate": req.tts_rate,
+        "tts_pitch": req.tts_pitch,
+    }
+    batch = job_manager.create_batch(items, common_options)
+    return {"success": True, "batch": batch}
+
+
+@app.get("/api/batches/{batch_id}")
+async def get_batch_status(batch_id: str):
+    batch = job_manager.get_batch(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail="批次不存在")
+    for j in batch.get("jobs", []):
+        if j.get("result") and j["result"].get("final_video_path"):
+            j["video_url"] = f"/output/final/{Path(j['result']['final_video_path']).name}"
+    return {"success": True, "batch": batch}
+
+
+@app.get("/api/batches")
+async def list_batches(limit: int = Query(default=20, ge=1, le=100)):
+    batches = job_manager.list_batches(limit=limit)
+    return {"success": True, "batches": batches}
+
+
+@app.post("/api/batches/{batch_id}/cancel", status_code=status.HTTP_202_ACCEPTED)
+async def cancel_batch(batch_id: str):
+    batch = job_manager.cancel_batch(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail="批次不存在")
+    return {"success": True, "batch": batch}
 
 
 @app.get("/api/jobs/{job_id}")

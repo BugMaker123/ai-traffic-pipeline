@@ -978,12 +978,12 @@
                     <span class="nav-badge-count">60fps</span>
                 </div>
 
-                <div class="nav-item" onclick="toast('批量矩阵生成：支持根据 1 组选题批量裂变 10 条不同风格分镜与音画')">
+                <div class="nav-item" onclick="openBatchInputModal()">
                     <div class="nav-item-left">
                         <span class="nav-item-icon">🎞️</span>
                         <span>批量矩阵生成</span>
                     </div>
-                    <span class="nav-badge-count">PRO</span>
+                    <span class="nav-badge-count">BATCH</span>
                 </div>
 
                 <!-- Group 4: 资产与分发矩阵 -->
@@ -1090,10 +1090,33 @@
                     </div>
                 </div>
 
+                <!-- Batch Action Bar -->
+                <div class="batch-action-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:10px 14px; background:var(--panel-bg); border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text-primary); user-select:none;">
+                            <input type="checkbox" id="selectAllTrendsCb" onchange="toggleSelectAllTrends(this.checked)" style="accent-color:var(--accent-primary); width:15px; height:15px; cursor:pointer;">
+                            全选当前热榜选题
+                        </label>
+                        <span id="selectedTrendsCountBadge" style="color:var(--text-muted); font-size:12px; background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:10px;">已勾选 0 个</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="btn-studio" onclick="openBatchInputModal()">📝 粘贴批量选题</button>
+                        <button class="btn-studio btn-studio-accent" id="btnBatchRun" onclick="runBatchFromSelected()" disabled>
+                            ⚡ 批量无人值守生成 (<span id="batchSelectedNum">0</span>)
+                        </button>
+                        <a href="/tasks" target="_blank" class="btn-studio" style="text-decoration:none; display:flex; align-items:center; gap:4px;">
+                            📋 任务看板 ↗
+                        </a>
+                    </div>
+                </div>
+
                 <!-- High-Density Data Table -->
                 <table class="trends-data-table">
                     <thead>
                         <tr>
+                            <th style="width: 42px; text-align:center;">
+                                <input type="checkbox" id="thSelectAllCb" onchange="toggleSelectAllTrends(this.checked)" style="accent-color:var(--accent-primary); width:14px; height:14px; cursor:pointer;">
+                            </th>
                             <th style="width: 130px;">平台 / 赛道</th>
                             <th>爆款选题与核心矛盾切入点</th>
                             <th style="width: 100px;">爆发指数</th>
@@ -1103,7 +1126,7 @@
                         </tr>
                     </thead>
                     <tbody id="trendsTableBody">
-                        <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">正在加载全网实时多维热点榜单...</td></tr>
+                        <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">正在加载全网实时多维热点榜单...</td></tr>
                     </tbody>
                 </table>
             </section>
@@ -1369,6 +1392,87 @@
         </div>
     </div>
 
+    <!-- ================= MODAL: 批量无人值守生成配置 ================= -->
+    <div id="batchCustomModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div class="studio-panel" style="width: 640px; max-width: 95vw; max-height: 88vh; display:flex; flex-direction:column; background: #0B132B; border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 25px 60px -12px rgba(0,0,0,0.9); border-radius:var(--radius-md); overflow:hidden;">
+            <div class="panel-toolbar" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85);">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div style="font-weight:700; font-size:14.5px; color:#F8FAFC; display:flex; align-items:center; gap:8px;">
+                        <span>🎞️</span> <span>批量无人值守短视频生成流水线</span>
+                        <span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--accent-primary); padding:2px 8px; border-radius:10px; border:1px solid rgba(56,189,248,0.3);">批量模式</span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted);">一键全自动生成：热点文案重塑 → TTS配音 → Ducking混音 → 素材抓取 → 成片渲染 & 剪映工程</div>
+                </div>
+                <button class="btn-studio" style="height:26px; width:26px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="closeBatchModal()">✕</button>
+            </div>
+            
+            <div class="panel-body" style="padding: 20px; overflow-y:auto; display:flex; flex-direction:column; gap:14px; max-height: 65vh;">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label style="font-size:12px; font-weight:600; color:var(--text-primary);">
+                            待生成选题列表（每行一个选题，支持直接粘贴批量）：
+                        </label>
+                        <span id="batchModalLineCount" style="font-size:11px; color:var(--text-muted);">共 0 条</span>
+                    </div>
+                    <textarea id="batchTopicsTextarea" class="code-textarea" oninput="updateBatchModalLineCount()" style="height:140px; font-size:12.5px; line-height:1.6; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:rgba(8,12,19,0.8); color:#eef2ff;" placeholder="例如：&#10;为什么高手都在悄悄戒掉情绪&#10;普通人如何抓住这一轮黄金周期&#10;自律不是意志力，而是环境设计"></textarea>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">解说音色预设</label>
+                        <select id="batchVoiceSelect" class="input-studio" style="width:100%; height:32px;">
+                            <option value="zh-CN-YunxiNeural">云希 (活力/爆款解说男声)</option>
+                            <option value="zh-CN-YunjianNeural">云健 (沉稳/磁性知识男声)</option>
+                            <option value="zh-CN-XiaoxiaoNeural">晓晓 (知性/温暖情感女声)</option>
+                            <option value="zh-CN-YunyangNeural">云扬 (专业新闻/纪实播音)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">背景音乐与Ducking</label>
+                        <select id="batchBgmSelect" class="input-studio" style="width:100%; height:32px;">
+                            <option value="energetic">热血律动 (Energetic) · 智能避让</option>
+                            <option value="suspense">悬疑反转 (Suspense) · 智能避让</option>
+                            <option value="chill">轻松思考 (Chill Lo-Fi) · 智能避让</option>
+                            <option value="emotional">治愈沉浸 (Emotional) · 智能避让</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">视频排版版式</label>
+                        <select id="batchLayoutSelect" class="input-studio" style="width:100%; height:32px;">
+                            <option value="impact">爆款满屏 (Impact)</option>
+                            <option value="split_screen">上下分屏 (Split Screen)</option>
+                            <option value="card_quote">磨砂金句卡 (Card Quote)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">花字字幕渲染风格</label>
+                        <select id="batchSubtitleStyleSelect" class="input-studio" style="width:100%; height:32px;">
+                            <option value="impact_yellow">经典明黄高亮 (Impact Yellow)</option>
+                            <option value="cyber_neon">赛博未来霓虹 (Cyber Neon)</option>
+                            <option value="variety_pop">综艺活力波普 (Variety Pop)</option>
+                            <option value="cinema_white">极简电影白字 (Cinema White)</option>
+                            <option value="flame_gold">烈焰流光黑金 (Flame Gold)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.25); border-radius:var(--radius-sm); padding:10px 14px; font-size:11.5px; color:#38BDF8; line-height:1.5;">
+                    ⚡ 流水线特性：提交后系统将在后台流水线线程池中依次调度并发，自动完成选题文案解构、TTS字级时间戳对齐、素材补齐、MoviePy 智能降鸭混音与剪映草稿生成。
+                </div>
+            </div>
+
+            <div style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85); border-bottom-left-radius:var(--radius-md); border-bottom-right-radius:var(--radius-md);">
+                <a href="/tasks" target="_blank" style="color:var(--text-muted); font-size:11.5px; text-decoration:none;">📋 查看任务中心看板 ↗</a>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-studio" onclick="closeBatchModal()">取消</button>
+                    <button class="btn-studio btn-studio-accent" id="btnSubmitBatch" onclick="submitBatchCustomJobs()">
+                        🚀 确认创建并启动后台批量流水线
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global State
         let currentFilter = {
@@ -1500,7 +1604,7 @@
                 if (!data.success || !data.trends || data.trends.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">
+                            <td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">
                                 当前组合筛选下暂无热点数据 (当前平台: ${currentFilter.platform})。
                                 <button class="btn-studio" style="margin-left:8px;" onclick="resetAllFilters()">重置筛选</button>
                             </td>
@@ -1529,6 +1633,9 @@
                         : (item.source_platform || '全网');
 
                     tr.innerHTML = `
+                        <td style="text-align:center;">
+                            <input type="checkbox" class="trend-item-cb" data-id="${key}" data-title="${escapeHtml(item.title)}" onchange="onTrendCheckboxChange()" style="accent-color:var(--accent-primary); width:15px; height:15px; cursor:pointer;">
+                        </td>
                         <td>
                             <div style="display:flex; flex-direction:column; gap:4px;">
                                 <span class="tag-source ${item.is_resonance ? 'resonance' : ''}">${escapeHtml(platformLabel)}</span>
@@ -1554,8 +1661,13 @@
                     `;
                     tbody.appendChild(tr);
                 });
+                const selectAllCb = document.getElementById('selectAllTrendsCb');
+                const thCb = document.getElementById('thSelectAllCb');
+                if (selectAllCb) selectAllCb.checked = false;
+                if (thCb) thCb.checked = false;
+                onTrendCheckboxChange();
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#FB7185;">获取热点失败: ${e.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#FB7185;">获取热点失败: ${e.message}</td></tr>`;
             }
         }
 
@@ -2325,6 +2437,106 @@
             el.innerHTML = `<span>⚡</span><span>${msg}</span>`;
             container.appendChild(el);
             setTimeout(() => el.remove(), 2600);
+        }
+
+        // ================= BATCH PROCESSING CONTROLLERS =================
+        function toggleSelectAllTrends(checked) {
+            const cbs = document.querySelectorAll('.trend-item-cb');
+            cbs.forEach(cb => { cb.checked = checked; });
+            const selectAllCb = document.getElementById('selectAllTrendsCb');
+            const thCb = document.getElementById('thSelectAllCb');
+            if (selectAllCb) selectAllCb.checked = checked;
+            if (thCb) thCb.checked = checked;
+            onTrendCheckboxChange();
+        }
+
+        function onTrendCheckboxChange() {
+            const checkedCbs = Array.from(document.querySelectorAll('.trend-item-cb:checked'));
+            const count = checkedCbs.length;
+            const badge = document.getElementById('selectedTrendsCountBadge');
+            const btn = document.getElementById('btnBatchRun');
+            const num = document.getElementById('batchSelectedNum');
+            if (badge) badge.textContent = `已勾选 ${count} 个`;
+            if (num) num.textContent = count;
+            if (btn) btn.disabled = (count === 0);
+        }
+
+        function updateBatchModalLineCount() {
+            const textarea = document.getElementById('batchTopicsTextarea');
+            const lines = (textarea.value || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const counter = document.getElementById('batchModalLineCount');
+            if (counter) counter.textContent = `共 ${lines.length} 条`;
+        }
+
+        function openBatchInputModal(initialTopics = []) {
+            const modal = document.getElementById('batchCustomModal');
+            const textarea = document.getElementById('batchTopicsTextarea');
+            if (Array.isArray(initialTopics) && initialTopics.length > 0) {
+                textarea.value = initialTopics.join('\n');
+            }
+            updateBatchModalLineCount();
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeBatchModal() {
+            const modal = document.getElementById('batchCustomModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function runBatchFromSelected() {
+            const checkedCbs = Array.from(document.querySelectorAll('.trend-item-cb:checked'));
+            if (checkedCbs.length === 0) {
+                toast('请先勾选至少一个热榜选题！');
+                return;
+            }
+            const topics = checkedCbs.map(cb => cb.getAttribute('data-title')).filter(Boolean);
+            openBatchInputModal(topics);
+        }
+
+        async function submitBatchCustomJobs() {
+            const textarea = document.getElementById('batchTopicsTextarea');
+            const lines = (textarea.value || '').split('\n').map(l => l.trim()).filter(Boolean);
+            if (lines.length === 0) {
+                toast('请输入至少一个待生成的选题！');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitBatch');
+            btn.disabled = true;
+            btn.textContent = '正在提交批量任务...';
+
+            const payload = {
+                topics: lines,
+                voice: document.getElementById('batchVoiceSelect').value,
+                bgm_type: document.getElementById('batchBgmSelect').value,
+                video_layout: document.getElementById('batchLayoutSelect').value,
+                subtitle_style: document.getElementById('batchSubtitleStyleSelect').value,
+                enable_karaoke: true
+            };
+
+            try {
+                const res = await fetch('/api/batch_jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success && data.batch) {
+                    closeBatchModal();
+                    toast(`✅ 成功创建批次 ${data.batch.batch_id} (共 ${data.batch.total_count} 条)，已进入后台排队！`);
+                    loadJobsList();
+                    setTimeout(() => {
+                        window.open('/tasks', '_blank');
+                    }, 1000);
+                } else {
+                    toast(`创建批次失败: ${data.detail || '未知错误'}`);
+                }
+            } catch (e) {
+                toast(`请求失败: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 确认创建并启动后台批量流水线';
+            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {

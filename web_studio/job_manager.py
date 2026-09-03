@@ -32,12 +32,16 @@ STAGE_PROGRESS = {
 class JobManager:
     def __init__(self, jobs_dir: Path | None = None, max_workers: int = MAX_RENDER_JOBS):
         self.jobs_dir = jobs_dir or (OUTPUT_DIR / "jobs")
+        self.batches_dir = self.jobs_dir / "batches"
         self.jobs_dir.mkdir(parents=True, exist_ok=True)
+        self.batches_dir.mkdir(parents=True, exist_ok=True)
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="render-job")
         self._lock = threading.RLock()
         self._jobs: Dict[str, Dict[str, Any]] = {}
+        self._batches: Dict[str, Dict[str, Any]] = {}
         self._cancel_events: Dict[str, threading.Event] = {}
         self._load_jobs()
+        self._load_batches()
 
     @staticmethod
     def _now() -> str:
@@ -46,10 +50,19 @@ class JobManager:
     def _job_path(self, job_id: str) -> Path:
         return self.jobs_dir / f"{job_id}.json"
 
+    def _batch_path(self, batch_id: str) -> Path:
+        return self.batches_dir / f"{batch_id}.json"
+
     def _persist(self, job: Dict[str, Any]) -> None:
         path = self._job_path(job["job_id"])
         temp = path.with_suffix(".tmp")
         temp.write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
+        temp.replace(path)
+
+    def _persist_batch(self, batch: Dict[str, Any]) -> None:
+        path = self._batch_path(batch["batch_id"])
+        temp = path.with_suffix(".tmp")
+        temp.write_text(json.dumps(batch, ensure_ascii=False, indent=2), encoding="utf-8")
         temp.replace(path)
 
     def _load_jobs(self) -> None:
@@ -65,12 +78,29 @@ class JobManager:
             except (OSError, ValueError, KeyError):
                 logger.exception("无法读取任务文件 %s", path)
 
-    def create(self, payload: Dict[str, Any], checkpoint: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def _load_batches(self) -> None:
+        for path in self.batches_dir.glob("batch_*.json"):
+            try:
+                batch = json.loads(path.read_text(encoding="utf-8"))
+                self._batches[batch["batch_id"]] = batch
+            except (OSError, ValueError, KeyError):
+                logger.exception("无法读取批次文件 %s", path)
+
+    def create(
+        self,
+        payload: Dict[str, Any],
+        checkpoint: Dict[str, Any] | None = None,
+        batch_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         job_id = f"job_{uuid.uuid4().hex[:12]}"
         now = self._now()
+        effective_batch_id = batch_id or payload.get("batch_id")
+        topic_title = payload.get("topic") or (payload.get("script_data") or {}).get("title") or payload.get("project_id")
         job = {
             "job_id": job_id,
             "project_id": payload["project_id"],
+            "title": topic_title,
+            "batch_id": effective_batch_id,
             "status": "queued",
             "stage": "queued",
             "created_at": now,
@@ -125,13 +155,15 @@ class JobManager:
         payload = job["payload"]
         try:
             result = VideoPipelineRunner.run(
-                script_data=payload["script_data"],
-                voice=payload["voice"],
-                bgm_type=payload["bgm_type"],
+                topic=payload.get("topic", ""),
+                script_data=payload.get("script_data"),
+                voice=payload.get("voice"),
+                bgm_type=payload.get("bgm_type", "energetic"),
                 tts_rate=payload.get("tts_rate"),
                 tts_pitch=payload.get("tts_pitch"),
                 video_layout=payload.get("video_layout", "impact"),
                 enable_karaoke=payload.get("enable_karaoke", True),
+                subtitle_style=payload.get("subtitle_style", "impact_yellow"),
                 project_id=payload["project_id"],
                 progress_callback=progress,
                 cancel_event=event,
@@ -144,12 +176,28 @@ class JobManager:
                 "final_video_path": result.get("final_video_path"),
                 "jianying_draft_path": result.get("jianying_draft_path"),
             }
-            self._update(job_id, status="succeeded", stage="completed", result=public_result, logs=result.get("logs", []))
+            final_title = (result.get("script_data") or {}).get("title")
+            updates: Dict[str, Any] = {
+                "status": "succeeded",
+                "stage": "completed",
+                "result": public_result,
+                "logs": result.get("logs", []),
+            }
+            if final_title:
+                updates["title"] = final_title
+            self._update(job_id, **updates)
         except PipelineCancelled as exc:
             self._update(job_id, status="cancelled", stage="cancelled", error=str(exc))
         except Exception as exc:
-            logger.exception("渲染任务 %s 失败", job_id)
-            self._update(job_id, status="failed", stage="failed", error=str(exc))
+            if "interpreter shutdown" not in str(exc).lower():
+                logger.exception("渲染任务 %s 失败", job_id)
+            try:
+                self._update(job_id, status="failed", stage="failed", error=str(exc))
+            except Exception:
+                pass
+
+    def shutdown(self, wait: bool = False) -> None:
+        self._executor.shutdown(wait=wait, cancel_futures=True)
 
     def get(self, job_id: str) -> Optional[Dict[str, Any]]:
         with self._lock:
@@ -184,6 +232,121 @@ class JobManager:
             payload = old["payload"]
             checkpoint = old.get("checkpoint")
         return self.create(payload, checkpoint=checkpoint)
+
+    def create_batch(
+        self,
+        items: list[Dict[str, Any]],
+        common_options: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """创建批量渲染任务并返回聚合批次信息"""
+        batch_id = f"batch_{uuid.uuid4().hex[:10]}"
+        now = self._now()
+        job_ids = []
+
+        for idx, item in enumerate(items):
+            topic = str(item.get("topic", "")).strip()
+            project_id = item.get("project_id") or f"proj_batch_{uuid.uuid4().hex[:6]}"
+            payload = {
+                "project_id": project_id,
+                "topic": topic,
+                "script_data": item.get("script_data"),
+                "voice": common_options.get("voice"),
+                "bgm_type": common_options.get("bgm_type", "energetic"),
+                "video_layout": common_options.get("video_layout", "impact"),
+                "enable_karaoke": common_options.get("enable_karaoke", True),
+                "subtitle_style": common_options.get("subtitle_style", "impact_yellow"),
+                "tts_rate": common_options.get("tts_rate"),
+                "tts_pitch": common_options.get("tts_pitch"),
+                "batch_id": batch_id,
+                "batch_index": idx + 1,
+            }
+            job = self.create(payload, batch_id=batch_id)
+            job_ids.append(job["job_id"])
+
+        batch_info = {
+            "batch_id": batch_id,
+            "created_at": now,
+            "updated_at": now,
+            "total_count": len(items),
+            "job_ids": job_ids,
+            "common_options": common_options,
+        }
+        with self._lock:
+            self._batches[batch_id] = batch_info
+            self._persist_batch(batch_info)
+
+        return self.public_batch(batch_info)
+
+    def public_batch(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        """计算并返回批次的聚合状态与子任务详情"""
+        job_ids = batch.get("job_ids", [])
+        jobs = []
+        statuses = []
+        total_progress = 0
+
+        for jid in job_ids:
+            job = self.get(jid)
+            if job:
+                jobs.append(job)
+                statuses.append(job.get("status", "unknown"))
+                total_progress += job.get("progress", 0)
+            else:
+                statuses.append("unknown")
+
+        total = len(job_ids) or 1
+        avg_progress = round(total_progress / total, 1)
+
+        succeeded = statuses.count("succeeded")
+        failed = statuses.count("failed")
+        cancelled = statuses.count("cancelled") + statuses.count("cancelling")
+        running = statuses.count("running")
+        queued = statuses.count("queued") + statuses.count("interrupted")
+
+        if succeeded == total:
+            overall_status = "succeeded"
+        elif cancelled == total:
+            overall_status = "cancelled"
+        elif succeeded + failed + cancelled == total:
+            overall_status = "completed_with_errors" if failed > 0 else "succeeded"
+        elif running > 0:
+            overall_status = "running"
+        else:
+            overall_status = "queued"
+
+        return {
+            "batch_id": batch["batch_id"],
+            "created_at": batch.get("created_at"),
+            "updated_at": batch.get("updated_at"),
+            "total_count": len(job_ids),
+            "succeeded_count": succeeded,
+            "failed_count": failed,
+            "cancelled_count": cancelled,
+            "running_count": running,
+            "queued_count": queued,
+            "status": overall_status,
+            "progress": avg_progress,
+            "jobs": jobs,
+        }
+
+    def get_batch(self, batch_id: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            batch = self._batches.get(batch_id)
+            return self.public_batch(batch) if batch else None
+
+    def list_batches(self, limit: int = 20) -> list[Dict[str, Any]]:
+        with self._lock:
+            batches = list(self._batches.values())
+            batches.sort(key=lambda b: b.get("created_at", ""), reverse=True)
+            return [self.public_batch(b) for b in batches[: max(1, min(limit, 100))]]
+
+    def cancel_batch(self, batch_id: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            batch = self._batches.get(batch_id)
+            if not batch:
+                return None
+            for jid in batch.get("job_ids", []):
+                self.cancel(jid)
+        return self.get_batch(batch_id)
 
     @staticmethod
     def public(job: Dict[str, Any]) -> Dict[str, Any]:

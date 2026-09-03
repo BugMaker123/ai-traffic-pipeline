@@ -254,6 +254,7 @@ class VideoPipelineRunner:
         tts_pitch: Optional[str] = None,
         video_layout: str = "impact",
         enable_karaoke: bool = True,
+        subtitle_style: str = "impact_yellow",
     ) -> PipelineState:
         proj_id = project_id or f"proj_{uuid.uuid4().hex[:8]}"
         initial_state: PipelineState = {
@@ -264,12 +265,13 @@ class VideoPipelineRunner:
             "bgm_type": bgm_type,
             "video_layout": video_layout,
             "enable_karaoke": enable_karaoke,
+            "subtitle_style": subtitle_style,
             "logs": [],
-            "status": "init"
-            , "progress_callback": progress_callback
-            , "cancel_event": cancel_event
-            , "tts_rate": tts_rate
-            , "tts_pitch": tts_pitch
+            "status": "init",
+            "progress_callback": progress_callback,
+            "cancel_event": cancel_event,
+            "tts_rate": tts_rate,
+            "tts_pitch": tts_pitch,
         }
         if resume_state:
             initial_state.update(resume_state)
