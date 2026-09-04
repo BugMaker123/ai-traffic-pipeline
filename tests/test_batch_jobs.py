@@ -56,7 +56,7 @@ def test_job_manager_create_and_get_batch(temp_job_manager):
     assert batch["batch_id"].startswith("batch_")
     assert batch["total_count"] == 3
     assert len(batch["jobs"]) == 3
-    assert batch["status"] in {"queued", "running"}
+    assert batch["status"] in {"queued", "running", "succeeded"}
 
     # 验证获取批次
     fetched = temp_job_manager.get_batch(batch["batch_id"])

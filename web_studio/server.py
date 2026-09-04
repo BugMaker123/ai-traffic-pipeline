@@ -22,7 +22,19 @@ if str(BASE_DIR) not in sys.path:
 
 import logging
 from audio.tts_engine import TTSEngine
-from config.settings import ASSETS_OUTPUT_DIR, DEFAULT_TTS_PITCH, DEFAULT_TTS_VOICE, DRAFTS_OUTPUT_DIR, MAX_SCENES, OUTPUT_DIR, PEXELS_API_KEY, VOICE_PRESETS
+from config.settings import (
+    ASSETS_OUTPUT_DIR,
+    DEFAULT_TTS_PITCH,
+    DEFAULT_TTS_VOICE,
+    DRAFTS_OUTPUT_DIR,
+    MAX_SCENES,
+    OUTPUT_DIR,
+    PEXELS_API_KEY,
+    PIXABAY_API_KEY,
+    VOICE_PRESETS,
+    WEB_HOST,
+    WEB_PORT,
+)
 from core.state import SceneItem, VideoProjectScript
 from core.logging_config import configure_logging
 from core.output_cleanup import cleanup_expired_outputs
@@ -434,7 +446,12 @@ async def upload_asset(
 
 @app.get("/api/media/status")
 async def media_status():
-    return {"success": True, "pexels_configured": bool(PEXELS_API_KEY), "fallback": "Unsplash curated photography & AI Image Generation"}
+    return {
+        "success": True,
+        "pexels_configured": bool(PEXELS_API_KEY),
+        "pixabay_configured": bool(PIXABAY_API_KEY),
+        "fallback": "Unsplash & Pixabay Curated 4K/1080P Footage & Wikimedia Commons",
+    }
 
 
 @app.get("/api/art_styles")
@@ -645,4 +662,4 @@ async def legacy_render_video(req: RenderRequest):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=WEB_HOST, port=WEB_PORT)

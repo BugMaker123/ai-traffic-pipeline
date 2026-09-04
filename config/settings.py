@@ -24,8 +24,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com/v1")
 LLM_MODEL = os.getenv("LLM_MODEL", "deepseek-chat")
 
-# Pexels 素材 API
+# 免版权商业素材 API (Pexels / Pixabay)
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
+PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY", "")
 
 # TTS 语音配置
 DEFAULT_TTS_VOICE = os.getenv("DEFAULT_TTS_VOICE", "zh-CN-YunxiNeural")  # 活力少年/解说风
@@ -42,6 +43,10 @@ TTS_CONCURRENCY = max(1, min(6, int(os.getenv("TTS_CONCURRENCY", "3"))))
 MEDIA_FETCH_CONCURRENCY = max(1, min(6, int(os.getenv("MEDIA_FETCH_CONCURRENCY", "3"))))
 MAX_SCENES = max(1, int(os.getenv("MAX_SCENES", "12")))
 OUTPUT_RETENTION_HOURS = max(1, int(os.getenv("OUTPUT_RETENTION_HOURS", "72")))
+
+# 服务网络配置
+WEB_HOST = os.getenv("WEB_HOST", "127.0.0.1")
+WEB_PORT = int(os.getenv("WEB_PORT", "9000"))
 
 # 常用高质量音色预设 (覆盖活力解说、稳重、情感、激情、幽默等赛道)
 VOICE_PRESETS = {

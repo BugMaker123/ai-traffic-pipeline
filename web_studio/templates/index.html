@@ -1011,12 +1011,21 @@
         </div>
 
         <!-- Engine Status -->
-        <div class="sidebar-bottom-status">
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <span class="status-indicator"></span>
-                <span style="font-size: 11px; color: var(--text-secondary);">MoviePy · 剪映 Draft API</span>
+        <div class="sidebar-bottom-status" style="flex-direction: column; align-items: stretch; gap: 6px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="status-indicator"></span>
+                    <span style="font-size: 11px; color: var(--text-secondary);">MoviePy · 剪映 Draft</span>
+                </div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-success);">READY</span>
             </div>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);">READY</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.05); pt: 4px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="status-indicator" id="mediaStatusDot" style="background: var(--accent-warning);"></span>
+                    <span style="font-size: 11px; color: var(--text-secondary);" title="Pexels + Pixabay 实拍双引擎">真实素材双引擎</span>
+                </div>
+                <span id="mediaStatusText" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);">ACTIVE</span>
+            </div>
         </div>
     </aside>
 
@@ -3223,11 +3232,36 @@
             }
         }
 
+        async function loadMediaStatus() {
+            try {
+                const res = await fetch('/api/media/status');
+                const data = await res.json();
+                const dot = document.getElementById('mediaStatusDot');
+                const text = document.getElementById('mediaStatusText');
+                if (dot && text) {
+                    if (data.pexels_configured || data.pixabay_configured) {
+                        dot.style.background = 'var(--accent-success)';
+                        const engines = [];
+                        if (data.pexels_configured) engines.push('Pexels');
+                        if (data.pixabay_configured) engines.push('Pixabay');
+                        text.textContent = engines.join('+');
+                        text.style.color = 'var(--accent-success)';
+                    } else {
+                        dot.style.background = 'var(--accent-warning)';
+                        text.textContent = 'UNSPLASH';
+                    }
+                }
+            } catch (e) {
+                console.warn('获取素材状态失败', e);
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             loadVoices();
             loadTrends();
             renderScenesList();
             loadJobsList();
+            loadMediaStatus();
             // Polling jobs every 8 seconds
             setInterval(loadJobsList, 8000);
         });

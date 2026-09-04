@@ -43,7 +43,7 @@ def test_style_preset_manager_profiles():
     style_ids = [s["id"] for s in styles]
     assert "cinematic_dark" in style_ids
     assert "cyberpunk_neon" in style_ids
-    assert "minimalist_tech" in style_ids
+    assert "minimalist_tech" in style_ids1
     assert "vintage_retro" in style_ids
     assert "anime_shinkai" in style_ids
     assert "chinese_traditional" in style_ids

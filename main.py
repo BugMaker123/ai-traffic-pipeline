@@ -18,7 +18,7 @@ from rich.table import Table
 from rich.panel import Panel
 from core.orchestrator import VideoPipelineRunner
 from crawlers.hot_topics import HotTopicCrawler, CATEGORY_NAMES
-from config.settings import VOICE_PRESETS
+from config.settings import VOICE_PRESETS, WEB_HOST, WEB_PORT
 from core.logging_config import configure_logging
 
 console = Console(legacy_windows=False, force_terminal=True)
@@ -58,7 +58,7 @@ def handle_list_trends(category: str = "all"):
     console.print(table)
     console.print("\n[dim]💡 提示：可使用 --category [tech|finance|social|entertainment|growth|resonance] 切换细分领域[/dim]\n")
 
-def start_web_studio(host: str = "127.0.0.1", port: int = 8000):
+def start_web_studio(host: str = WEB_HOST, port: int = WEB_PORT):
     import uvicorn
     console.print(Panel(
         f"[bold green]🚀 Web Studio 已启动！[/bold green]\n\n"
@@ -75,7 +75,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="AI 爆款短视频自动化生产流水线")
     parser.add_argument("--web", action="store_true", help="启动现代深色玻璃拟态 Web Studio 可视化创作工作台")
-    parser.add_argument("--port", type=int, default=8000, help="Web Studio 运行端口 (默认 8000)")
+    parser.add_argument("--port", type=int, default=WEB_PORT, help=f"Web Studio 运行端口 (默认 {WEB_PORT})")
     parser.add_argument("--category", type=str, default="all", choices=list(CATEGORY_NAMES.keys()), help="选择细分领域榜单")
     parser.add_argument("--topic", type=str, default="", help="指定视频创作主题（如：'为什么越自律的人越自由'）")
     parser.add_argument("--auto-trend", action="store_true", help="全自动模式：抓取当前分类 Top 1 爆款热点并一键出片")
