@@ -43,7 +43,7 @@ def test_style_preset_manager_profiles():
     style_ids = [s["id"] for s in styles]
     assert "cinematic_dark" in style_ids
     assert "cyberpunk_neon" in style_ids
-    assert "minimalist_tech" in style_ids1
+    assert "minimalist_tech" in style_ids
     assert "vintage_retro" in style_ids
     assert "anime_shinkai" in style_ids
     assert "chinese_traditional" in style_ids
@@ -87,7 +87,7 @@ def test_script_generator_with_art_style_and_compliance():
 def test_moviepy_renderer_hwaccel_and_camera_motion():
     """测试硬件编码器自动探测机制与运镜函数兼容性"""
     codec = MoviePyRenderer.detect_hwaccel_codec()
-    assert codec in ("libx264", "h264_nvenc", "h264_qsv", "h264_amf")
+    assert codec in ("libx264", "h264_nvenc", "h264_qsv", "h264_amf", "h264_mf")
 
     # 验证带 punch_in 的相机动态推拉
     renderer = MoviePyRenderer()

@@ -1917,7 +1917,8 @@
                 const row = document.createElement('div');
                 row.className = 'scene-item-row';
                 const isVideo = sc.asset_type === 'video' || (sc.img && (sc.img.includes('.mp4') || sc.img.includes('.mov') || sc.img.includes('.webm')));
-                const badgeLabel = isVideo ? '🎬 视频切片' : (sc.asset_source === 'user_upload' ? '📁 自定义图' : '🤖 AI画面');
+                const badgeLabel = isVideo ? '🎬 实拍视频' : (sc.asset_source === 'user_upload' ? '📁 自定义' : (sc.asset_source === 'ai_gen' ? '🤖 AI画面' : '📸 独家摄影'));
+                const curTransition = sc.transition || (idx % 2 === 1 ? 'flash_white' : 'punch_in');
 
                 row.innerHTML = `
                     <div class="scene-asset-column">
@@ -1951,6 +1952,15 @@
                             <input class="input-studio scene-kw-input" value="${escapeHtml(sc.keywords || '')}" oninput="updateSceneKw(${idx}, this.value)" style="font-size: 11px; padding: 3px 6px;">
                         </div>
                         <div class="param-field">
+                            <span class="param-label">转场动效</span>
+                            <select class="input-studio" style="font-size: 10.5px; padding: 2px 4px;" onchange="updateSceneTransition(${idx}, this.value)">
+                                <option value="flash_white" ${curTransition === 'flash_white' ? 'selected' : ''}>⚡ 闪白高光 (Flash)</option>
+                                <option value="punch_in" ${curTransition === 'punch_in' ? 'selected' : ''}>🚀 极速推镜 (Punch)</option>
+                                <option value="slide_left" ${curTransition === 'slide_left' ? 'selected' : ''}>🔀 动态滑切 (Slide)</option>
+                                <option value="fade" ${curTransition === 'fade' ? 'selected' : ''}>✨ 平滑溶解 (Fade)</option>
+                            </select>
+                        </div>
+                        <div class="param-field">
                             <span class="param-label">AI 生图 Prompt</span>
                             <input class="input-studio scene-prompt-input" value="${escapeHtml(sc.prompt || '')}" oninput="updateScenePrompt(${idx}, this.value)" style="font-size: 11px; padding: 3px 6px; color: var(--accent-primary);">
                         </div>
@@ -1974,6 +1984,9 @@
         }
         function updateSceneKw(idx, val) {
             if (currentScenes[idx]) currentScenes[idx].keywords = val;
+        }
+        function updateSceneTransition(idx, val) {
+            if (currentScenes[idx]) currentScenes[idx].transition = val;
         }
         function updateScenePrompt(idx, val) {
             if (currentScenes[idx]) currentScenes[idx].prompt = val;
@@ -2267,6 +2280,19 @@
         }
 
         const UI_PHOTO_LIBRARY = {
+            scifi: [
+                "photo-1506703719100-a0f3a48c0f86", "photo-1451187580459-43490279c0fa", "photo-1446776811953-b23d57bd21aa",
+                "photo-1516339901601-2e1b62dc0c45", "photo-1462331940025-496dfbfc7564", "photo-1447433589675-4aaa569f3e05",
+                "photo-1502134249126-9f3755a50d78", "photo-1419242902214-272b3f66ee7a", "photo-1506443432602-ac2fcd6f54e0", "photo-1538370965046-79c0d6907d47"
+            ],
+            strategy: [
+                "photo-1529699211952-734e80c4d42b", "photo-1580541832626-2a7131ee809f", "photo-1586165368502-1bad197a6461",
+                "photo-1560250097-0b93528c311a", "photo-1507003211169-0a1dd7228f2d", "photo-1534528741775-53994a69daeb", "photo-1551836022-d5d88e9218df"
+            ],
+            sports: [
+                "photo-1546519638-68e109498ffc", "photo-1519766304817-4f37bda74a29", "photo-1574629810360-7efbbe195018",
+                "photo-1517838277536-f5f99be501cd", "photo-1461896836934-ffe607ba8211", "photo-1534438327276-14e5300c3a48"
+            ],
             tech: ["photo-1518770660439-4636190af475", "photo-1519389950473-47ba0277781c", "photo-1550751827-4bd374c3f58b", "photo-1526374965328-7f61d4dc18c5", "photo-1531297484001-80022131f5a1", "photo-1451187580459-43490279c0fa", "photo-1618005182384-a83a8bd57fbe", "photo-1620712943543-bcc4688e7485"],
             finance: ["photo-1486406146926-c627a92ad1ab", "photo-1611974789855-9c2a0a7236a3", "photo-1590283603385-17ffb3a7f29f", "photo-1450133064473-71024230f91b", "photo-1579532537598-459ecdaf39cc", "photo-1559526324-4b87b5e36e44", "photo-1526304640581-d334cdbbf45e"],
             workplace: ["photo-1497215728101-856f4ea42174", "photo-1522071820081-009f0129c71c", "photo-1542744173-8e7e53415bb0", "photo-1573496359142-b8d87734a5a2", "photo-1551836022-d5d88e9218df", "photo-1507679799987-c73779587ccf"],
@@ -2279,10 +2305,15 @@
             emotions: ["photo-1516589178581-6cd7833ae3b2", "photo-1534447677768-be436bb09401", "photo-1518495973542-4542c06a5843", "photo-1499209974431-9dddcece7f88", "photo-1474552226712-ac0f0961a954"]
         };
 
+        const usedSessionPhotos = new Set();
+
         function buildDynamicAiImageUrl(prompt, keywords, voice, idx) {
             const combined = `${prompt || ''} ${keywords || ''} ${voice || ''}`.toLowerCase();
             let cat = "growth";
-            if (/chip|tech|computer|phone|code|ai|robot|server|algorithm|digital|future|算力|技术|芯片/.test(combined)) cat = "tech";
+            if (/三体|宇宙|星空|太空|银河|深空|天体|黑洞|星球|光年|二向箔|水滴|智子|罗辑|刘慈欣|space|galaxy|universe|stars|scifi/.test(combined)) cat = "scifi";
+            else if (/博弈|抉择|决定|按纽|按钮|生死|存亡|危机|国际象棋|chess|strategy|decision|button/.test(combined)) cat = "strategy";
+            else if (/篮球|足球|运动|体育|赛事|跑|马拉松|健身|力量|sports|athlete|basketball|running/.test(combined)) cat = "sports";
+            else if (/chip|tech|computer|phone|code|ai|robot|server|algorithm|digital|future|算力|技术|芯片/.test(combined)) cat = "tech";
             else if (/market|stock|money|chart|building|finance|business|bank|invest|economy|trade|搞钱|商业|经济/.test(combined)) cat = "finance";
             else if (/office|desk|meeting|work|boss|job|career|worker|打工|职场|老板|同事/.test(combined)) cat = "workplace";
             else if (/music|concert|game|movie|film|stage|show|tv|entertainment|variety|综艺|明星|八卦|电影|节目/.test(combined)) cat = "entertainment";
@@ -2293,8 +2324,19 @@
             else if (/love|heart|sunset|coffee|hug|warm|emotion|tear|alone|sad|情绪|治愈|暖心/.test(combined)) cat = "emotions";
 
             const pool = UI_PHOTO_LIBRARY[cat] || UI_PHOTO_LIBRARY["growth"];
-            const pick = pool[((idx || 1) - 1 + (combined.length % pool.length)) % pool.length];
-            return `https://images.unsplash.com/${pick}?w=720&h=1280&fit=crop&q=80`;
+            const baseIdx = ((idx || 1) - 1) % pool.length;
+            let chosenPhoto = pool[baseIdx];
+
+            // 智能顺序探查未使用的图片，保证同一剧本内绝不重复
+            for (let i = 0; i < pool.length; i++) {
+                const cand = pool[(baseIdx + i) % pool.length];
+                if (!usedSessionPhotos.has(cand)) {
+                    chosenPhoto = cand;
+                    break;
+                }
+            }
+            usedSessionPhotos.add(chosenPhoto);
+            return `https://images.unsplash.com/${chosenPhoto}?w=720&h=1280&fit=crop&q=80`;
         }
 
         // Batch Generate AI Images for all Scenes
@@ -2379,8 +2421,10 @@
 
                 document.getElementById('studioProjectTitle').value = data.script.title;
                 document.getElementById('monitorTitleDisplay').textContent = data.script.title;
+                usedSessionPhotos.clear(); // 清空去重池，保证本剧本全新分配
                 currentScenes = data.script.scenes.map((s, i) => {
                     const promptText = s.image_prompt || `${(s.visual_keywords || []).join(' ')}, ${s.voiceover_text.slice(0, 30)}`;
+                    const assignedTransition = s.transition || (i === 0 ? 'fade' : (i % 2 === 1 ? 'flash_white' : 'punch_in'));
                     return {
                         idx: i + 1,
                         scene_type: s.scene_type || '',
@@ -2388,11 +2432,14 @@
                         voice: s.voiceover_text,
                         img: buildDynamicAiImageUrl(promptText, (s.visual_keywords || []).join(', '), s.voiceover_text, i + 1),
                         keywords: (s.visual_keywords || []).join(', '),
-                        prompt: promptText
+                        prompt: promptText,
+                        transition: assignedTransition,
+                        asset_type: "image",
+                        asset_source: "curated_photo"
                     };
                 });
                 renderScenesList();
-                toast(`✅ 分镜创作完成！已加载 ${currentScenes.length} 个专属动态 AI 画面`);
+                toast(`✅ 分镜创作完成！已加载 ${currentScenes.length} 个专属独家无重复实拍画面与爆款转场`);
             } catch (e) {
                 toast(`分镜生成失败: ${e.message}`);
                 container.innerHTML = `
@@ -2463,15 +2510,20 @@
                         container.appendChild(box);
                     });
 
+                    usedSessionPhotos.clear();
                     currentScenes = s.scenes.map((sc, i) => {
                         const promptText = sc.image_prompt || `${(sc.visual_keywords || []).join(' ')}, ${sc.voiceover_text.slice(0, 30)}`;
+                        const assignedTransition = sc.transition || (i === 0 ? 'fade' : (i % 2 === 1 ? 'flash_white' : 'punch_in'));
                         return {
                             idx: i + 1,
                             name: sc.transition || '分镜情节',
                             voice: sc.voiceover_text,
                             img: buildDynamicAiImageUrl(promptText, (sc.visual_keywords || []).join(', '), sc.voiceover_text, i + 1),
                             keywords: (sc.visual_keywords || []).join(', '),
-                            prompt: promptText
+                            prompt: promptText,
+                            transition: assignedTransition,
+                            asset_type: "image",
+                            asset_source: "curated_photo"
                         };
                     });
                     renderScenesList();
@@ -2532,11 +2584,12 @@
                 scene_index: idx + 1,
                 voiceover_text: s.voice,
                 scene_type: s.scene_type || '',
+                transition: s.transition || (idx === 0 ? 'fade' : (idx % 2 === 1 ? 'flash_white' : 'punch_in')),
                 visual_keywords: (s.keywords || '').split(',').map(v => v.trim()).filter(Boolean).slice(0, 8),
                 image_prompt: s.prompt || '',
                 asset_file: s.asset_file || null,
                 asset_type: s.asset_type || (s.img && (s.img.includes('.mp4') || s.img.includes('.mov') || s.img.includes('.webm')) ? 'video' : 'image'),
-                img: s.img || null
+                img: (s.asset_source === 'user_upload' || s.asset_source === 'user_url' || s.asset_source === 'ai_gen') ? s.img : null
             }));
 
             const btn = document.getElementById('btnStartRender');

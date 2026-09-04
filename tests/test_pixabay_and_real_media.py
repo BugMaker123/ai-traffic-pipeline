@@ -138,3 +138,59 @@ def test_fetch_scene_asset_prioritizes_real_video(monkeypatch, tmp_path):
     )
     assert res["asset_type"] == "video"
     assert res["source"] == "pexels"
+
+
+def test_scifi_strategy_query_and_core_extraction():
+    """验证三体/宇宙/博弈商业词映射与高频视频核心词提炼"""
+    client = PexelsMediaClient()
+
+    # 三体 / 宇宙
+    q1 = client._normalize_commercial_query(["三体执剑人的抉择"], None, "罗辑面对黑暗森林")
+    assert "space" in q1 or "universe" in q1
+    core1 = client._extract_core_video_query(q1)
+    assert core1 in ["universe", "space", "galaxy"]
+
+    # 国际象棋 / 博弈
+    q2 = client._normalize_commercial_query(["终局博弈与危机"], None, "按纽被按下的那一瞬间")
+    assert "chess" in q2 or "strategy" in q2 or "button" in q2
+    core2 = client._extract_core_video_query(q2)
+    assert core2 in ["chess", "pressing button"]
+
+
+def test_curated_photo_strict_deduplication(monkeypatch, tmp_path):
+    """验证同一项目内连续获取精选大片时，严格消除重复，各镜头素材独一无二"""
+    monkeypatch.setattr("media.pexels_client.ASSETS_OUTPUT_DIR", tmp_path)
+    client = PexelsMediaClient()
+
+    def mock_download(url, *args, **kwargs):
+        return MockResponse({}, 200, content=b"\xff\xd8\xff" + b"\x00" * 15_000)
+
+    monkeypatch.setattr(client.session, "get", mock_download)
+
+    project_id = "test_dedup_proj"
+    res1 = client._match_and_download_curated_photo("space galaxy", scene_idx=1, project_id=project_id)
+    res2 = client._match_and_download_curated_photo("space galaxy", scene_idx=2, project_id=project_id)
+    res3 = client._match_and_download_curated_photo("space galaxy", scene_idx=3, project_id=project_id)
+
+    assert res1 is not None
+    assert res2 is not None
+    assert res3 is not None
+    # 验证已用集合包含了 3 个不同图片 ID
+    used_set = client._used_assets_by_project[project_id]
+    assert len(used_set) == 3
+
+
+def test_sfx_manager_generation():
+    """验证转场破风 (whoosh)、重音顿挫 (hit)、金句强调 (ding) 均能程序化生成高质量音频"""
+    from media.sfx_manager import SFXManager
+
+    whoosh_p = SFXManager.get_whoosh()
+    ding_p = SFXManager.get_ding()
+    hit_p = SFXManager.get_hit()
+    pop_p = SFXManager.get_pop()
+
+    for p in [whoosh_p, ding_p, hit_p, pop_p]:
+        path = Path(p)
+        assert path.exists()
+        assert path.stat().st_size > 1000
+

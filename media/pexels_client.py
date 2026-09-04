@@ -36,6 +36,16 @@ logger = logging.getLogger(__name__)
 
 # 常用中文意象与专业商业实拍英文词语义映射表 (大幅提升 Pexels / Pixabay 检索命中率)
 COMMERCIAL_QUERY_MAP = [
+    # 三体 / 科幻 / 深空 / 宇宙 / 黑暗森林 / 执剑人
+    (r"三体|水滴|智子|面壁|执剑|红岸|歌者|降维|二向箔|罗辑|程心|庄颜|大刘", "deep space universe galaxy stars cinematic"),
+    (r"宇宙|星空|太空|银河|深空|天体|黑洞|星球|星系|光年", "universe galaxy space starry night milky way"),
+    (r"末日|灾难|毁灭|降临|浩劫|绝望|风暴|废墟", "dramatic stormy clouds epic landscape darkness"),
+    (r"博弈|抉择|决定|生死|存亡|危机|对抗|算计|谋略", "chess game strategy intense focus dramatic light"),
+    (r"按纽|按钮|开关|发射|按下|控制台|核按钮|警报", "pressing button finger control room switch"),
+    (r"人性|思考|哲思|命运|沉思|孤独|悲悯|众生", "man thinking portrait serious looking away solitude"),
+    (r"科技|未来|赛博|文明|纪元|探索", "futuristic tech cyberpunk neon modern digital"),
+
+    # 体育 / 竞技
     (r"女篮|女足|女性运动|女运动员", "women basketball match court action athlete"),
     (r"男篮|篮球|灌篮|三分球|球场", "basketball game match professional action court"),
     (r"足球|世界杯|球赛|点球|绿茵", "soccer football match tournament athlete stadium"),
@@ -43,10 +53,14 @@ COMMERCIAL_QUERY_MAP = [
     (r"跑步|晨跑|马拉松|冲刺|田径", "running marathon athlete track morning finish line"),
     (r"健身|力量|哑铃|硬拉|撸铁|减脂", "gym workout fitness training strength athlete"),
     (r"自律|晨起|冥想|习惯|读书|阅读", "morning routine athlete workout focus meditation book"),
+
+    # 科技 / 芯片 / 算力
     (r"芯片|半导体|光刻|主板|硬件|显卡", "semiconductor microchip motherboard macro technology"),
     (r"算力|服务器|机房|云计算|数据中心", "datacenter server racks modern computing technology"),
     (r"ai|人工智能|算法|深度学习|大模型", "artificial intelligence network modern technology computer"),
     (r"代码|编程|程序员|黑客|软件", "software code computer screen programming developer"),
+
+    # 财经 / 商业 / 职场
     (r"黄金|金条|金价|财富|贵金属", "gold bars bullion treasure luxury finance wealth"),
     (r"股票|股市|k线|交易|基金|行情", "stock market trading chart screen finance bull"),
     (r"搞钱|搞投资|理财|资产|商业模式", "finance modern office investment wealth growth money"),
@@ -54,14 +68,58 @@ COMMERCIAL_QUERY_MAP = [
     (r"职场|工位|开会|加班|汇报|ppt", "modern corporate office teamwork discussion business"),
     (r"老板|领导|高管|战略|ceo", "business executive leadership meeting office boardroom"),
     (r"打工|跳槽|简历|求职|HR", "workspace employee laptop coffee focused work career"),
+
+    # 社会 / 情感 / 悬疑
     (r"医院|医生|医疗|手术|健康", "doctor hospital medical healthcare clinic surgeon"),
     (r"城市|街头|车流|夜市|繁华|天际线", "city skyline night traffic crowd street metropolitan"),
     (r"情感|治愈|拥抱|落泪|心碎|晚霞", "heartfelt sunset warm hug emotion calm coffee"),
-    (r"悬疑|迷雾|黑夜|案情|真相|探秘", "mystery dark night detective shadow fog cinematic"),
+    # 法律 / 犯罪 / 审判 / 正义 / 纪实
+    (r"认罪|庭审|法庭|法官|审判|判决|律师|辩护|被告|原告|法槌|手铐|监狱|罪犯|犯罪|乱港|涉案|公诉|司法|法治", "courtroom trial judge gavel legal justice law"),
+    (r"真相|调查|内幕|揭露|黑幕|证据|卷宗|档案|线索", "investigation documents evidence magnifying glass mystery archive"),
+    (r"历史|过去|风云|时代|沧桑|岁月|变迁|复盘", "vintage archive newspaper history retro documentary clock"),
 ]
 
-# 垂直领域 1080x1920 超清实拍商用大片库 (涵盖 17 大细分赛道，160+ 真实超清竖屏摄影镜头)
+# 全局项目素材跨实例去重集合 (彻底根除多实例并发时的图库重复下发)
+_GLOBAL_PROJECT_USED_ASSETS: Dict[str, set] = {}
+
+# 垂直领域 1080x1920 超清实拍商用大片库 (涵盖 20+ 细分赛道，真实超清竖屏摄影镜头)
 CURATED_PHOTO_COLLECTION = {
+    "justice": [
+        "photo-1589829545856-d10d557cf95f",  # 严肃法庭法槌与法律案卷
+        "photo-1453733190028-5615fddf2945",  # 庄严正义法院大楼罗马立柱
+        "photo-1505664194779-8beaceb93744",  # 厚重司法典籍与判例
+        "photo-1589994965851-a8f479c573a9",  # 正义女神天平与象征
+        "photo-1575505586569-646b2ca898fc",  # 签字画押与严谨法律文书
+        "photo-1486406146926-c627a92ad1ab",  # 现代化法务摩天大楼
+    ],
+    "documentary": [
+        "photo-1585829365295-ab7cd400c167",  # 复古报纸头条与旧新闻
+        "photo-1524995997946-a1c2e315a42f",  # 浩瀚图书馆档案与绝密宗卷
+        "photo-1518709268805-4e9042af9f23",  # 昏暗案情分析室与泛黄线索
+        "photo-1461360370896-922624d12aa1",  # 老怀表与流逝历史岁月
+    ],
+    "scifi": [
+        "photo-1506703719100-a0f3a48c0f86",  # 壮丽深空星云与星尘
+        "photo-1451187580459-43490279c0fa",  # 地球外太空发光视界
+        "photo-1446776811953-b23d57bd21aa",  # 太空轨道与深邃宇宙
+        "photo-1516339901601-2e1b62dc0c45",  # 银河与深邃星空
+        "photo-1462331940025-496dfbfc7564",  # 浩瀚星云与宇宙射电
+        "photo-1447433589675-4aaa569f3e05",  # 极夜极光与璀璨星河
+        "photo-1502134249126-9f3755a50d78",  # 幽蓝星空与山脉
+        "photo-1419242902214-272b3f66ee7a",  # 宇宙星系微光
+        "photo-1506443432602-ac2fcd6f54e0",  # 深空神秘星尘
+        "photo-1538370965046-79c0d6907d47",  # 璀璨星空与孤独探索
+    ],
+    "strategy": [
+        "photo-1529699211952-734e80c4d42b",  # 国际象棋王见王终局博弈
+        "photo-1580541832626-2a7131ee809f",  # 经典黑白棋局深谋远虑
+        "photo-1586165368502-1bad197a6461",  # 国际象棋对弈指尖特写
+        "photo-1560250097-0b93528c311a",  # 严峻沉思的高管与决策者
+        "photo-1507003211169-0a1dd7228f2d",  # 坚毅目光与深沉对峙
+        "photo-1534528741775-53994a69daeb",  # 聚光灯下的深沉神情
+        "photo-1551836022-d5d88e9218df",  # 决断时刻的手势与眼神
+        "photo-1517841905240-472988babdf9",  # 复杂心绪下的沉着特写
+    ],
     "sports": [
         "photo-1546519638-68e109498ffc",  # 篮球场专注投篮特写
         "photo-1519766304817-4f37bda74a29",  # 运动员激烈对抗与球场
@@ -181,6 +239,46 @@ class PexelsMediaClient:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         })
         self.pixabay_client = pixabay_client or PixabayMediaClient(api_key=PIXABAY_API_KEY)
+        self._used_assets_by_project: Dict[str, set] = {}
+
+    def _extract_core_video_query(self, query: str) -> str:
+        """
+        将长句/复合句提炼为 1~2 个最强实拍高频动名词，极大提升 Pexels / Pixabay 竖屏视频命中率
+        """
+        q = (query or "").lower()
+        if any(w in q for w in ["space", "galaxy", "universe", "stars", "planet", "cosmic"]):
+            return "universe"
+        if any(w in q for w in ["basketball", "hoop"]):
+            return "basketball"
+        if any(w in q for w in ["soccer", "football", "stadium"]):
+            return "soccer"
+        if any(w in q for w in ["running", "marathon", "sprint"]):
+            return "running"
+        if any(w in q for w in ["gym", "workout", "fitness", "training"]):
+            return "gym workout"
+        if any(w in q for w in ["chess", "strategy"]):
+            return "chess"
+        if any(w in q for w in ["button", "switch", "finger"]):
+            return "pressing button"
+        if any(w in q for w in ["chip", "semiconductor", "microchip"]):
+            return "technology"
+        if any(w in q for w in ["code", "programming", "software"]):
+            return "coding"
+        if any(w in q for w in ["stock", "trading", "finance", "gold"]):
+            return "stock market"
+        if any(w in q for w in ["office", "meeting", "boardroom", "workplace"]):
+            return "office meeting"
+        if any(w in q for w in ["city", "skyline", "traffic"]):
+            return "city night"
+        if any(w in q for w in ["hospital", "doctor", "medical"]):
+            return "hospital"
+        if any(w in q for w in ["thinking", "portrait", "serious", "man"]):
+            return "man thinking"
+        if any(w in q for w in ["storm", "clouds", "darkness"]):
+            return "storm clouds"
+
+        words = [w for w in re.findall(r"[a-zA-Z]{3,}", q) if w not in {"the", "and", "with", "for", "modern", "cinematic"}]
+        return " ".join(words[:2]) if words else "commercial lifestyle"
 
     def _normalize_commercial_query(
         self,
@@ -201,7 +299,6 @@ class PexelsMediaClient:
         # 2. 从已有 image_prompt 中提取纯英文核心实体词
         if image_prompt:
             en_words = re.findall(r"[a-zA-Z]{3,}", image_prompt)
-            # 过滤掉常见虚词
             stop_words = {"the", "and", "with", "for", "vertical", "cinematic", "photorealistic", "ultra", "detailed", "lighting"}
             clean_words = [w for w in en_words if w.lower() not in stop_words]
             if len(clean_words) >= 2:
@@ -225,10 +322,9 @@ class PexelsMediaClient:
         检索 Wikimedia Commons 维基共享媒体库中的真实新闻/百科照片。
         特别适合特定历史事件、体育名人、地理标志，彻底避免 AI 假脸。
         """
-        # 提取可能的专有名词（如人名、地名）
         target_name = ""
         combined = f"{query} {voiceover_text}"
-        name_match = re.search(r"(姚明|易建联|李金铭|韩旭|李梦|王思雨|郑薇|库里|詹姆斯|科比|乔丹|莫言|马斯克|雷军|周鸿祎)", combined)
+        name_match = re.search(r"(姚明|易建联|李金铭|韩旭|李梦|王思雨|郑薇|库里|詹姆斯|科比|乔丹|莫言|马斯克|雷军|周鸿祎|罗辑|刘慈欣)", combined)
         if name_match:
             target_name = name_match.group(1)
 
@@ -284,22 +380,46 @@ class PexelsMediaClient:
         scene_type: str = "",
     ) -> Dict[str, Any]:
         """
-        获取分镜素材（重构后遵循“去 AI 味”高质感实拍管线）：
-        1. 优先使用前端传入的显式图片/视频 URL
-        2. 智能商用检索词清洗与语义翻译 (如: '女篮' -> 'women basketball match')
-        3. 【第一首选】Pexels / Pixabay 真实 9:16 短视频双引擎
+        获取分镜素材（遵循“去 AI 味、告别静态重复、释放真实视频”的高质感实拍管线）：
+        1. 商业实拍检索词智能标准化与核心动词提取
+        2. 【第一首选】Pexels / Pixabay 真实 9:16 短视频双引擎
+        3. 若明确指定了专属定制图片或真实视频未命中，则使用显式素材
         4. 【第二首选】Wikimedia Commons 真实新闻纪实与人物原图
         5. 【第三首选】Pixabay / Pexels 真实 1080x1920 竖屏摄影大片
-        6. 【第四首选】精选 17 大垂直赛道超清单反摄影大片池 (Unsplash 真实原片)
+        6. 【第四首选】精选 19 大垂直赛道超清单反摄影大片池 (严格按项目去重)
         7. 【保底兜底】若所有真实素材库皆无法匹配，再进入 AI 生图 (Flux/SDXL)
         8. 【终极离线】本地高质感弥散流光
         """
         save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.jpg"
 
-        # 1. 前端传入的动态指定素材
+        # 商业实拍检索词智能标准化
+        commercial_query = self._normalize_commercial_query(keywords, image_prompt, voiceover_text)
+        logger.info("分镜 #%d 智能提取商业实拍检索词: [%s]", scene_idx, commercial_query)
+
+        # 1. 真实 9:16 动态短视频双引擎 (Pexels -> Pixabay)
+        # 注意：即使前端传了默认占位图片 URL，当 prefer_video=True 时，也优先升级为震撼的真实实拍视频！
+        if prefer_video and commercial_query:
+            # 1.1 Pexels 官方真实视频
+            if self.api_key:
+                try:
+                    res_pexels_v = self._search_pexels(commercial_query, scene_idx, project_id)
+                    if res_pexels_v and res_pexels_v.get("asset_type") == "video":
+                        logger.info("分镜 #%d 成功命中 Pexels 真实视频", scene_idx)
+                        return res_pexels_v
+                except Exception as e:
+                    logger.warning("Pexels 视频检索失败: %s", e)
+
+            # 1.2 Pixabay 官方真实实拍视频
+            if self.pixabay_client and self.pixabay_client.is_configured:
+                res_pixabay_v = self.pixabay_client.search_video(commercial_query, scene_idx, project_id)
+                if res_pixabay_v:
+                    logger.info("分镜 #%d 成功命中 Pixabay 真实视频", scene_idx)
+                    return res_pixabay_v
+
+        # 2. 若视频未命中，且前端传入了有效的显式指定素材 (非普通占位图或用户特定上传)
         if explicit_url and explicit_url.startswith("http"):
             try:
-                logger.info("正在下载分镜 #%d 显式指定画面: %s", scene_idx, explicit_url[:60])
+                logger.info("分镜 #%d 视频未覆盖，下载显式指定画面: %s", scene_idx, explicit_url[:60])
                 resp = self.session.get(explicit_url, timeout=20)
                 if resp.status_code == 200 and len(resp.content) > 5000:
                     with open(save_path, "wb") as f:
@@ -311,37 +431,14 @@ class PexelsMediaClient:
                         "keyword": image_prompt or "",
                     }
             except Exception as e:
-                logger.warning("下载指定画面失败 (%s)，进入实拍检索管线", e)
+                logger.warning("下载指定画面失败 (%s)，进入实拍大片匹配管线", e)
 
-        # 2. 商业实拍检索词智能标准化
-        commercial_query = self._normalize_commercial_query(keywords, image_prompt, voiceover_text)
-        logger.info("分镜 #%d 智能提取商业实拍检索词: [%s]", scene_idx, commercial_query)
-
-        # 3. 真实 9:16 动态短视频双引擎 (Pexels -> Pixabay)
-        if prefer_video and commercial_query:
-            # 3.1 Pexels 官方真实视频
-            if self.api_key:
-                try:
-                    res_pexels_v = self._search_pexels(commercial_query, scene_idx, project_id)
-                    if res_pexels_v and res_pexels_v.get("asset_type") == "video":
-                        logger.info("分镜 #%d 成功命中 Pexels 真实视频", scene_idx)
-                        return res_pexels_v
-                except Exception as e:
-                    logger.warning("Pexels 视频检索失败: %s", e)
-
-            # 3.2 Pixabay 官方真实实拍视频
-            if self.pixabay_client and self.pixabay_client.is_configured:
-                res_pixabay_v = self.pixabay_client.search_video(commercial_query, scene_idx, project_id)
-                if res_pixabay_v:
-                    logger.info("分镜 #%d 成功命中 Pixabay 真实视频", scene_idx)
-                    return res_pixabay_v
-
-        # 4. 真实人物/事件纪实照片 (Wikimedia Commons)
+        # 3. 真实人物/事件纪实照片 (Wikimedia Commons)
         real_wiki = self._search_wikimedia_real_photo(commercial_query, voiceover_text, scene_idx, project_id)
         if real_wiki:
             return real_wiki
 
-        # 5. 真实 1080x1920 竖屏摄影大片双引擎 (Pixabay Photo -> Pexels Photo)
+        # 4. 真实 1080x1920 竖屏摄影大片双引擎 (Pixabay Photo -> Pexels Photo)
         if self.pixabay_client and self.pixabay_client.is_configured and commercial_query:
             res_pixabay_p = self.pixabay_client.search_photo(commercial_query, scene_idx, project_id)
             if res_pixabay_p:
@@ -356,24 +453,29 @@ class PexelsMediaClient:
             except Exception as e:
                 logger.warning("Pexels 摄影检索失败: %s", e)
 
-        # 6. 精选 17 大细分赛道真实单反摄影大片池 (Unsplash 真实原片 CDN)
+        # 5. 精选 19 大细分赛道真实单反摄影大片池 (Unsplash 真实原片 CDN，严格同项目去重)
         try:
             res_curated = self._match_and_download_curated_photo(commercial_query, scene_idx, project_id)
             if res_curated:
-                logger.info("分镜 #%d 成功命中 17 大赛道精选商业摄影原片", scene_idx)
+                logger.info("分镜 #%d 成功命中 19 大赛道精选商业摄影原片 (独家无重复)", scene_idx)
                 return res_curated
         except Exception as e:
             logger.warning("精选实景图片匹配失败: %s", e)
 
-        # 7. 仅在真实素材均未覆盖时，才调用动态 AI 生图兜底
+        # 6. 仅在真实素材均未覆盖时，才调用动态 AI 生图兜底
         prompt = self._build_scene_prompt(image_prompt, keywords, voiceover_text, scene_type)
         if prompt:
             try:
                 from media.ai_image_gen import AIImageGenerator
-                ai_gen = AIImageGenerator()
-                ai_img = ai_gen.generate_image(prompt=prompt, project_id=project_id, scene_index=scene_idx)
+                ai_img = ai_gen.generate_image(
+                    prompt=prompt,
+                    project_id=project_id,
+                    scene_index=scene_idx,
+                    voiceover_text=voiceover_text,
+                    scene_type=scene_type,
+                )
                 if ai_img and os.path.exists(ai_img):
-                    logger.info("分镜 #%d 真实素材未覆盖，启用 AI 视觉增强生成: %s", scene_idx, ai_img)
+                    logger.info("分镜 #%d 启用 AI 视觉增强生成: %s", scene_idx, ai_img)
                     return {
                         "asset_file": ai_img,
                         "asset_type": "image",
@@ -383,7 +485,7 @@ class PexelsMediaClient:
             except Exception as e:
                 logger.warning("分镜 #%d 动态 AI 生图异常: %s", scene_idx, e)
 
-        # 8. 本地纯净深色弥散流光保底
+        # 7. 本地纯净深色弥散流光保底
         return self._generate_pure_mesh_gradient(scene_idx, project_id)
 
     @staticmethod
@@ -413,14 +515,22 @@ class PexelsMediaClient:
         project_id: str,
     ) -> Optional[Dict[str, Any]]:
         """
-        根据分镜关键词精准选择领域摄影大片并下载 1080x1920 竖屏版
+        根据分镜关键词精准选择领域摄影大片并下载 1080x1920 竖屏版 (含同项目全局去重)
         """
         save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.jpg"
         kw_lower = keyword_str.lower()
 
-        # 细粒度判定关键词所属领域 (新增 sports 等高频爆款分类)
-        cat = "growth"
-        if any(w in kw_lower for w in ["basketball", "sports", "athlete", "soccer", "football", "workout", "tournament", "stadium"]):
+        # 细粒度判定关键词所属领域 (优先匹配精准垂直领域)
+        cat = None
+        if any(w in kw_lower for w in ["court", "trial", "judge", "gavel", "justice", "law", "prison", "handcuff", "guilty", "plea", "lawyer", "legal", "crime", "verdict", "police"]):
+            cat = "justice"
+        elif any(w in kw_lower for w in ["history", "archive", "newspaper", "document", "vintage", "retro", "record", "headline"]):
+            cat = "documentary"
+        elif any(w in kw_lower for w in ["space", "galaxy", "universe", "stars", "planet", "cosmic", "scifi", "alien", "astronomy"]):
+            cat = "scifi"
+        elif any(w in kw_lower for w in ["chess", "strategy", "game", "button", "switch", "decision", "crisis", "intense", "thinking", "solitude"]):
+            cat = "strategy"
+        elif any(w in kw_lower for w in ["basketball", "sports", "athlete", "soccer", "football", "workout", "tournament", "stadium"]):
             cat = "sports"
         elif any(w in kw_lower for w in ["chip", "tech", "computer", "phone", "code", "ai", "robot", "server", "algorithm", "digital", "future"]):
             cat = "tech"
@@ -428,7 +538,7 @@ class PexelsMediaClient:
             cat = "finance"
         elif any(w in kw_lower for w in ["office", "desk", "meeting", "work", "boss", "job", "career", "worker", "colleague"]):
             cat = "workplace"
-        elif any(w in kw_lower for w in ["music", "concert", "game", "movie", "film", "stage", "camera", "show", "tv", "entertainment", "variety"]):
+        elif any(w in kw_lower for w in ["music", "concert", "movie", "film", "stage", "camera", "show", "tv", "entertainment", "variety"]):
             cat = "entertainment"
         elif any(w in kw_lower for w in ["star", "actor", "actress", "celebrity", "model", "fashion", "portrait", "woman", "man", "person"]):
             cat = "celebrity"
@@ -440,11 +550,47 @@ class PexelsMediaClient:
             cat = "social"
         elif any(w in kw_lower for w in ["love", "heart", "sunset", "coffee", "hug", "warm", "emotion", "tear", "alone", "sad"]):
             cat = "emotions"
+        elif any(w in kw_lower for w in ["habit", "routine", "meditation", "exercise", "morning", "growth"]):
+            cat = "growth"
 
-        photo_pool = CURATED_PHOTO_COLLECTION.get(cat, CURATED_PHOTO_COLLECTION["growth"])
+        # 若未命中特定赛道，按分镜轮询多样化垂直图库，绝不让所有镜头回退到同一种图！
+        if not cat:
+            diverse_pools = ["documentary", "strategy", "social", "workplace", "finance", "mystery"]
+            cat = diverse_pools[(scene_idx - 1) % len(diverse_pools)]
+
+        photo_pool = CURATED_PHOTO_COLLECTION.get(cat) or CURATED_PHOTO_COLLECTION["documentary"]
+        used_set = _GLOBAL_PROJECT_USED_ASSETS.setdefault(project_id, set())
+        self._used_assets_by_project.setdefault(project_id, set()).update(used_set)
+
+        # 智能探查未使用的照片 ID，彻底消除同项目多镜头重复
         seed_hash = int(hashlib.md5(f"{kw_lower}:{project_id}".encode("utf-8")).hexdigest()[:6], 16)
-        pick_idx = (seed_hash + (scene_idx - 1) * 3) % len(photo_pool)
-        photo_id = photo_pool[pick_idx]
+        base_idx = (seed_hash + (scene_idx - 1) * 2) % len(photo_pool)
+        photo_id = None
+
+        # 优先在当前类别中找未用过的
+        for offset in range(len(photo_pool)):
+            cand_id = photo_pool[(base_idx + offset) % len(photo_pool)]
+            if cand_id not in used_set:
+                photo_id = cand_id
+                break
+
+        # 若当前类别已被当前项目用尽，向其他高质感备选池借图，绝不复用
+        if not photo_id:
+            for fallback_cat in ["justice", "documentary", "strategy", "social", "workplace"]:
+                f_pool = CURATED_PHOTO_COLLECTION.get(fallback_cat, [])
+                for cand_id in f_pool:
+                    if cand_id not in used_set:
+                        photo_id = cand_id
+                        cat = fallback_cat
+                        break
+                if photo_id:
+                    break
+
+        if not photo_id:
+            photo_id = photo_pool[base_idx % len(photo_pool)]
+
+        used_set.add(photo_id)
+        self._used_assets_by_project[project_id].add(photo_id)
 
         url = f"https://images.unsplash.com/{photo_id}?w=1080&h=1920&fit=crop&q=82"
         try:
@@ -519,53 +665,67 @@ class PexelsMediaClient:
         }
 
     def _search_pexels(self, query: str, scene_idx: int, project_id: str) -> Optional[Dict[str, Any]]:
-        """优先搜索 Pexels 竖屏视频，无合适视频时搜索竖屏图片。"""
-        params = {"query": query, "orientation": "portrait", "per_page": 3}
-        resp = self.session.get("https://api.pexels.com/videos/search", headers=self.headers, params=params, timeout=8)
-        resp.raise_for_status()
-        if resp.status_code == 200:
-            videos = resp.json().get("videos", [])
-            if videos:
-                chosen = random.choice(videos)
-                files = sorted(chosen.get("video_files", []), key=lambda item: item.get("height", 0), reverse=True)
-                for vf in files:
-                    if vf.get("width", 0) <= vf.get("height", 1) and vf.get("link"):
-                        save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.mp4"
-                        download = self.session.get(vf["link"], timeout=30)
-                        download.raise_for_status()
-                        v_data = download.content
-                        if len(v_data) < 100_000:
-                            continue
-                        with open(save_path, "wb") as f:
-                            f.write(v_data)
-                        return {
-                            "asset_file": str(save_path),
-                            "asset_type": "video",
-                            "source": "pexels",
-                            "keyword": query,
-                            "duration": chosen.get("duration", 5.0),
-                        }
+        """优先使用极简核心词搜索 Pexels 竖屏视频，无合适视频时搜索竖屏图片。"""
+        used_set = self._used_assets_by_project.setdefault(project_id, set())
+        video_q = query if len(query.strip().split()) <= 2 else self._extract_core_video_query(query)
 
-        photo_resp = self.session.get("https://api.pexels.com/v1/search", headers=self.headers, params=params, timeout=8)
-        photo_resp.raise_for_status()
-        photos = photo_resp.json().get("photos", [])
-        if photos:
-            chosen_photo = photos[(scene_idx - 1) % len(photos)]
-            photo_url = chosen_photo.get("src", {}).get("portrait") or chosen_photo.get("src", {}).get("large2x")
-            if photo_url:
-                download = self.session.get(photo_url, timeout=20)
-                download.raise_for_status()
-                if len(download.content) > 20_000:
-                    save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.jpg"
-                    with open(save_path, "wb") as f:
-                        f.write(download.content)
-                    return {
-                        "asset_file": str(save_path),
-                        "asset_type": "image",
-                        "source": "pexels_photo",
-                        "keyword": query,
-                        "photographer": chosen_photo.get("photographer", "Pexels"),
-                    }
+        # 1. 检索竖屏真实视频
+        try:
+            params = {"query": video_q, "orientation": "portrait", "per_page": 5}
+            resp = self.session.get("https://api.pexels.com/videos/search", headers=self.headers, params=params, timeout=8)
+            if resp.status_code == 200:
+                videos = resp.json().get("videos", [])
+                for chosen in videos:
+                    vid_id = f"pexels_v_{chosen.get('id')}"
+                    if vid_id in used_set:
+                        continue
+                    files = sorted(chosen.get("video_files", []), key=lambda item: item.get("height", 0), reverse=True)
+                    for vf in files:
+                        if vf.get("width", 0) <= vf.get("height", 1) and vf.get("link"):
+                            save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.mp4"
+                            download = self.session.get(vf["link"], timeout=30)
+                            if download.status_code == 200 and len(download.content) >= 100_000:
+                                with open(save_path, "wb") as f:
+                                    f.write(download.content)
+                                used_set.add(vid_id)
+                                return {
+                                    "asset_file": str(save_path),
+                                    "asset_type": "video",
+                                    "source": "pexels",
+                                    "keyword": video_q,
+                                    "duration": chosen.get("duration", 5.0),
+                                }
+        except Exception as e:
+            logger.debug("Pexels 竖屏视频检索尝试 [%s] 失败: %s", video_q, e)
+
+        # 2. 视频未命中，搜索竖屏单反摄影
+        try:
+            params = {"query": video_q, "orientation": "portrait", "per_page": 5}
+            photo_resp = self.session.get("https://api.pexels.com/v1/search", headers=self.headers, params=params, timeout=8)
+            if photo_resp.status_code == 200:
+                photos = photo_resp.json().get("photos", [])
+                for chosen_photo in photos:
+                    pid = f"pexels_p_{chosen_photo.get('id')}"
+                    if pid in used_set:
+                        continue
+                    photo_url = chosen_photo.get("src", {}).get("portrait") or chosen_photo.get("src", {}).get("large2x")
+                    if photo_url:
+                        download = self.session.get(photo_url, timeout=20)
+                        if download.status_code == 200 and len(download.content) > 20_000:
+                            save_path = ASSETS_OUTPUT_DIR / f"{project_id}_asset_scene_{scene_idx}.jpg"
+                            with open(save_path, "wb") as f:
+                                f.write(download.content)
+                            used_set.add(pid)
+                            return {
+                                "asset_file": str(save_path),
+                                "asset_type": "image",
+                                "source": "pexels_photo",
+                                "keyword": video_q,
+                                "photographer": chosen_photo.get("photographer", "Pexels"),
+                            }
+        except Exception as e:
+            logger.debug("Pexels 摄影检索失败: %s", e)
+
         return None
 
     def fetch_scene_assets(self, scenes: List[Dict[str, Any]], project_id: str) -> List[Dict[str, Any]]:
@@ -597,3 +757,4 @@ class PexelsMediaClient:
 
         with ThreadPoolExecutor(max_workers=MEDIA_FETCH_CONCURRENCY, thread_name_prefix="media-fetch") as pool:
             return list(pool.map(fetch, scenes))
+
